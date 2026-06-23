@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — CR Grows</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-dark:   #1a3a2a;
+      --green-mid:    #2d6a4f;
+      --green-accent: #52b788;
+      --cream:        #f8f5f0;
+      --sand:         #e8e0d4;
+      --white:        #ffffff;
+      --text:         #1c1c1c;
+      --text-soft:    #5c5c5c;
+      --radius:       12px;
+      --sidebar-w:    240px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--green-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 24px 32px;
+      border-bottom: 1px solid #2d6a4f44;
+    }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: var(--green-accent);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: #fff;
+    }
+
+    .nav {
+      flex: 1;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6a9e82;
+      padding: 0 12px;
+      margin: 16px 0 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #a8c4b2;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-item:hover { background: #2d6a4f44; color: #fff; }
+
+    .nav-item.active {
+      background: var(--green-accent);
+      color: #fff;
+    }
+
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 20px 24px 0;
+      border-top: 1px solid #2d6a4f44;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--green-mid);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .user-info strong {
+      display: block;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .user-info span {
+      font-size: 11px;
+      color: #6a9e82;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #6a9e82;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 10px 0 0;
+      font-family: 'Inter', sans-serif;
+      transition: color 0.15s;
+      display: block;
+    }
+
+    .logout-btn:hover { color: #fff; }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 40px 48px;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+
+    .topbar-left h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--green-dark);
+      margin-bottom: 4px;
+    }
+
+    .topbar-left p {
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge {
+      background: var(--green-accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      border: 1px solid var(--sand);
+      transition: box-shadow 0.2s;
+    }
+
+    .stat-card:hover { box-shadow: 0 4px 20px #1a3a2a12; }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 36px;
+      color: var(--green-dark);
+      margin-bottom: 4px;
+    }
+
+    .stat-meta {
+      font-size: 13px;
+      color: var(--green-mid);
+      font-weight: 500;
+    }
+
+    .stat-icon {
+      float: right;
+      font-size: 28px;
+      opacity: 0.2;
+      margin-top: -4px;
+    }
+
+    /* ── TWO-COL LAYOUT ── */
+    .content-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--sand);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--sand);
+    }
+
+    .card-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green-dark);
+    }
+
+    .card-header a {
+      font-size: 13px;
+      color: var(--green-mid);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .card-header a:hover { text-decoration: underline; }
+
+    /* ── ACTIVITY LIST ── */
+    .activity-list {
+      padding: 0;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--sand);
+      transition: background 0.15s;
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:hover { background: #f8f5f055; }
+
+    .act-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green-accent);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .act-dot.orange { background: #e67e22; }
+    .act-dot.blue   { background: #3498db; }
+
+    .act-body strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .act-body span {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .act-time {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-soft);
+      white-space: nowrap;
+      margin-top: 3px;
+    }
+
+    /* ── QUICK ACTIONS ── */
+    .quick-actions {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .qa-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--sand);
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .qa-btn:hover {
+      border-color: var(--green-accent);
+      background: #52b78808;
+    }
+
+    .qa-icon { font-size: 18px; }
+
+    .qa-btn .arrow {
+      margin-left: auto;
+      color: var(--text-soft);
+      font-size: 16px;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 28px 20px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .content-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🌱</div>
+      <span class="brand-name">CR Grows</span>
+    </div>
+
+    <nav class="nav">
+      <span class="nav-label">Main</span>
+      <a class="nav-item active" href="#">
+        <span class="icon">🏠</span> Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <span class="icon">📊</span> Reports
+      </a>
+      <a class="nav-item" href="#">
+        <span class="icon">📁</span> Projects
+      </a>
+
+      <span class="nav-label">Account</span>
+      <a class="nav-item" href="#">
+        <span class="icon">👤</span> Profile
+      </a>
+      <a class="nav-item" href="#">
+        <span class="icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="user-info">
+          <strong id="sidebarName">Loading…</strong>
+          <span id="sidebarEmail">—</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">→ Sign out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="greetingMsg">Good morning 👋</h1>
+        <p id="greetingDate">Loading your dashboard…</p>
+      </div>
+      <div class="topbar-right">
+        <span class="badge">Active</span>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon">📁</span>
+        <div class="stat-label">Active Projects</div>
+        <div class="stat-value">12</div>
+        <div class="stat-meta">↑ 3 this month</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">✅</span>
+        <div class="stat-label">Tasks Done</div>
+        <div class="stat-value">84</div>
+        <div class="stat-meta">↑ 12 this week</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📈</span>
+        <div class="stat-label">Growth Rate</div>
+        <div class="stat-value">+24%</div>
+        <div class="stat-meta">vs last quarter</div>
+      </div>
+    </div>
+
+    <!-- CONTENT ROW -->
+    <div class="content-row">
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Recent Activity</h2>
+          <a href="#">View all</a>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="act-dot"></div>
+            <div class="act-body">
+              <strong>Project Alpha updated</strong>
+              <span>Status changed to In Progress</span>
+            </div>
+            <div class="act-time">2m ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot blue"></div>
+            <div class="act-body">
+              <strong>New report generated</strong>
+              <span>Q2 2025 summary is ready to view</span>
+            </div>
+            <div class="act-time">1h ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot orange"></div>
+            <div class="act-body">
+              <strong>Task deadline approaching</strong>
+              <span>Review design mockups — due tomorrow</span>
+            </div>
+            <div class="act-time">3h ago</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot"></div>
+            <div class="act-body">
+              <strong>Account settings saved</strong>
+              <span>Profile information updated</span>
+            </div>
+            <div class="act-time">Yesterday</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot"></div>
+            <div class="act-body">
+              <strong>Project Beta completed</strong>
+              <span>All milestones reached ✓</span>
+            </div>
+            <div class="act-time">2 days ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Quick Actions</h2>
+        </div>
+        <div class="quick-actions">
+          <button class="qa-btn">
+            <span class="qa-icon">➕</span>
+            New Project
+            <span class="arrow">›</span>
+          </button>
+          <button class="qa-btn">
+            <span class="qa-icon">📄</span>
+            Generate Report
+            <span class="arrow">›</span>
+          </button>
+          <button class="qa-btn">
+            <span class="qa-icon">👤</span>
+            Edit Profile
+            <span class="arrow">›</span>
+          </button>
+          <button class="qa-btn">
+            <span class="qa-icon">🔒</span>
+            Change Password
+            <span class="arrow">›</span>
+          </button>
+          <button class="qa-btn">
+            <span class="qa-icon">📬</span>
+            Notifications
+            <span class="arrow">›</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // ── Auth guard: redirect to login if no token ──
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    // ── Decode JWT (no library needed for display) ──
+    function parseJwt(t) {
+      try {
+        return JSON.parse(atob(t.split('.')[1]));
+      } catch {
+        return null;
+      }
+    }
+
+    const payload = parseJwt(token);
+
+    if (payload) {
+      const email = payload.email || '';
+      const name  = payload.name  || email.split('@')[0] || 'User';
+      const initials = name.slice(0, 2).toUpperCase();
+
+      document.getElementById('sidebarName').textContent  = name;
+      document.getElementById('sidebarEmail').textContent = email;
+      document.getElementById('sidebarAvatar').textContent = initials;
+
+      // Greeting based on time of day
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      document.getElementById('greetingMsg').textContent = `${greeting}, ${name} 👋`;
+    }
+
+    // ── Date in topbar ──
+    const now = new Date();
+    document.getElementById('greetingDate').textContent =
+      now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // ── Logout ──
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
