@@ -4,9 +4,17 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { CosmosClient } = require('@azure/cosmos');
+const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/api", authRoutes);
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`Running on port ${PORT}`));
 
 // Middleware to parse incoming JSON payloads and serve static frontend files
 app.use(express.json());
