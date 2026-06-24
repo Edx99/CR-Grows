@@ -1,1 +1,52 @@
-i
+name: Deploy CR-Grows to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:   # allows manual trigger from GitHub Actions tab
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1 — Download the repo code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2 — Set up Node.js 18
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # 3 — Install dependencies from package.json in root
+      - name: Install dependencies
+        run: npm install
+
+      # 4 — Zip the app (Azure needs a package)
+      - name: Zip artifact for deployment
+        run: zip -r release.zip . --exclude "*.git*" --exclude ".github/*"
+
+      # 5 — Upload the zip so the deploy step can use it
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cr-grows-app
+          path: release.zip
+
+      # 6 — Download the zip in the deploy job
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cr-grows-app
+
+      # 7 — Deploy to Azure Web App wapedx04
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'wapedx04'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: release.zip
