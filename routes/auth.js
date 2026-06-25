@@ -90,7 +90,7 @@ router.post("/forgot-password", async (req, res) => {
   await usersContainer.item(user.id, user.email).replace(user);
 
   // 5. Build the reset link that will be sent by email
-  const resetLink = `https://wapedx04.azurewebsites.net/reset-password.html?token=${resetToken}&email=${email}`;
+  const resetLink = `https://wapedxtest01.azurewebsites.net/reset-password.html?token=${resetToken}&email=${email}`;
 
   // 6. Send the email (uses SendGrid — configured in Step 6)
   const sgMail = require("@sendgrid/mail");
