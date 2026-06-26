@@ -154,27 +154,6 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-
-// TEMPORARY DEBUG — remove after confirming variables load
-console.log("COSMOS_ENDPOINT:", process.env.COSMOS_ENDPOINT ? "✓ loaded" : "✗ MISSING");
-console.log("COSMOS_KEY:", process.env.COSMOS_KEY ? "✓ loaded" : "✗ MISSING");
-console.log("JWT_SECRET:", process.env.JWT_SECRET ? "✓ loaded" : "✗ MISSING");
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/api", authRoutes);
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
-
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`CR-Grows server running on port ${PORT}`);
-});
-
 // ==========================================
 // SEVER EXECUTION
 // ==========================================
