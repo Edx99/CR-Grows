@@ -145,6 +145,6 @@ app.post('/api/auth/login', async (req, res) => {
 // ==========================================
 // SEVER EXECUTION
 // ==========================================
-app.listen(PORT, () => {
-    console.log(`Application engine actively listening on port ${PORT}`);
-});
+//app.listen(PORT, () => {
+//    console.log(`Application engine actively listening on port ${PORT}`);
+//});
