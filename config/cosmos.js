@@ -8,17 +8,14 @@ function getContainer() {
   const endpoint = process.env.COSMOS_ENDPOINT;
   const key      = process.env.COSMOS_KEY;
 
-  console.log("COSMOS_ENDPOINT:", endpoint ? "✓ " + endpoint : "✗ MISSING");
-  console.log("COSMOS_KEY:",      key      ? "✓ loaded"      : "✗ MISSING");
+  console.log("COSMOS_ENDPOINT:", endpoint ? "✓ loaded" : "✗ MISSING");
+  console.log("COSMOS_KEY:",      key      ? "✓ loaded" : "✗ MISSING");
 
   if (!endpoint || !key) {
-    throw new Error(
-      "Missing Cosmos DB credentials.\n" +
-      "Set COSMOS_ENDPOINT and COSMOS_KEY in Azure Application Settings."
-    );
+    throw new Error("Missing COSMOS_ENDPOINT or COSMOS_KEY in Application Settings.");
   }
 
-  const client = new CosmosClient({ endpoint, key });
+  const client   = new CosmosClient({ endpoint, key });
   usersContainer = client.database("appdb").container("users");
   return usersContainer;
 }
