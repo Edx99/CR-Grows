@@ -1,144 +1,149 @@
-// routes/auth.js  ← THIS is the file
-
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");         // built-in Node.js, no install needed
-const { usersContainer } = require("../config/cosmos");
+const express          = require("express");
+const bcrypt           = require("bcryptjs");
+const jwt              = require("jsonwebtoken");
+const crypto           = require("crypto");
+const { getContainer } = require("../config/cosmos");
 
 const router = express.Router();
 
-// ─────────────────────────────────────────
-// STEP 4 — REGISTER
-// ─────────────────────────────────────────
+// ── REGISTER ──────────────────────────────────────────────
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const usersContainer = getContainer();
+    const { name, email, password } = req.body;
 
-  const { resources } = await usersContainer.items
-    .query({
-      query: "SELECT * FROM c WHERE c.email = @e",
-      parameters: [{ name: "@e", value: email }],
-    })
-    .fetchAll();
+    if (!email || !password)
+      return res.status(400).json({ error: "All fields are required." });
 
-  if (resources.length > 0)
-    return res.status(400).json({ error: "Email already registered" });
+    const { resources } = await usersContainer.items
+      .query({
+        query: "SELECT * FROM c WHERE c.email = @e",
+        parameters: [{ name: "@e", value: email }],
+      })
+      .fetchAll();
 
-  const passwordHash = await bcrypt.hash(password, 10);
-  await usersContainer.items.create({
-    email,
-    passwordHash,
-    createdAt: new Date().toISOString(),
-  });
+    if (resources.length > 0)
+      return res.status(400).json({ error: "Email already registered." });
 
-  res.json({ message: "Account created" });
+    const passwordHash = await bcrypt.hash(password, 10);
+    await usersContainer.items.create({
+      name: name || "",
+      email,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+    });
+
+    res.json({ message: "Account created successfully." });
+  } catch (err) {
+    console.error("Register error:", err.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
 });
 
-// ─────────────────────────────────────────
-// STEP 4 — LOGIN
-// ─────────────────────────────────────────
+// ── LOGIN ─────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const usersContainer = getContainer();
+    const { email, password } = req.body;
 
-  const { resources } = await usersContainer.items
-    .query({
-      query: "SELECT * FROM c WHERE c.email = @e",
-      parameters: [{ name: "@e", value: email }],
-    })
-    .fetchAll();
+    if (!email || !password)
+      return res.status(400).json({ error: "All fields are required." });
 
-  const user = resources[0];
-  if (!user || !(await bcrypt.compare(password, user.passwordHash)))
-    return res.status(401).json({ error: "Invalid credentials" });
+    const { resources } = await usersContainer.items
+      .query({
+        query: "SELECT * FROM c WHERE c.email = @e",
+        parameters: [{ name: "@e", value: email }],
+      })
+      .fetchAll();
 
-  const token = jwt.sign(
-    { email: user.email, id: user.id },
-    process.env.JWT_SECRET,
-    { expiresIn: "2h" }
-  );
+    const user = resources[0];
+    if (!user || !(await bcrypt.compare(password, user.passwordHash)))
+      return res.status(401).json({ error: "Invalid email or password." });
 
-  res.json({ token });
+    const token = jwt.sign(
+      { email: user.email, id: user.id, name: user.name },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    console.error("Login error:", err.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
 });
 
-// ─────────────────────────────────────────
-// STEP 5 — FORGOT PASSWORD (request link)
-// ─────────────────────────────────────────
+// ── FORGOT PASSWORD ───────────────────────────────────────
 router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
+  try {
+    const usersContainer = getContainer();
+    const { email } = req.body;
 
-  // 1. Find the user by email
-  const { resources } = await usersContainer.items
-    .query({
-      query: "SELECT * FROM c WHERE c.email = @e",
-      parameters: [{ name: "@e", value: email }],
-    })
-    .fetchAll();
+    const { resources } = await usersContainer.items
+      .query({
+        query: "SELECT * FROM c WHERE c.email = @e",
+        parameters: [{ name: "@e", value: email }],
+      })
+      .fetchAll();
 
-  const user = resources[0];
+    const user = resources[0];
 
-  // 2. If user doesn't exist, we still respond the same way
-  //    so attackers can't figure out which emails are registered
-  if (!user)
-    return res.json({ message: "If that email exists, a reset link was sent" });
+    // Always same response — prevents email enumeration
+    if (!user)
+      return res.json({ message: "If that email exists, a reset link was sent." });
 
-  // 3. Generate a random secure token
-  const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken      = crypto.randomBytes(32).toString("hex");
+    user.resetToken       = resetToken;
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    await usersContainer.item(user.id, user.email).replace(user);
 
-  // 4. Save the token + expiry (1 hour) on the user document in Cosmos DB
-  user.resetToken = resetToken;
-  user.resetTokenExpiry = Date.now() + 3600000; // 1 hour in milliseconds
-  await usersContainer.item(user.id, user.email).replace(user);
+    const resetLink = `https://wapedxtest01.azurewebsites.net/reset-password.html?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
-  // 5. Build the reset link that will be sent by email
-  const resetLink = `https://wapedxtest01.azurewebsites.net/reset-password.html?token=${resetToken}&email=${email}`;
+    const sgMail = require("@sendgrid/mail");
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    await sgMail.send({
+      to: email,
+      from: "noreply@yourdomain.com",   // ← change to your verified sender
+      subject: "Reset your password",
+      html: `<p>Click the link below to reset your password. It expires in 1 hour.</p>
+             <a href="${resetLink}">Reset my password</a>`,
+    });
 
-  // 6. Send the email (uses SendGrid — configured in Step 6)
-  const sgMail = require("@sendgrid/mail");
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  await sgMail.send({
-    to: email,
-    from: "noreply@yourdomain.com",      // ← change to your sender email
-    subject: "Reset your password",
-    html: `<p>Click the link below to reset your password. It expires in 1 hour.</p>
-           <a href="${resetLink}">Reset my password</a>`,
-  });
-
-  res.json({ message: "If that email exists, a reset link was sent" });
+    res.json({ message: "If that email exists, a reset link was sent." });
+  } catch (err) {
+    console.error("Forgot password error:", err.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
 });
 
-// ─────────────────────────────────────────
-// STEP 5 — RESET PASSWORD (apply new password)
-// ─────────────────────────────────────────
+// ── RESET PASSWORD ────────────────────────────────────────
 router.post("/reset-password", async (req, res) => {
-  const { email, token, newPassword } = req.body;
+  try {
+    const usersContainer = getContainer();
+    const { email, token, newPassword } = req.body;
 
-  // 1. Find user by email
-  const { resources } = await usersContainer.items
-    .query({
-      query: "SELECT * FROM c WHERE c.email = @e",
-      parameters: [{ name: "@e", value: email }],
-    })
-    .fetchAll();
+    const { resources } = await usersContainer.items
+      .query({
+        query: "SELECT * FROM c WHERE c.email = @e",
+        parameters: [{ name: "@e", value: email }],
+      })
+      .fetchAll();
 
-  const user = resources[0];
+    const user = resources[0];
 
-  // 2. Validate: user must exist, token must match, and not be expired
-  if (!user || user.resetToken !== token || Date.now() > user.resetTokenExpiry)
-    return res.status(400).json({ error: "Invalid or expired token" });
+    if (!user || user.resetToken !== token || Date.now() > user.resetTokenExpiry)
+      return res.status(400).json({ error: "Invalid or expired token." });
 
-  // 3. Hash the new password and save it
-  user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    delete user.resetToken;
+    delete user.resetTokenExpiry;
+    await usersContainer.item(user.id, user.email).replace(user);
 
-  // 4. Clean up the token so it can't be reused
-  delete user.resetToken;
-  delete user.resetTokenExpiry;
-
-  await usersContainer.item(user.id, user.email).replace(user);
-
-  res.json({ message: "Password updated successfully" });
+    res.json({ message: "Password updated successfully." });
+  } catch (err) {
+    console.error("Reset password error:", err.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
 });
 
-// ─────────────────────────────────────────
-// Export the router so server.js can use it
-// ─────────────────────────────────────────
 module.exports = router;
