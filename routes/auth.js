@@ -6,6 +6,14 @@ const { getContainer } = require("../config/cosmos");
 
 const router = express.Router();
 
+// ── HELPER: verify JWT from Authorization header ──────────
+function verifyToken(req) {
+  const header = req.headers.authorization;
+  if (!header) throw new Error("No token provided.");
+  const token = header.split(" ")[1];
+  return jwt.verify(token, process.env.JWT_SECRET);
+}
+
 // ── REGISTER ──────────────────────────────────────────────
 router.post("/register", async (req, res) => {
   try {
@@ -30,6 +38,7 @@ router.post("/register", async (req, res) => {
       name: name || "",
       email,
       passwordHash,
+      appState: null,
       createdAt: new Date().toISOString(),
     });
 
@@ -87,14 +96,12 @@ router.post("/forgot-password", async (req, res) => {
       .fetchAll();
 
     const user = resources[0];
-
-    // Always same response — prevents email enumeration
     if (!user)
       return res.json({ message: "If that email exists, a reset link was sent." });
 
     const resetToken      = crypto.randomBytes(32).toString("hex");
     user.resetToken       = resetToken;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    user.resetTokenExpiry = Date.now() + 3600000;
     await usersContainer.item(user.id, user.email).replace(user);
 
     const resetLink = `https://wapedxtest01.azurewebsites.net/reset-password.html?token=${resetToken}&email=${encodeURIComponent(email)}`;
@@ -103,9 +110,9 @@ router.post("/forgot-password", async (req, res) => {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     await sgMail.send({
       to: email,
-      from: "noreply@yourdomain.com",   // ← change to your verified sender
+      from: "noreply@yourdomain.com",
       subject: "Reset your password",
-      html: `<p>Click the link below to reset your password. It expires in 1 hour.</p>
+      html: `<p>Click below to reset your password (expires in 1 hour).</p>
              <a href="${resetLink}">Reset my password</a>`,
     });
 
@@ -130,7 +137,6 @@ router.post("/reset-password", async (req, res) => {
       .fetchAll();
 
     const user = resources[0];
-
     if (!user || user.resetToken !== token || Date.now() > user.resetTokenExpiry)
       return res.status(400).json({ error: "Invalid or expired token." });
 
@@ -143,6 +149,55 @@ router.post("/reset-password", async (req, res) => {
   } catch (err) {
     console.error("Reset password error:", err.message);
     res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+// ── GET STATE — load user's app data ─────────────────────
+router.get("/state", async (req, res) => {
+  try {
+    const payload        = verifyToken(req);
+    const usersContainer = getContainer();
+
+    const { resources } = await usersContainer.items
+      .query({
+        query: "SELECT * FROM c WHERE c.email = @e",
+        parameters: [{ name: "@e", value: payload.email }],
+      })
+      .fetchAll();
+
+    const user = resources[0];
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    res.json({ state: user.appState || null });
+  } catch (err) {
+    console.error("Get state error:", err.message);
+    res.status(401).json({ error: "Invalid or expired token." });
+  }
+});
+
+// ── POST STATE — save user's app data ────────────────────
+router.post("/state", async (req, res) => {
+  try {
+    const payload        = verifyToken(req);
+    const usersContainer = getContainer();
+
+    const { resources } = await usersContainer.items
+      .query({
+        query: "SELECT * FROM c WHERE c.email = @e",
+        parameters: [{ name: "@e", value: payload.email }],
+      })
+      .fetchAll();
+
+    const user = resources[0];
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    user.appState = req.body.state;
+    await usersContainer.item(user.id, user.email).replace(user);
+
+    res.json({ message: "State saved." });
+  } catch (err) {
+    console.error("Save state error:", err.message);
+    res.status(401).json({ error: "Invalid or expired token." });
   }
 });
 
