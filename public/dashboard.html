@@ -436,8 +436,18 @@ if (!token) window.location.href = 'login.html';
 function parseJwt(t) {
     try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
 }
+
 const payload = parseJwt(token);
-if (!payload || Date.now() > payload.exp * 1000) {
+
+if (!payload) {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+}
+
+// Grace period: only redirect if expired more than 10 minutes ago
+// Prevents mobile browsers from logging out on app resume
+const GRACE_MS = 10 * 60 * 1000;
+if ((payload.exp * 1000) - Date.now() < -GRACE_MS) {
     localStorage.removeItem('token');
     window.location.href = 'login.html';
 }
