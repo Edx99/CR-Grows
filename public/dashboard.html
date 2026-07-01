@@ -1,591 +1,758 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard — CR Grows</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comando Élite — CR Grows</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --green-dark:   #1a3a2a;
+            --green-mid:    #2d6a4f;
+            --green-accent: #52b788;
+            --cream:        #f8f5f0;
+            --sand:         #e8e0d4;
+        }
 
-    :root {
-      --green-dark:   #1a3a2a;
-      --green-mid:    #2d6a4f;
-      --green-accent: #52b788;
-      --cream:        #f8f5f0;
-      --sand:         #e8e0d4;
-      --white:        #ffffff;
-      --text:         #1c1c1c;
-      --text-soft:    #5c5c5c;
-      --radius:       12px;
-      --sidebar-w:    240px;
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--cream);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-    }
+        body {
+            background: #020617;
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image:
+                radial-gradient(circle at top right, #1a3a2a55, transparent 60%),
+                radial-gradient(circle at bottom left, #0f172a, transparent);
+            min-height: 100vh;
+            display: flex;
+        }
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: var(--sidebar-w);
-      background: var(--green-dark);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 28px 0;
-      position: fixed;
-      top: 0; left: 0;
-      z-index: 100;
-    }
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 220px;
+            min-height: 100vh;
+            background: rgba(26, 58, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(82, 183, 136, 0.15);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 0;
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 100;
+        }
 
-    .sidebar-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 24px 32px;
-      border-bottom: 1px solid #2d6a4f44;
-    }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px 28px;
+            border-bottom: 1px solid rgba(82, 183, 136, 0.15);
+        }
 
-    .brand-icon {
-      width: 36px; height: 36px;
-      background: var(--green-accent);
-      border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: var(--green-accent);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
 
-    .brand-name {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      color: #fff;
-    }
+        .brand-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 16px;
+            color: #fff;
+            line-height: 1.2;
+        }
 
-    .nav {
-      flex: 1;
-      padding: 24px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+        .brand-sub {
+            font-size: 9px;
+            color: var(--green-accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
 
-    .nav-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #6a9e82;
-      padding: 0 12px;
-      margin: 16px 0 6px;
-    }
+        .nav {
+            flex: 1;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
 
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: #a8c4b2;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-    }
+        .nav-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(82, 183, 136, 0.5);
+            padding: 0 10px;
+            margin: 14px 0 5px;
+        }
 
-    .nav-item:hover { background: #2d6a4f44; color: #fff; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 10px;
+            border-radius: 8px;
+            color: rgba(168, 196, 178, 0.8);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
 
-    .nav-item.active {
-      background: var(--green-accent);
-      color: #fff;
-    }
+        .nav-item:hover { background: rgba(82, 183, 136, 0.12); color: #fff; }
+        .nav-item.active { background: var(--green-accent); color: #fff; }
+        .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
 
-    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+        .sidebar-footer {
+            padding: 16px 20px 0;
+            border-top: 1px solid rgba(82, 183, 136, 0.15);
+        }
 
-    .sidebar-footer {
-      padding: 20px 24px 0;
-      border-top: 1px solid #2d6a4f44;
-    }
+        .user-card {
+            display: flex; align-items: center; gap: 10px;
+        }
 
-    .user-card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+        .avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: var(--green-mid);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 13px;
+            flex-shrink: 0;
+            border: 2px solid var(--green-accent);
+        }
 
-    .avatar {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: var(--green-mid);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff;
-      font-weight: 600;
-      font-size: 14px;
-      flex-shrink: 0;
-    }
+        .user-name { display: block; color: #fff; font-size: 12px; font-weight: 600; }
+        .user-rank { font-size: 10px; color: var(--green-accent); }
 
-    .user-info strong {
-      display: block;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 600;
-    }
+        .logout-btn {
+            background: none; border: none;
+            color: rgba(168, 196, 178, 0.5);
+            font-size: 11px; cursor: pointer;
+            padding: 8px 0 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: color 0.15s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .logout-btn:hover { color: #f87171; }
 
-    .user-info span {
-      font-size: 11px;
-      color: #6a9e82;
-    }
+        /* ── MAIN ── */
+        .main {
+            margin-left: 220px;
+            flex: 1;
+            padding: 32px 36px;
+            min-height: 100vh;
+        }
 
-    .logout-btn {
-      background: none;
-      border: none;
-      color: #6a9e82;
-      font-size: 13px;
-      cursor: pointer;
-      padding: 10px 0 0;
-      font-family: 'Inter', sans-serif;
-      transition: color 0.15s;
-      display: block;
-    }
+        /* ── GLASS CARDS ── */
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(82, 183, 136, 0.12);
+            border-radius: 16px;
+        }
 
-    .logout-btn:hover { color: #fff; }
+        .glass-green {
+            background: rgba(26, 58, 42, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(82, 183, 136, 0.2);
+            border-radius: 16px;
+        }
 
-    /* ── MAIN ── */
-    .main {
-      margin-left: var(--sidebar-w);
-      flex: 1;
-      padding: 40px 48px;
-      min-height: 100vh;
-    }
+        /* ── GRADIENT TEXT ── */
+        .gradient-text {
+            background: linear-gradient(90deg, var(--green-accent), #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 40px;
-    }
+        /* ── NEON ACCENT ── */
+        .neon-border { box-shadow: 0 0 18px rgba(82, 183, 136, 0.25); }
 
-    .topbar-left h1 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 28px;
-      color: var(--green-dark);
-      margin-bottom: 4px;
-    }
+        /* ── LOADING ── */
+        #loadingOverlay {
+            position: fixed; inset: 0;
+            background: #020617;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.4s;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #1e293b;
+            border-top-color: var(--green-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-    .topbar-left p {
-      font-size: 14px;
-      color: var(--text-soft);
-    }
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #1a3a2a; border: 1px solid rgba(82,183,136,0.3);
+            color: #f8fafc; padding: 11px 18px;
+            border-radius: 10px; font-size: 13px;
+            opacity: 0; transform: translateY(8px);
+            transition: all 0.3s; z-index: 1000; pointer-events: none;
+        }
+        #toast.show  { opacity: 1; transform: translateY(0); }
+        #toast.success { border-color: #22c55e; color: #86efac; }
+        #toast.error   { border-color: #ef4444; color: #fca5a5; }
 
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        /* ── SYNC DOT ── */
+        #syncDot { transition: background 0.3s; }
 
-    .badge {
-      background: var(--green-accent);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(82,183,136,0.2); border-radius: 2px; }
 
-    /* ── STATS ── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin-bottom: 36px;
-    }
-
-    .stat-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      padding: 24px 28px;
-      border: 1px solid var(--sand);
-      transition: box-shadow 0.2s;
-    }
-
-    .stat-card:hover { box-shadow: 0 4px 20px #1a3a2a12; }
-
-    .stat-label {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-soft);
-      margin-bottom: 10px;
-    }
-
-    .stat-value {
-      font-family: 'DM Serif Display', serif;
-      font-size: 36px;
-      color: var(--green-dark);
-      margin-bottom: 4px;
-    }
-
-    .stat-meta {
-      font-size: 13px;
-      color: var(--green-mid);
-      font-weight: 500;
-    }
-
-    .stat-icon {
-      float: right;
-      font-size: 28px;
-      opacity: 0.2;
-      margin-top: -4px;
-    }
-
-    /* ── TWO-COL LAYOUT ── */
-    .content-row {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 24px;
-    }
-
-    .card {
-      background: var(--white);
-      border-radius: var(--radius);
-      border: 1px solid var(--sand);
-      overflow: hidden;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--sand);
-    }
-
-    .card-header h2 {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--green-dark);
-    }
-
-    .card-header a {
-      font-size: 13px;
-      color: var(--green-mid);
-      font-weight: 500;
-      text-decoration: none;
-    }
-    .card-header a:hover { text-decoration: underline; }
-
-    /* ── ACTIVITY LIST ── */
-    .activity-list {
-      padding: 0;
-    }
-
-    .activity-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--sand);
-      transition: background 0.15s;
-    }
-
-    .activity-item:last-child { border-bottom: none; }
-    .activity-item:hover { background: #f8f5f055; }
-
-    .act-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--green-accent);
-      margin-top: 6px;
-      flex-shrink: 0;
-    }
-
-    .act-dot.orange { background: #e67e22; }
-    .act-dot.blue   { background: #3498db; }
-
-    .act-body strong {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-
-    .act-body span {
-      font-size: 13px;
-      color: var(--text-soft);
-    }
-
-    .act-time {
-      margin-left: auto;
-      font-size: 12px;
-      color: var(--text-soft);
-      white-space: nowrap;
-      margin-top: 3px;
-    }
-
-    /* ── QUICK ACTIONS ── */
-    .quick-actions {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .qa-btn {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border-radius: 10px;
-      border: 1.5px solid var(--sand);
-      background: transparent;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      cursor: pointer;
-      text-align: left;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .qa-btn:hover {
-      border-color: var(--green-accent);
-      background: #52b78808;
-    }
-
-    .qa-icon { font-size: 18px; }
-
-    .qa-btn .arrow {
-      margin-left: auto;
-      color: var(--text-soft);
-      font-size: 16px;
-    }
-
-    /* ── MOBILE ── */
-    @media (max-width: 900px) {
-      .sidebar { display: none; }
-      .main { margin-left: 0; padding: 28px 20px; }
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .content-row { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 500px) {
-      .stats-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 20px 16px; }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
+<!-- Loading -->
+<div id="loadingOverlay">
+    <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p style="color:rgba(82,183,136,0.6); font-size:13px; font-family:'Plus Jakarta Sans',sans-serif;">Cargando comando...</p>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon">🌱</div>
-      <span class="brand-name">CR Grows</span>
+        <div class="brand-icon">🌱</div>
+        <div>
+            <div class="brand-name">CR Grows</div>
+            <div class="brand-sub">Comando Élite</div>
+        </div>
     </div>
 
     <nav class="nav">
-      <span class="nav-label">Main</span>
-      <a class="nav-item active" href="#">
-        <span class="icon">🏠</span> Dashboard
-      </a>
-      <a class="nav-item" href="#">
-        <span class="icon">📊</span> Reports
-      </a>
-      <a class="nav-item" href="#">
-        <span class="icon">📁</span> Projects
-      </a>
+        <span class="nav-label">Operaciones</span>
+        <a class="nav-item active">
+            <span class="icon">🎯</span> Dashboard
+        </a>
+        <a class="nav-item" onclick="showToast('Próximamente...', '')">
+            <span class="icon">📊</span> Estadísticas
+        </a>
+        <a class="nav-item" onclick="showToast('Próximamente...', '')">
+            <span class="icon">🏆</span> Logros
+        </a>
 
-      <span class="nav-label">Account</span>
-      <a class="nav-item" href="#">
-        <span class="icon">👤</span> Profile
-      </a>
-      <a class="nav-item" href="#">
-        <span class="icon">⚙️</span> Settings
-      </a>
+        <span class="nav-label">Personal</span>
+        <a class="nav-item" onclick="showToast('Próximamente...', '')">
+            <span class="icon">👤</span> Perfil
+        </a>
+        <a class="nav-item" onclick="showToast('Próximamente...', '')">
+            <span class="icon">⚙️</span> Ajustes
+        </a>
     </nav>
 
     <div class="sidebar-footer">
-      <div class="user-card">
-        <div class="avatar" id="sidebarAvatar">?</div>
-        <div class="user-info">
-          <strong id="sidebarName">Loading…</strong>
-          <span id="sidebarEmail">—</span>
+        <div class="user-card">
+            <div class="avatar" id="sidebarAvatar">?</div>
+            <div>
+                <span class="user-name" id="sidebarName">Cargando...</span>
+                <span class="user-rank" id="sidebarRank">Recluta 🛡️</span>
+            </div>
         </div>
-      </div>
-      <button class="logout-btn" onclick="logout()">→ Sign out</button>
+        <button class="logout-btn" onclick="logout()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Cerrar sesión
+        </button>
     </div>
-  </aside>
+</aside>
 
-  <!-- MAIN -->
-  <main class="main">
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1 id="greetingMsg">Good morning 👋</h1>
-        <p id="greetingDate">Loading your dashboard…</p>
-      </div>
-      <div class="topbar-right">
-        <span class="badge">Active</span>
-      </div>
-    </div>
+<!-- ── MAIN ── -->
+<main class="main">
 
-    <!-- STATS -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-icon">📁</span>
-        <div class="stat-label">Active Projects</div>
-        <div class="stat-value">12</div>
-        <div class="stat-meta">↑ 3 this month</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon">✅</span>
-        <div class="stat-label">Tasks Done</div>
-        <div class="stat-value">84</div>
-        <div class="stat-meta">↑ 12 this week</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon">📈</span>
-        <div class="stat-label">Growth Rate</div>
-        <div class="stat-value">+24%</div>
-        <div class="stat-meta">vs last quarter</div>
-      </div>
+    <!-- TOPBAR -->
+    <div class="flex justify-between items-start mb-8">
+        <div>
+            <h1 style="font-family:'DM Serif Display',serif; font-size:28px; color:#fff; margin-bottom:4px;">
+                <span class="gradient-text">COMANDO ÉLITE</span>
+            </h1>
+            <p style="font-size:13px; color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div id="syncStatus" class="flex items-center gap-1" style="font-size:11px; color:rgba(148,163,184,0.5);">
+                <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#334155;"></div>
+                <span id="syncText">Sin cambios</span>
+            </div>
+            <button onclick="requestNotifications()"
+                style="font-size:11px; background:rgba(30,41,59,0.8); border:1px solid rgba(82,183,136,0.2); color:rgba(148,163,184,0.8); padding:6px 14px; border-radius:20px; cursor:pointer; transition:all 0.2s;"
+                onmouseover="this.style.borderColor='rgba(82,183,136,0.5)'"
+                onmouseout="this.style.borderColor='rgba(82,183,136,0.2)'">
+                Alertas 🔔
+            </button>
+        </div>
     </div>
 
-    <!-- CONTENT ROW -->
-    <div class="content-row">
-
-      <!-- Recent Activity -->
-      <div class="card">
-        <div class="card-header">
-          <h2>Recent Activity</h2>
-          <a href="#">View all</a>
+    <!-- STATS ROW -->
+    <div class="grid grid-cols-3 gap-4 mb-6" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="glass p-5 text-center neon-border">
+            <div style="font-size:32px; font-weight:800; color:#52b788; font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
+            <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;">Éxito Diario</div>
         </div>
-        <div class="activity-list">
-          <div class="activity-item">
-            <div class="act-dot"></div>
-            <div class="act-body">
-              <strong>Project Alpha updated</strong>
-              <span>Status changed to In Progress</span>
-            </div>
-            <div class="act-time">2m ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-dot blue"></div>
-            <div class="act-body">
-              <strong>New report generated</strong>
-              <span>Q2 2025 summary is ready to view</span>
-            </div>
-            <div class="act-time">1h ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-dot orange"></div>
-            <div class="act-body">
-              <strong>Task deadline approaching</strong>
-              <span>Review design mockups — due tomorrow</span>
-            </div>
-            <div class="act-time">3h ago</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-dot"></div>
-            <div class="act-body">
-              <strong>Account settings saved</strong>
-              <span>Profile information updated</span>
-            </div>
-            <div class="act-time">Yesterday</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-dot"></div>
-            <div class="act-body">
-              <strong>Project Beta completed</strong>
-              <span>All milestones reached ✓</span>
-            </div>
-            <div class="act-time">2 days ago</div>
-          </div>
+        <div class="glass p-5 text-center">
+            <div style="font-size:32px; font-weight:800; color:#818cf8; font-family:'DM Serif Display',serif;" id="avgScore">0%</div>
+            <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;">Promedio 30D</div>
         </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="card">
-        <div class="card-header">
-          <h2>Quick Actions</h2>
+        <div class="glass p-5 text-center" style="border-left:3px solid #f97316;">
+            <div style="font-size:32px; font-weight:800; color:#f97316; font-family:'DM Serif Display',serif;" id="streakCount">0</div>
+            <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;">Racha (Días)</div>
         </div>
-        <div class="quick-actions">
-          <button class="qa-btn">
-            <span class="qa-icon">➕</span>
-            New Project
-            <span class="arrow">›</span>
-          </button>
-          <button class="qa-btn">
-            <span class="qa-icon">📄</span>
-            Generate Report
-            <span class="arrow">›</span>
-          </button>
-          <button class="qa-btn">
-            <span class="qa-icon">👤</span>
-            Edit Profile
-            <span class="arrow">›</span>
-          </button>
-          <button class="qa-btn">
-            <span class="qa-icon">🔒</span>
-            Change Password
-            <span class="arrow">›</span>
-          </button>
-          <button class="qa-btn">
-            <span class="qa-icon">📬</span>
-            Notifications
-            <span class="arrow">›</span>
-          </button>
-        </div>
-      </div>
-
     </div>
-  </main>
 
-  <script>
-    // ── Auth guard: redirect to login if no token ──
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
+    <!-- CONTENT GRID -->
+    <div style="display:grid; grid-template-columns: 1fr 320px; gap:20px;">
 
-    // ── Decode JWT (no library needed for display) ──
-    function parseJwt(t) {
-      try {
-        return JSON.parse(atob(t.split('.')[1]));
-      } catch {
-        return null;
-      }
+        <!-- LEFT COL -->
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+            <!-- MISSIONS -->
+            <div class="glass p-6">
+                <div class="flex justify-between items-center" style="margin-bottom:18px;">
+                    <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
+                    </h3>
+                </div>
+                <div id="missionList" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div id="emptyMissions" style="display:none; text-align:center; color:#475569; font-size:13px; padding:32px 0;">
+                    No hay misiones para hoy.<br>
+                    <span style="font-size:11px;">Agrega misiones desde las Áreas Operativas →</span>
+                </div>
+            </div>
+
+            <!-- CHART -->
+            <div class="glass p-6">
+                <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                    <span style="color:#34d399;">📈</span> Análisis de Desempeño
+                </h3>
+                <canvas id="historyChart" height="140"></canvas>
+            </div>
+        </div>
+
+        <!-- RIGHT COL -->
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+            <!-- AREAS -->
+            <div class="glass-green p-5" style="border-top:2px solid var(--green-accent);">
+                <h3 style="font-size:14px; font-weight:700; margin-bottom:14px; color:#fff;">Áreas Operativas</h3>
+                <div id="areaGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+            </div>
+
+            <!-- AI -->
+            <div style="background:rgba(49,46,129,0.2); border:1px solid rgba(129,140,248,0.2); border-radius:16px; padding:20px;">
+                <h3 style="font-size:14px; font-weight:700; margin-bottom:10px; color:#a5b4fc; display:flex; align-items:center; gap:7px;">
+                    🤖 Comando AI
+                </h3>
+                <div id="aiResponse"
+                    style="font-size:13px; color:#cbd5e1; margin-bottom:14px; height:88px; overflow-y:auto; font-style:italic; line-height:1.6;">
+                    "Listo para optimizar tu rutina. ¿En qué área nos enfocamos hoy?"
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="aiInput" placeholder="Pide un consejo..."
+                        style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; font-size:13px; width:100%; outline:none; color:#f8fafc; font-family:'Plus Jakarta Sans',sans-serif;"
+                        onfocus="this.style.borderColor='rgba(129,140,248,0.5)'"
+                        onblur="this.style.borderColor='#334155'"
+                        onkeydown="if(event.key==='Enter') askAI()">
+                    <button onclick="askAI()"
+                        style="background:#4f46e5; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; color:#fff; transition:background 0.2s; flex-shrink:0;"
+                        onmouseover="this.style.background='#4338ca'"
+                        onmouseout="this.style.background='#4f46e5'">
+                        ➤
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- ── MODAL ── -->
+<div id="modal" onclick="if(event.target===this)closeModal()"
+    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px; z-index:500;">
+    <div class="glass" style="padding:32px; width:100%; max-width:440px; border:1px solid rgba(82,183,136,0.25);">
+        <h2 id="modalTitle" style="font-family:'DM Serif Display',serif; font-size:22px; color:var(--green-accent); margin-bottom:20px;">Configurar Área</h2>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <input type="text" id="taskText" placeholder="Nombre de la misión"
+                style="background:#0f172a; border:1px solid #334155; border-radius:10px; padding:12px 14px; outline:none; color:#f8fafc; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif;"
+                onfocus="this.style.borderColor='rgba(82,183,136,0.5)'" onblur="this.style.borderColor='#334155'">
+            <input type="number" id="taskPoints" placeholder="Puntos (1-100)"
+                style="background:#0f172a; border:1px solid #334155; border-radius:10px; padding:12px 14px; outline:none; color:#f8fafc; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif;"
+                onfocus="this.style.borderColor='rgba(82,183,136,0.5)'" onblur="this.style.borderColor='#334155'">
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; font-size:10px;">
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="1"> L</label>
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="2"> M</label>
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="3"> X</label>
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="4"> J</label>
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="5"> V</label>
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="6"> S</label>
+                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="0"> D</label>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:8px;">
+                <button onclick="closeModal()"
+                    style="flex:1; background:#1e293b; border:none; border-radius:10px; padding:12px; font-weight:700; color:#94a3b8; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:background 0.2s;"
+                    onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#1e293b'">
+                    Cancelar
+                </button>
+                <button onclick="saveNewTask()"
+                    style="flex:1; background:var(--green-dark); border:1px solid var(--green-accent); border-radius:10px; padding:12px; font-weight:700; color:#fff; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:background 0.2s;"
+                    onmouseover="this.style.background='var(--green-mid)'" onmouseout="this.style.background='var(--green-dark)'">
+                    Guardar Misión
+                </button>
+            </div>
+            <div id="modalTaskList" style="max-height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── AUTH GUARD ──────────────────────────────────────────────
+const token = localStorage.getItem('token');
+if (!token) window.location.href = 'login.html';
+
+function parseJwt(t) {
+    try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
+}
+const payload = parseJwt(token);
+if (!payload || Date.now() > payload.exp * 1000) {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+}
+
+// ── STATE ───────────────────────────────────────────────────
+const AREAS     = ['Personal','Familiar','Fitness','Social','Finanzas','Profesional','Negocios'];
+const today     = new Date().toLocaleDateString('en-CA');
+const userEmail = payload?.email || '';
+const userName  = payload?.name  || userEmail.split('@')[0] || 'Soldado';
+const LOCAL_KEY = `comando_elite_${userEmail}`;
+
+let state        = JSON.parse(localStorage.getItem(LOCAL_KEY)) || { days: {}, weekly: [], streak: 0 };
+let currentArea  = null;
+let saveTimeout  = null;
+let chartInstance = null;
+
+// ── API ─────────────────────────────────────────────────────
+async function apiGet(path) {
+    const res = await fetch(path, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return null; }
+    return res.ok ? res.json() : null;
+}
+async function apiPost(path, body) {
+    const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+    });
+    if (res.status === 401) { logout(); return null; }
+    return res.ok ? res.json() : null;
+}
+
+// ── SAVE ────────────────────────────────────────────────────
+function save() {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+    setSyncStatus('pending');
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+        try {
+            await apiPost('/api/state', { state });
+            setSyncStatus('saved');
+        } catch { setSyncStatus('error'); }
+    }, 3000);
+}
+
+function setSyncStatus(s) {
+    const dot = document.getElementById('syncDot');
+    const txt = document.getElementById('syncText');
+    if (s === 'pending') { dot.style.background = '#eab308'; txt.textContent = 'Guardando...'; }
+    if (s === 'saved')   { dot.style.background = '#22c55e'; txt.textContent = 'Guardado ✓'; }
+    if (s === 'error')   { dot.style.background = '#ef4444'; txt.textContent = 'Error al guardar'; }
+}
+
+// ── TOAST ───────────────────────────────────────────────────
+function showToast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ── RANK ────────────────────────────────────────────────────
+function getRank(avg) {
+    if (avg < 30) return 'Novato 🥚';
+    if (avg < 55) return 'Recluta 🛡️';
+    if (avg < 75) return 'Guerrero ⚔️';
+    if (avg < 90) return 'Comando 🎖️';
+    return 'Élite 👑';
+}
+
+// ── INIT ────────────────────────────────────────────────────
+async function init() {
+    lucide.createIcons();
+
+    // Sidebar user info
+    const initials = userName.slice(0, 2).toUpperCase();
+    document.getElementById('sidebarAvatar').textContent = initials;
+    document.getElementById('sidebarName').textContent   = userName;
+
+    // Date
+    document.getElementById('dateDisplay').textContent =
+        new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Load state from server
+    try {
+        const data = await apiGet('/api/state');
+        if (data?.state) {
+            state = data.state;
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+        }
+    } catch { /* use localStorage */ }
+
+    if (!state.days[today]) state.days[today] = { done: [], percent: 0 };
+
+    // Hide loading
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 400);
+
+    render();
+    showToast(`Bienvenido, ${userName} 👋`, 'success');
+}
+
+// ── RENDER ──────────────────────────────────────────────────
+function render() {
+    const dow = new Date().getDay();
+    const missionsToday = state.weekly.filter(m => m.days.includes(dow));
+    const missionList   = document.getElementById('missionList');
+    const emptyMsg      = document.getElementById('emptyMissions');
+    missionList.innerHTML = '';
+
+    let totalPts = 0, earnedPts = 0;
+    missionsToday.forEach(m => {
+        totalPts += m.pts;
+        if (state.days[today].done.includes(m.id)) earnedPts += m.pts;
+    });
+
+    const dailyPct = totalPts > 0 ? Math.round((earnedPts / totalPts) * 100) : 0;
+    state.days[today].percent = dailyPct;
+
+    const allDays = Object.values(state.days);
+    const avg = allDays.length
+        ? Math.round(allDays.reduce((a, b) => a + (b.percent || 0), 0) / allDays.length)
+        : 0;
+
+    document.getElementById('dailyScore').textContent  = `${dailyPct}%`;
+    document.getElementById('avgScore').textContent    = `${avg}%`;
+    document.getElementById('streakCount').textContent = state.streak || 0;
+
+    const rank = getRank(avg);
+    document.getElementById('sidebarRank').textContent = rank;
+
+    // Missions
+    if (missionsToday.length === 0) {
+        emptyMsg.style.display = 'block';
+    } else {
+        emptyMsg.style.display = 'none';
+        missionsToday.forEach(m => {
+            const isDone = state.days[today].done.includes(m.id);
+            const div = document.createElement('div');
+            div.style.cssText = `
+                display:flex; justify-content:space-between; align-items:center;
+                padding:14px 16px; border-radius:12px; transition:all 0.2s;
+                background:${isDone ? 'rgba(82,183,136,0.08)' : 'rgba(30,41,59,0.5)'};
+                border:1px solid ${isDone ? 'rgba(82,183,136,0.25)' : 'rgba(255,255,255,0.06)'};
+                opacity:${isDone ? '0.65' : '1'};
+            `;
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:600; font-size:14px; ${isDone ? 'text-decoration:line-through; color:#64748b;' : 'color:#f8fafc;'}">${m.text}</div>
+                    <div style="font-size:10px; color:var(--green-accent); text-transform:uppercase; margin-top:2px; letter-spacing:0.06em;">${m.area} • ${m.pts} PTS</div>
+                </div>
+                <button onclick="toggleMission(${m.id})"
+                    style="padding:8px 12px; border-radius:9px; border:none; cursor:pointer; font-weight:700; font-size:12px; transition:all 0.2s;
+                    background:${isDone ? '#1e293b' : 'var(--green-dark)'}; color:${isDone ? '#64748b' : 'var(--green-accent)'}; border:1px solid ${isDone ? '#334155' : 'var(--green-accent)'};">
+                    ${isDone ? '↺' : '✓'}
+                </button>
+            `;
+            missionList.appendChild(div);
+        });
     }
 
-    const payload = parseJwt(token);
+    // Areas
+    const areaGrid = document.getElementById('areaGrid');
+    areaGrid.innerHTML = '';
+    AREAS.forEach(a => {
+        const count = state.weekly.filter(t => t.area === a).length;
+        const btn   = document.createElement('button');
+        btn.style.cssText = `
+            background:rgba(26,58,42,0.5); border:1px solid rgba(82,183,136,0.15);
+            border-radius:10px; padding:10px 8px; font-size:11px; font-weight:700;
+            color:#a8c4b2; cursor:pointer; text-align:left; transition:all 0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif;
+        `;
+        btn.onmouseover = () => { btn.style.background = 'rgba(82,183,136,0.15)'; btn.style.color = '#fff'; btn.style.borderColor = 'rgba(82,183,136,0.4)'; };
+        btn.onmouseout  = () => { btn.style.background = 'rgba(26,58,42,0.5)'; btn.style.color = '#a8c4b2'; btn.style.borderColor = 'rgba(82,183,136,0.15)'; };
+        btn.innerHTML = `${a}${count > 0 ? `<span style="display:block;font-size:9px;color:var(--green-accent);margin-top:2px;">${count} misión${count > 1 ? 'es' : ''}</span>` : ''}`;
+        btn.onclick = () => openModal(a);
+        areaGrid.appendChild(btn);
+    });
 
-    if (payload) {
-      const email = payload.email || '';
-      const name  = payload.name  || email.split('@')[0] || 'User';
-      const initials = name.slice(0, 2).toUpperCase();
+    save();
+    updateChart();
+}
 
-      document.getElementById('sidebarName').textContent  = name;
-      document.getElementById('sidebarEmail').textContent = email;
-      document.getElementById('sidebarAvatar').textContent = initials;
+// ── TOGGLE ──────────────────────────────────────────────────
+function toggleMission(id) {
+    const idx = state.days[today].done.indexOf(id);
+    if (idx > -1) state.days[today].done.splice(idx, 1);
+    else state.days[today].done.push(id);
+    render();
+}
 
-      // Greeting based on time of day
-      const hour = new Date().getHours();
-      const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-      document.getElementById('greetingMsg').textContent = `${greeting}, ${name} 👋`;
+// ── MODAL ───────────────────────────────────────────────────
+function openModal(area) {
+    currentArea = area;
+    document.getElementById('modalTitle').textContent = `Misiones: ${area}`;
+    document.getElementById('modal').style.display = 'flex';
+    document.getElementById('taskText').value = '';
+    document.getElementById('taskPoints').value = '';
+    document.querySelectorAll('#modal input[type=checkbox]').forEach(c => c.checked = false);
+    renderModalTasks();
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+}
+
+function saveNewTask() {
+    const text   = document.getElementById('taskText').value.trim();
+    const pts    = parseInt(document.getElementById('taskPoints').value);
+    const checks = Array.from(document.querySelectorAll('#modal input[type=checkbox]:checked')).map(c => parseInt(c.value));
+
+    if (!text || !pts || pts < 1 || pts > 100 || checks.length === 0) {
+        showToast('Completa todos los campos.', 'error'); return;
     }
 
-    // ── Date in topbar ──
-    const now = new Date();
-    document.getElementById('greetingDate').textContent =
-      now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    state.weekly.push({ id: Date.now(), area: currentArea, text, pts, days: checks });
+    document.getElementById('taskText').value = '';
+    document.getElementById('taskPoints').value = '';
+    document.querySelectorAll('#modal input[type=checkbox]').forEach(c => c.checked = false);
+    showToast(`"${text}" agregada ✓`, 'success');
+    renderModalTasks();
+    render();
+}
 
-    // ── Logout ──
-    function logout() {
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
+function renderModalTasks() {
+    const container = document.getElementById('modalTaskList');
+    container.innerHTML = '';
+    state.weekly.filter(t => t.area === currentArea).forEach(t => {
+        const d = document.createElement('div');
+        d.style.cssText = 'display:flex; justify-content:space-between; background:#0f172a; padding:8px 12px; border-radius:8px; font-size:12px; align-items:center; border:1px solid #1e293b;';
+        d.innerHTML = `<span style="color:#cbd5e1;">${t.text} <span style="color:var(--green-accent);">${t.pts}pts</span></span>
+                       <button onclick="deleteTask(${t.id})" style="background:none;border:none;cursor:pointer;color:#f87171;font-size:14px;">🗑️</button>`;
+        container.appendChild(d);
+    });
+}
+
+function deleteTask(id) {
+    state.weekly = state.weekly.filter(t => t.id !== id);
+    state.days[today].done = state.days[today].done.filter(d => d !== id);
+    showToast('Misión eliminada.');
+    renderModalTasks();
+    render();
+}
+
+// ── CHART ───────────────────────────────────────────────────
+function updateChart() {
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    const last7 = [], labels = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const key = d.toLocaleDateString('en-CA');
+        labels.push(d.toLocaleDateString('es-ES', { weekday: 'short' }));
+        last7.push(state.days[key] ? (state.days[key].percent || 0) : 0);
     }
-  </script>
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: '% Cumplimiento',
+                data: last7,
+                borderColor: '#52b788',
+                backgroundColor: 'rgba(82,183,136,0.08)',
+                fill: true, tension: 0.4, borderWidth: 2.5, pointRadius: 4,
+                pointBackgroundColor: '#52b788',
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: '#1e293b' }, ticks: { color: '#475569' } },
+                x: { grid: { display: false }, ticks: { color: '#475569' } }
+            }
+        }
+    });
+}
+
+// ── AI ──────────────────────────────────────────────────────
+function askAI() {
+    const input = document.getElementById('aiInput').value.toLowerCase().trim();
+    const box   = document.getElementById('aiResponse');
+    if (!input) return;
+
+    let reply = "Analiza tu semana: ¿qué misión completas siempre y cuál nunca? Empieza por la que evitas.";
+    if (input.includes('motivaci'))  reply = `${userName}, la motivación arranca. El hábito mantiene. Haz la misión más pequeña ahora mismo.`;
+    if (input.includes('fitness'))   reply = "Regla de 2 minutos: si tarda menos de 2 minutos, hazla ya. Para fitness, empieza con 5 repeticiones.";
+    if (input.includes('finanza'))   reply = "Registra cada gasto esta semana, sin juzgar. La consciencia es el primer paso al control.";
+    if (input.includes('social'))    reply = "Una conversación real vale más que 10 mensajes. Agenda una llamada hoy.";
+    if (input.includes('mejorar'))   reply = "La clave no es hacer más, sino eliminar lo innecesario. Revisa tus misiones de baja puntuación.";
+    if (input.includes('cansado') || input.includes('agotado')) reply = "El descanso es parte del entrenamiento. Hoy es día de recuperación activa.";
+    if (input.includes('racha'))     reply = `Tu racha: ${state.streak || 0} días. Para mantenerla, completa al menos el 60% hoy.`;
+
+    box.textContent = `"${reply}"`;
+    document.getElementById('aiInput').value = '';
+}
+
+// ── NOTIFICATIONS ───────────────────────────────────────────
+function requestNotifications() {
+    if (!("Notification" in window)) { showToast('Navegador no soporta alertas.', 'error'); return; }
+    Notification.requestPermission().then(p => {
+        if (p === "granted") {
+            new Notification("Comando Élite", { body: "¡Alertas activadas!" });
+            showToast('Alertas activadas ✓', 'success');
+        }
+    });
+}
+
+init();
+</script>
 </body>
 </html>
