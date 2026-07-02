@@ -13,12 +13,8 @@
             --green-dark:   #1a3a2a;
             --green-mid:    #2d6a4f;
             --green-accent: #52b788;
-            --cream:        #f8f5f0;
-            --sand:         #e8e0d4;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
             background: #020617;
             color: #f8fafc;
@@ -29,212 +25,108 @@
             min-height: 100vh;
             display: flex;
         }
-
-        /* ── SIDEBAR ── */
         .sidebar {
-            width: 220px;
-            min-height: 100vh;
-            background: rgba(26, 58, 42, 0.95);
+            width: 220px; min-height: 100vh;
+            background: rgba(26,58,42,0.95);
             backdrop-filter: blur(16px);
-            border-right: 1px solid rgba(82, 183, 136, 0.15);
-            display: flex;
-            flex-direction: column;
+            border-right: 1px solid rgba(82,183,136,0.15);
+            display: flex; flex-direction: column;
             padding: 28px 0;
-            position: fixed;
-            top: 0; left: 0;
-            z-index: 100;
+            position: fixed; top: 0; left: 0; z-index: 100;
         }
-
         .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
             padding: 0 20px 28px;
-            border-bottom: 1px solid rgba(82, 183, 136, 0.15);
+            border-bottom: 1px solid rgba(82,183,136,0.15);
         }
-
         .brand-icon {
             width: 36px; height: 36px;
-            background: var(--green-accent);
-            border-radius: 9px;
+            background: var(--green-accent); border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; flex-shrink: 0;
         }
-
-        .brand-name {
-            font-family: 'DM Serif Display', serif;
-            font-size: 16px;
-            color: #fff;
-            line-height: 1.2;
-        }
-
-        .brand-sub {
-            font-size: 9px;
-            color: var(--green-accent);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .nav {
-            flex: 1;
-            padding: 20px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .nav-label {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(82, 183, 136, 0.5);
-            padding: 0 10px;
-            margin: 14px 0 5px;
-        }
-
+        .brand-name { font-family: 'DM Serif Display',serif; font-size:16px; color:#fff; line-height:1.2; }
+        .brand-sub  { font-size:9px; color:var(--green-accent); letter-spacing:0.1em; text-transform:uppercase; font-family:'Plus Jakarta Sans',sans-serif; }
+        .nav { flex:1; padding:20px 12px; display:flex; flex-direction:column; gap:3px; }
+        .nav-label { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(82,183,136,0.5); padding:0 10px; margin:14px 0 5px; }
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 9px 10px;
-            border-radius: 8px;
-            color: rgba(168, 196, 178, 0.8);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.15s, color 0.15s;
+            display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px;
+            color:rgba(168,196,178,0.8); font-size:13px; font-weight:500;
+            cursor:pointer; text-decoration:none; transition:background 0.15s, color 0.15s;
         }
-
-        .nav-item:hover { background: rgba(82, 183, 136, 0.12); color: #fff; }
-        .nav-item.active { background: var(--green-accent); color: #fff; }
-        .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
-
-        .sidebar-footer {
-            padding: 16px 20px 0;
-            border-top: 1px solid rgba(82, 183, 136, 0.15);
-        }
-
-        .user-card {
-            display: flex; align-items: center; gap: 10px;
-        }
-
+        .nav-item:hover { background:rgba(82,183,136,0.12); color:#fff; }
+        .nav-item.active { background:var(--green-accent); color:#fff; }
+        .sidebar-footer { padding:16px 20px 0; border-top:1px solid rgba(82,183,136,0.15); }
+        .user-card { display:flex; align-items:center; gap:10px; }
         .avatar {
-            width: 34px; height: 34px;
-            border-radius: 50%;
-            background: var(--green-mid);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 700; font-size: 13px;
-            flex-shrink: 0;
-            border: 2px solid var(--green-accent);
+            width:34px; height:34px; border-radius:50%;
+            background:var(--green-mid);
+            display:flex; align-items:center; justify-content:center;
+            color:#fff; font-weight:700; font-size:13px; flex-shrink:0;
+            border:2px solid var(--green-accent);
         }
-
-        .user-name { display: block; color: #fff; font-size: 12px; font-weight: 600; }
-        .user-rank { font-size: 10px; color: var(--green-accent); }
-
+        .user-name { display:block; color:#fff; font-size:12px; font-weight:600; }
+        .user-rank { font-size:10px; color:var(--green-accent); }
         .logout-btn {
-            background: none; border: none;
-            color: rgba(168, 196, 178, 0.5);
-            font-size: 11px; cursor: pointer;
-            padding: 8px 0 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            transition: color 0.15s;
-            display: flex; align-items: center; gap: 5px;
+            background:none; border:none; color:rgba(168,196,178,0.5);
+            font-size:11px; cursor:pointer; padding:8px 0 0;
+            font-family:'Plus Jakarta Sans',sans-serif;
+            transition:color 0.15s; display:flex; align-items:center; gap:5px;
         }
-        .logout-btn:hover { color: #f87171; }
-
-        /* ── MAIN ── */
-        .main {
-            margin-left: 220px;
-            flex: 1;
-            padding: 32px 36px;
-            min-height: 100vh;
-        }
-
-        /* ── GLASS CARDS ── */
+        .logout-btn:hover { color:#f87171; }
+        .main { margin-left:220px; flex:1; padding:32px 36px; min-height:100vh; }
         .glass {
-            background: rgba(30, 41, 59, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(82, 183, 136, 0.12);
-            border-radius: 16px;
+            background:rgba(30,41,59,0.6); backdrop-filter:blur(12px);
+            border:1px solid rgba(82,183,136,0.12); border-radius:16px;
         }
-
         .glass-green {
-            background: rgba(26, 58, 42, 0.5);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(82, 183, 136, 0.2);
-            border-radius: 16px;
+            background:rgba(26,58,42,0.5); backdrop-filter:blur(12px);
+            border:1px solid rgba(82,183,136,0.2); border-radius:16px;
         }
-
-        /* ── GRADIENT TEXT ── */
         .gradient-text {
-            background: linear-gradient(90deg, var(--green-accent), #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            background:linear-gradient(90deg, var(--green-accent), #818cf8);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
         }
-
-        /* ── NEON ACCENT ── */
-        .neon-border { box-shadow: 0 0 18px rgba(82, 183, 136, 0.25); }
-
-        /* ── LOADING ── */
         #loadingOverlay {
-            position: fixed; inset: 0;
-            background: #020617;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999; transition: opacity 0.4s;
+            position:fixed; inset:0; background:#020617;
+            display:flex; align-items:center; justify-content:center;
+            z-index:9999; transition:opacity 0.4s;
         }
         .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid #1e293b;
-            border-top-color: var(--green-accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            width:40px; height:40px; border:3px solid #1e293b;
+            border-top-color:var(--green-accent); border-radius:50%;
+            animation:spin 0.8s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ── TOAST ── */
+        @keyframes spin { to { transform:rotate(360deg); } }
         #toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: #1a3a2a; border: 1px solid rgba(82,183,136,0.3);
-            color: #f8fafc; padding: 11px 18px;
-            border-radius: 10px; font-size: 13px;
-            opacity: 0; transform: translateY(8px);
-            transition: all 0.3s; z-index: 1000; pointer-events: none;
+            position:fixed; bottom:24px; right:24px;
+            background:#1a3a2a; border:1px solid rgba(82,183,136,0.3);
+            color:#f8fafc; padding:11px 18px; border-radius:10px; font-size:13px;
+            opacity:0; transform:translateY(8px); transition:all 0.3s;
+            z-index:1000; pointer-events:none;
         }
-        #toast.show  { opacity: 1; transform: translateY(0); }
-        #toast.success { border-color: #22c55e; color: #86efac; }
-        #toast.error   { border-color: #ef4444; color: #fca5a5; }
-
-        /* ── SYNC DOT ── */
-        #syncDot { transition: background 0.3s; }
-
-        /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(82,183,136,0.2); border-radius: 2px; }
-
-        /* ── MOBILE ── */
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main { margin-left: 0; padding: 20px 16px; }
+        #toast.show    { opacity:1; transform:translateY(0); }
+        #toast.success { border-color:#22c55e; color:#86efac; }
+        #toast.error   { border-color:#ef4444; color:#fca5a5; }
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-thumb { background:rgba(82,183,136,0.2); border-radius:2px; }
+        @media (max-width:768px) {
+            .sidebar { display:none; }
+            .main { margin-left:0; padding:20px 16px; }
         }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
 
-<!-- Loading -->
 <div id="loadingOverlay">
     <div class="text-center">
         <div class="spinner mx-auto mb-4"></div>
-        <p style="color:rgba(82,183,136,0.6); font-size:13px; font-family:'Plus Jakarta Sans',sans-serif;">Cargando comando...</p>
+        <p style="color:rgba(82,183,136,0.6);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;">Cargando comando...</p>
     </div>
 </div>
 
 <div id="toast"></div>
 
-<!-- ── SIDEBAR ── -->
 <aside class="sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon">🌱</div>
@@ -243,29 +135,15 @@
             <div class="brand-sub">Comando Élite</div>
         </div>
     </div>
-</div>
-
     <nav class="nav">
         <span class="nav-label">Operaciones</span>
-        <a class="nav-item active">
-            <span class="icon">🎯</span> Dashboard
-        </a>
-        <a class="nav-item" onclick="showToast('Próximamente...', '')">
-            <span class="icon">📊</span> Estadísticas
-        </a>
-        <a class="nav-item" onclick="showToast('Próximamente...', '')">
-            <span class="icon">🏆</span> Logros
-        </a>
-
+        <a class="nav-item active"><span>🎯</span> Dashboard</a>
+        <a class="nav-item" onclick="showToast('Próximamente...')"><span>📊</span> Estadísticas</a>
+        <a class="nav-item" onclick="showToast('Próximamente...')"><span>🏆</span> Logros</a>
         <span class="nav-label">Personal</span>
-        <a class="nav-item" onclick="showToast('Próximamente...', '')">
-            <span class="icon">👤</span> Perfil
-        </a>
-        <a class="nav-item" onclick="showToast('Próximamente...', '')">
-            <span class="icon">⚙️</span> Ajustes
-        </a>
+        <a class="nav-item" onclick="showToast('Próximamente...')"><span>👤</span> Perfil</a>
+        <a class="nav-item" onclick="showToast('Próximamente...')"><span>⚙️</span> Ajustes</a>
     </nav>
-
     <div class="sidebar-footer">
         <div class="user-card">
             <div class="avatar" id="sidebarAvatar">?</div>
@@ -274,247 +152,251 @@
                 <span class="user-rank" id="sidebarRank">Recluta 🛡️</span>
             </div>
         </div>
-        <button class="logout-btn" onclick="logout()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <button class="logout-btn" onclick="doLogout()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
             Cerrar sesión
         </button>
     </div>
 </aside>
 
-<!-- ── MAIN ── -->
 <main class="main">
-
-    <!-- TOPBAR -->
     <div class="flex justify-between items-start mb-8">
         <div>
-            <h1 style="font-family:'DM Serif Display',serif; font-size:28px; color:#fff; margin-bottom:4px;">
+            <h1 style="font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-bottom:4px;">
                 <span class="gradient-text">COMANDO ÉLITE</span>
             </h1>
-            <p style="font-size:13px; color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
+            <p style="font-size:13px;color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
         </div>
         <div class="flex items-center gap-3">
-            <div id="syncStatus" class="flex items-center gap-1" style="font-size:11px; color:rgba(148,163,184,0.5);">
-                <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#334155;"></div>
+            <div id="syncStatus" class="flex items-center gap-1" style="font-size:11px;color:rgba(148,163,184,0.5);">
+                <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#334155;transition:background 0.3s;"></div>
                 <span id="syncText">Sin cambios</span>
             </div>
             <button onclick="requestNotifications()"
-                style="font-size:11px; background:rgba(30,41,59,0.8); border:1px solid rgba(82,183,136,0.2); color:rgba(148,163,184,0.8); padding:6px 14px; border-radius:20px; cursor:pointer; transition:all 0.2s;"
-                onmouseover="this.style.borderColor='rgba(82,183,136,0.5)'"
-                onmouseout="this.style.borderColor='rgba(82,183,136,0.2)'">
+                style="font-size:11px;background:rgba(30,41,59,0.8);border:1px solid rgba(82,183,136,0.2);color:rgba(148,163,184,0.8);padding:6px 14px;border-radius:20px;cursor:pointer;">
                 Alertas 🔔
             </button>
         </div>
     </div>
 
-    <!-- STATS ROW -->
-    <div class="grid grid-cols-3 gap-4 mb-6" style="grid-template-columns: repeat(3, 1fr);">
-        <div class="glass p-5 text-center neon-border">
-            <div style="font-size:32px; font-weight:800; color:#52b788; font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
-            <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;">Éxito Diario</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+        <div class="glass p-5 text-center" style="box-shadow:0 0 18px rgba(82,183,136,0.25);">
+            <div style="font-size:32px;font-weight:800;color:#52b788;font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
+            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Éxito Diario</div>
         </div>
         <div class="glass p-5 text-center">
-            <div style="font-size:32px; font-weight:800; color:#818cf8; font-family:'DM Serif Display',serif;" id="avgScore">0%</div>
-            <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;">Promedio 30D</div>
+            <div style="font-size:32px;font-weight:800;color:#818cf8;font-family:'DM Serif Display',serif;" id="avgScore">0%</div>
+            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Promedio 30D</div>
         </div>
         <div class="glass p-5 text-center" style="border-left:3px solid #f97316;">
-            <div style="font-size:32px; font-weight:800; color:#f97316; font-family:'DM Serif Display',serif;" id="streakCount">0</div>
-            <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;">Racha (Días)</div>
+            <div style="font-size:32px;font-weight:800;color:#f97316;font-family:'DM Serif Display',serif;" id="streakCount">0</div>
+            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Racha (Días)</div>
         </div>
     </div>
 
-    <!-- CONTENT GRID -->
-    <div style="display:grid; grid-template-columns: 1fr 320px; gap:20px;">
-
-        <!-- LEFT COL -->
-        <div style="display:flex; flex-direction:column; gap:20px;">
-
-            <!-- MISSIONS -->
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+        <div style="display:flex;flex-direction:column;gap:20px;">
             <div class="glass p-6">
-                <div class="flex justify-between items-center" style="margin-bottom:18px;">
-                    <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">
-                        <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
-                    </h3>
-                </div>
-                <div id="missionList" style="display:flex; flex-direction:column; gap:10px;"></div>
-                <div id="emptyMissions" style="display:none; text-align:center; color:#475569; font-size:13px; padding:32px 0;">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+                    <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
+                </h3>
+                <div id="missionList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <div id="emptyMissions" style="display:none;text-align:center;color:#475569;font-size:13px;padding:32px 0;">
                     No hay misiones para hoy.<br>
                     <span style="font-size:11px;">Agrega misiones desde las Áreas Operativas →</span>
                 </div>
             </div>
-
-            <!-- CHART -->
             <div class="glass p-6">
-                <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
                     <span style="color:#34d399;">📈</span> Análisis de Desempeño
                 </h3>
                 <canvas id="historyChart" height="140"></canvas>
             </div>
         </div>
 
-        <!-- RIGHT COL -->
-        <div style="display:flex; flex-direction:column; gap:20px;">
-
-            <!-- AREAS -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
             <div class="glass-green p-5" style="border-top:2px solid var(--green-accent);">
-                <h3 style="font-size:14px; font-weight:700; margin-bottom:14px; color:#fff;">Áreas Operativas</h3>
-                <div id="areaGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+                <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:#fff;">Áreas Operativas</h3>
+                <div id="areaGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
             </div>
-
-            <!-- AI -->
-            <div style="background:rgba(49,46,129,0.2); border:1px solid rgba(129,140,248,0.2); border-radius:16px; padding:20px;">
-                <h3 style="font-size:14px; font-weight:700; margin-bottom:10px; color:#a5b4fc; display:flex; align-items:center; gap:7px;">
+            <div style="background:rgba(49,46,129,0.2);border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:20px;">
+                <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#a5b4fc;display:flex;align-items:center;gap:7px;">
                     🤖 Comando AI
                 </h3>
-                <div id="aiResponse"
-                    style="font-size:13px; color:#cbd5e1; margin-bottom:14px; height:88px; overflow-y:auto; font-style:italic; line-height:1.6;">
+                <div id="aiResponse" style="font-size:13px;color:#cbd5e1;margin-bottom:14px;height:88px;overflow-y:auto;font-style:italic;line-height:1.6;">
                     "Listo para optimizar tu rutina. ¿En qué área nos enfocamos hoy?"
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex;gap:8px;">
                     <input type="text" id="aiInput" placeholder="Pide un consejo..."
-                        style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; font-size:13px; width:100%; outline:none; color:#f8fafc; font-family:'Plus Jakarta Sans',sans-serif;"
-                        onfocus="this.style.borderColor='rgba(129,140,248,0.5)'"
-                        onblur="this.style.borderColor='#334155'"
-                        onkeydown="if(event.key==='Enter') askAI()">
+                        style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;font-size:13px;width:100%;outline:none;color:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;"
+                        onkeydown="if(event.key==='Enter')askAI()">
                     <button onclick="askAI()"
-                        style="background:#4f46e5; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; color:#fff; transition:background 0.2s; flex-shrink:0;"
-                        onmouseover="this.style.background='#4338ca'"
-                        onmouseout="this.style.background='#4f46e5'">
-                        ➤
-                    </button>
+                        style="background:#4f46e5;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#fff;flex-shrink:0;">➤</button>
                 </div>
             </div>
-
         </div>
     </div>
 </main>
 
-<!-- ── MODAL ── -->
 <div id="modal" onclick="if(event.target===this)closeModal()"
-    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px; z-index:500;">
-    <div class="glass" style="padding:32px; width:100%; max-width:440px; border:1px solid rgba(82,183,136,0.25);">
-        <h2 id="modalTitle" style="font-family:'DM Serif Display',serif; font-size:22px; color:var(--green-accent); margin-bottom:20px;">Configurar Área</h2>
-        <div style="display:flex; flex-direction:column; gap:12px;">
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;z-index:500;">
+    <div class="glass" style="padding:32px;width:100%;max-width:440px;border:1px solid rgba(82,183,136,0.25);">
+        <h2 id="modalTitle" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--green-accent);margin-bottom:20px;">Configurar Área</h2>
+        <div style="display:flex;flex-direction:column;gap:12px;">
             <input type="text" id="taskText" placeholder="Nombre de la misión"
-                style="background:#0f172a; border:1px solid #334155; border-radius:10px; padding:12px 14px; outline:none; color:#f8fafc; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif;"
-                onfocus="this.style.borderColor='rgba(82,183,136,0.5)'" onblur="this.style.borderColor='#334155'">
+                style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 14px;outline:none;color:#f8fafc;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">
             <input type="number" id="taskPoints" placeholder="Puntos (1-100)"
-                style="background:#0f172a; border:1px solid #334155; border-radius:10px; padding:12px 14px; outline:none; color:#f8fafc; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif;"
-                onfocus="this.style.borderColor='rgba(82,183,136,0.5)'" onblur="this.style.borderColor='#334155'">
-
-            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; font-size:10px;">
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="1"> L</label>
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="2"> M</label>
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="3"> X</label>
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="4"> J</label>
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="5"> V</label>
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="6"> S</label>
-                <label style="display:flex; flex-direction:column; align-items:center; background:#1e293b; padding:8px; border-radius:8px; cursor:pointer; gap:4px;"><input type="checkbox" value="0"> D</label>
+                style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 14px;outline:none;color:#f8fafc;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:10px;">
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="1"> L</label>
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="2"> M</label>
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="3"> X</label>
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="4"> J</label>
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="5"> V</label>
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="6"> S</label>
+                <label style="display:flex;flex-direction:column;align-items:center;background:#1e293b;padding:8px;border-radius:8px;cursor:pointer;gap:4px;"><input type="checkbox" value="0"> D</label>
             </div>
-
-            <div style="display:flex; gap:10px; margin-top:8px;">
+            <div style="display:flex;gap:10px;margin-top:8px;">
                 <button onclick="closeModal()"
-                    style="flex:1; background:#1e293b; border:none; border-radius:10px; padding:12px; font-weight:700; color:#94a3b8; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:background 0.2s;"
-                    onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#1e293b'">
+                    style="flex:1;background:#1e293b;border:none;border-radius:10px;padding:12px;font-weight:700;color:#94a3b8;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
                     Cancelar
                 </button>
                 <button onclick="saveNewTask()"
-                    style="flex:1; background:var(--green-dark); border:1px solid var(--green-accent); border-radius:10px; padding:12px; font-weight:700; color:#fff; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; transition:background 0.2s;"
-                    onmouseover="this.style.background='var(--green-mid)'" onmouseout="this.style.background='var(--green-dark)'">
+                    style="flex:1;background:var(--green-dark);border:1px solid var(--green-accent);border-radius:10px;padding:12px;font-weight:700;color:#fff;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
                     Guardar Misión
                 </button>
             </div>
-            <div id="modalTaskList" style="max-height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+            <div id="modalTaskList" style="max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:4px;"></div>
         </div>
     </div>
 </div>
 
 <script>
-// ── AUTH GUARD ──────────────────────────────────────────────
-const token = localStorage.getItem('token');
-if (!token) window.location.href = 'login.html';
-
+// ══════════════════════════════════════════════════
+// AUTH — simple and safe, no redirect on page load
+// ══════════════════════════════════════════════════
 function parseJwt(t) {
     try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
 }
 
-const payload = parseJwt(token);
-
-if (!payload) {
-    localStorage.removeItem('token');
-    window.location.href = 'login.html';
+function getToken() {
+    return localStorage.getItem('token');
 }
 
-// Grace period: only redirect if expired more than 10 minutes ago
-// Prevents mobile browsers from logging out on app resume
-const GRACE_MS = 10 * 60 * 1000;
-if ((payload.exp * 1000) - Date.now() < -GRACE_MS) {
+function doLogout() {
     localStorage.removeItem('token');
-    window.location.href = 'login.html';
+    window.location.replace('login.html');
 }
 
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = 'login.html';
+// Only check token when actually making API calls, not on page load
+// This prevents redirect loops caused by timing issues on mobile
+function isTokenValid() {
+    const t = getToken();
+    if (!t) return false;
+    const p = parseJwt(t);
+    if (!p) return false;
+    // Allow 1 hour past expiry as grace period for mobile background resumption
+    return Date.now() < (p.exp * 1000) + (60 * 60 * 1000);
 }
 
-// ── STATE ───────────────────────────────────────────────────
+// Check on load — but only redirect if clearly no token at all
+const _initialToken = getToken();
+if (!_initialToken) {
+    window.location.replace('login.html');
+}
+
+const _payload = parseJwt(_initialToken);
+if (!_payload) {
+    localStorage.removeItem('token');
+    window.location.replace('login.html');
+}
+
+// Extract user info
+const userEmail = _payload.email || '';
+const userName  = _payload.name  || userEmail.split('@')[0] || 'Soldado';
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
 const AREAS     = ['Personal','Familiar','Fitness','Social','Finanzas','Profesional','Negocios'];
 const today     = new Date().toLocaleDateString('en-CA');
-const userEmail = payload?.email || '';
-const userName  = payload?.name  || userEmail.split('@')[0] || 'Soldado';
 const LOCAL_KEY = `comando_elite_${userEmail}`;
 
-let state        = JSON.parse(localStorage.getItem(LOCAL_KEY)) || { days: {}, weekly: [], streak: 0 };
+let state        = (() => {
+    try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || { days:{}, weekly:[], streak:0 }; }
+    catch { return { days:{}, weekly:[], streak:0 }; }
+})();
 let currentArea  = null;
 let saveTimeout  = null;
 let chartInstance = null;
 
-// ── API ─────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// API — never redirect on 401, just show error
+// ══════════════════════════════════════════════════
 async function apiGet(path) {
-    const res = await fetch(path, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.status === 401) { logout(); return null; }
-    return res.ok ? res.json() : null;
-}
-async function apiPost(path, body) {
-    const res = await fetch(path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
-    });
-    if (res.status === 401) { logout(); return null; }
-    return res.ok ? res.json() : null;
+    try {
+        const res = await fetch(path, {
+            headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
 }
 
-// ── SAVE ────────────────────────────────────────────────────
+async function apiPost(path, body) {
+    try {
+        const res = await fetch(path, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
+}
+
+// ══════════════════════════════════════════════════
+// SAVE
+// ══════════════════════════════════════════════════
 function save() {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch {}
     setSyncStatus('pending');
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
-        try {
-            await apiPost('/api/state', { state });
-            setSyncStatus('saved');
-        } catch { setSyncStatus('error'); }
+        const result = await apiPost('/api/state', { state });
+        setSyncStatus(result ? 'saved' : 'error');
     }, 3000);
 }
 
 function setSyncStatus(s) {
     const dot = document.getElementById('syncDot');
     const txt = document.getElementById('syncText');
-    if (s === 'pending') { dot.style.background = '#eab308'; txt.textContent = 'Guardando...'; }
-    if (s === 'saved')   { dot.style.background = '#22c55e'; txt.textContent = 'Guardado ✓'; }
-    if (s === 'error')   { dot.style.background = '#ef4444'; txt.textContent = 'Error al guardar'; }
+    if (!dot || !txt) return;
+    if (s === 'pending') { dot.style.background='#eab308'; txt.textContent='Guardando...'; }
+    if (s === 'saved')   { dot.style.background='#22c55e'; txt.textContent='Guardado ✓'; }
+    if (s === 'error')   { dot.style.background='#ef4444'; txt.textContent='Sin conexión'; }
 }
 
-// ── TOAST ───────────────────────────────────────────────────
-function showToast(msg, type = '') {
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+function showToast(msg, type='') {
     const el = document.getElementById('toast');
+    if (!el) return;
     el.textContent = msg;
     el.className = `show ${type}`;
-    setTimeout(() => { el.className = ''; }, 3000);
+    setTimeout(() => { el.className=''; }, 3000);
 }
 
-// ── RANK ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// RANK
+// ══════════════════════════════════════════════════
 function getRank(avg) {
     if (avg < 30) return 'Novato 🥚';
     if (avg < 55) return 'Recluta 🛡️';
@@ -523,67 +405,65 @@ function getRank(avg) {
     return 'Élite 👑';
 }
 
-// ── INIT ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
 async function init() {
-    lucide.createIcons();
-
-    // Sidebar user info
-    const initials = userName.slice(0, 2).toUpperCase();
-    document.getElementById('sidebarAvatar').textContent = initials;
+    // Set user info in sidebar
+    document.getElementById('sidebarAvatar').textContent = userName.slice(0,2).toUpperCase();
     document.getElementById('sidebarName').textContent   = userName;
+    document.getElementById('dateDisplay').textContent   =
+        new Date().toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
-    // Date
-    document.getElementById('dateDisplay').textContent =
-        new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    // Load state from server — no redirect if it fails
+    const data = await apiGet('/api/state');
+    if (data?.state) {
+        state = data.state;
+        try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch {}
+    }
 
-    // Load state from server
-    try {
-        const data = await apiGet('/api/state');
-        if (data?.state) {
-            state = data.state;
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
-        }
-    } catch { /* use localStorage */ }
+    if (!state.days[today]) state.days[today] = { done:[], percent:0 };
 
-    if (!state.days[today]) state.days[today] = { done: [], percent: 0 };
-
-    // Hide loading
+    // Hide loading overlay
     const overlay = document.getElementById('loadingOverlay');
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.remove(), 400);
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 400);
+    }
 
     render();
     showToast(`Bienvenido, ${userName} 👋`, 'success');
 }
 
-// ── RENDER ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
 function render() {
-    const dow = new Date().getDay();
+    const dow           = new Date().getDay();
     const missionsToday = state.weekly.filter(m => m.days.includes(dow));
     const missionList   = document.getElementById('missionList');
     const emptyMsg      = document.getElementById('emptyMissions');
+    if (!missionList) return;
     missionList.innerHTML = '';
 
-    let totalPts = 0, earnedPts = 0;
+    let totalPts=0, earnedPts=0;
     missionsToday.forEach(m => {
         totalPts += m.pts;
-        if (state.days[today].done.includes(m.id)) earnedPts += m.pts;
+        if (state.days[today]?.done?.includes(m.id)) earnedPts += m.pts;
     });
 
-    const dailyPct = totalPts > 0 ? Math.round((earnedPts / totalPts) * 100) : 0;
-    state.days[today].percent = dailyPct;
+    const dailyPct = totalPts > 0 ? Math.round((earnedPts/totalPts)*100) : 0;
+    if (state.days[today]) state.days[today].percent = dailyPct;
 
     const allDays = Object.values(state.days);
     const avg = allDays.length
-        ? Math.round(allDays.reduce((a, b) => a + (b.percent || 0), 0) / allDays.length)
+        ? Math.round(allDays.reduce((a,b) => a+(b.percent||0), 0) / allDays.length)
         : 0;
 
     document.getElementById('dailyScore').textContent  = `${dailyPct}%`;
     document.getElementById('avgScore').textContent    = `${avg}%`;
     document.getElementById('streakCount').textContent = state.streak || 0;
-
-    const rank = getRank(avg);
-    document.getElementById('sidebarRank').textContent = rank;
+    document.getElementById('sidebarRank').textContent = getRank(avg);
 
     // Missions
     if (missionsToday.length === 0) {
@@ -591,69 +471,61 @@ function render() {
     } else {
         emptyMsg.style.display = 'none';
         missionsToday.forEach(m => {
-            const isDone = state.days[today].done.includes(m.id);
+            const isDone = state.days[today]?.done?.includes(m.id);
             const div = document.createElement('div');
-            div.style.cssText = `
-                display:flex; justify-content:space-between; align-items:center;
-                padding:14px 16px; border-radius:12px; transition:all 0.2s;
-                background:${isDone ? 'rgba(82,183,136,0.08)' : 'rgba(30,41,59,0.5)'};
-                border:1px solid ${isDone ? 'rgba(82,183,136,0.25)' : 'rgba(255,255,255,0.06)'};
-                opacity:${isDone ? '0.65' : '1'};
-            `;
+            div.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:12px;background:${isDone?'rgba(82,183,136,0.08)':'rgba(30,41,59,0.5)'};border:1px solid ${isDone?'rgba(82,183,136,0.25)':'rgba(255,255,255,0.06)'};opacity:${isDone?'0.65':'1'};`;
             div.innerHTML = `
                 <div>
-                    <div style="font-weight:600; font-size:14px; ${isDone ? 'text-decoration:line-through; color:#64748b;' : 'color:#f8fafc;'}">${m.text}</div>
-                    <div style="font-size:10px; color:var(--green-accent); text-transform:uppercase; margin-top:2px; letter-spacing:0.06em;">${m.area} • ${m.pts} PTS</div>
+                    <div style="font-weight:600;font-size:14px;${isDone?'text-decoration:line-through;color:#64748b;':'color:#f8fafc;'}">${m.text}</div>
+                    <div style="font-size:10px;color:var(--green-accent);text-transform:uppercase;margin-top:2px;letter-spacing:0.06em;">${m.area} • ${m.pts} PTS</div>
                 </div>
                 <button onclick="toggleMission(${m.id})"
-                    style="padding:8px 12px; border-radius:9px; border:none; cursor:pointer; font-weight:700; font-size:12px; transition:all 0.2s;
-                    background:${isDone ? '#1e293b' : 'var(--green-dark)'}; color:${isDone ? '#64748b' : 'var(--green-accent)'}; border:1px solid ${isDone ? '#334155' : 'var(--green-accent)'};">
-                    ${isDone ? '↺' : '✓'}
-                </button>
-            `;
+                    style="padding:8px 12px;border-radius:9px;border:1px solid ${isDone?'#334155':'var(--green-accent)'};cursor:pointer;font-weight:700;font-size:12px;background:${isDone?'#1e293b':'var(--green-dark)'};color:${isDone?'#64748b':'var(--green-accent)'};">
+                    ${isDone?'↺':'✓'}
+                </button>`;
             missionList.appendChild(div);
         });
     }
 
     // Areas
     const areaGrid = document.getElementById('areaGrid');
-    areaGrid.innerHTML = '';
-    AREAS.forEach(a => {
-        const count = state.weekly.filter(t => t.area === a).length;
-        const btn   = document.createElement('button');
-        btn.style.cssText = `
-            background:rgba(26,58,42,0.5); border:1px solid rgba(82,183,136,0.15);
-            border-radius:10px; padding:10px 8px; font-size:11px; font-weight:700;
-            color:#a8c4b2; cursor:pointer; text-align:left; transition:all 0.2s;
-            font-family:'Plus Jakarta Sans',sans-serif;
-        `;
-        btn.onmouseover = () => { btn.style.background = 'rgba(82,183,136,0.15)'; btn.style.color = '#fff'; btn.style.borderColor = 'rgba(82,183,136,0.4)'; };
-        btn.onmouseout  = () => { btn.style.background = 'rgba(26,58,42,0.5)'; btn.style.color = '#a8c4b2'; btn.style.borderColor = 'rgba(82,183,136,0.15)'; };
-        btn.innerHTML = `${a}${count > 0 ? `<span style="display:block;font-size:9px;color:var(--green-accent);margin-top:2px;">${count} misión${count > 1 ? 'es' : ''}</span>` : ''}`;
-        btn.onclick = () => openModal(a);
-        areaGrid.appendChild(btn);
-    });
+    if (areaGrid) {
+        areaGrid.innerHTML = '';
+        AREAS.forEach(a => {
+            const count = state.weekly.filter(t => t.area===a).length;
+            const btn   = document.createElement('button');
+            btn.style.cssText = `background:rgba(26,58,42,0.5);border:1px solid rgba(82,183,136,0.15);border-radius:10px;padding:10px 8px;font-size:11px;font-weight:700;color:#a8c4b2;cursor:pointer;text-align:left;font-family:'Plus Jakarta Sans',sans-serif;`;
+            btn.innerHTML = `${a}${count>0?`<span style="display:block;font-size:9px;color:var(--green-accent);margin-top:2px;">${count} misión${count>1?'es':''}</span>`:''}`;
+            btn.onclick = () => openModal(a);
+            areaGrid.appendChild(btn);
+        });
+    }
 
     save();
     updateChart();
 }
 
-// ── TOGGLE ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// TOGGLE MISSION
+// ══════════════════════════════════════════════════
 function toggleMission(id) {
+    if (!state.days[today]) state.days[today] = { done:[], percent:0 };
     const idx = state.days[today].done.indexOf(id);
     if (idx > -1) state.days[today].done.splice(idx, 1);
     else state.days[today].done.push(id);
     render();
 }
 
-// ── MODAL ───────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════
 function openModal(area) {
     currentArea = area;
     document.getElementById('modalTitle').textContent = `Misiones: ${area}`;
     document.getElementById('modal').style.display = 'flex';
     document.getElementById('taskText').value = '';
     document.getElementById('taskPoints').value = '';
-    document.querySelectorAll('#modal input[type=checkbox]').forEach(c => c.checked = false);
+    document.querySelectorAll('#modal input[type=checkbox]').forEach(c => c.checked=false);
     renderModalTasks();
 }
 
@@ -664,17 +536,15 @@ function closeModal() {
 function saveNewTask() {
     const text   = document.getElementById('taskText').value.trim();
     const pts    = parseInt(document.getElementById('taskPoints').value);
-    const checks = Array.from(document.querySelectorAll('#modal input[type=checkbox]:checked')).map(c => parseInt(c.value));
-
-    if (!text || !pts || pts < 1 || pts > 100 || checks.length === 0) {
-        showToast('Completa todos los campos.', 'error'); return;
+    const checks = Array.from(document.querySelectorAll('#modal input[type=checkbox]:checked')).map(c=>parseInt(c.value));
+    if (!text || !pts || pts<1 || pts>100 || checks.length===0) {
+        showToast('Completa todos los campos.','error'); return;
     }
-
-    state.weekly.push({ id: Date.now(), area: currentArea, text, pts, days: checks });
-    document.getElementById('taskText').value = '';
-    document.getElementById('taskPoints').value = '';
-    document.querySelectorAll('#modal input[type=checkbox]').forEach(c => c.checked = false);
-    showToast(`"${text}" agregada ✓`, 'success');
+    state.weekly.push({ id:Date.now(), area:currentArea, text, pts, days:checks });
+    document.getElementById('taskText').value='';
+    document.getElementById('taskPoints').value='';
+    document.querySelectorAll('#modal input[type=checkbox]').forEach(c=>c.checked=false);
+    showToast(`"${text}" agregada ✓`,'success');
     renderModalTasks();
     render();
 }
@@ -682,87 +552,93 @@ function saveNewTask() {
 function renderModalTasks() {
     const container = document.getElementById('modalTaskList');
     container.innerHTML = '';
-    state.weekly.filter(t => t.area === currentArea).forEach(t => {
+    state.weekly.filter(t=>t.area===currentArea).forEach(t=>{
         const d = document.createElement('div');
-        d.style.cssText = 'display:flex; justify-content:space-between; background:#0f172a; padding:8px 12px; border-radius:8px; font-size:12px; align-items:center; border:1px solid #1e293b;';
-        d.innerHTML = `<span style="color:#cbd5e1;">${t.text} <span style="color:var(--green-accent);">${t.pts}pts</span></span>
-                       <button onclick="deleteTask(${t.id})" style="background:none;border:none;cursor:pointer;color:#f87171;font-size:14px;">🗑️</button>`;
+        d.style.cssText='display:flex;justify-content:space-between;background:#0f172a;padding:8px 12px;border-radius:8px;font-size:12px;align-items:center;border:1px solid #1e293b;';
+        d.innerHTML=`<span style="color:#cbd5e1;">${t.text} <span style="color:var(--green-accent);">${t.pts}pts</span></span>
+                     <button onclick="deleteTask(${t.id})" style="background:none;border:none;cursor:pointer;color:#f87171;font-size:14px;">🗑️</button>`;
         container.appendChild(d);
     });
 }
 
 function deleteTask(id) {
-    state.weekly = state.weekly.filter(t => t.id !== id);
-    state.days[today].done = state.days[today].done.filter(d => d !== id);
+    state.weekly = state.weekly.filter(t=>t.id!==id);
+    if (state.days[today]) state.days[today].done = state.days[today].done.filter(d=>d!==id);
     showToast('Misión eliminada.');
     renderModalTasks();
     render();
 }
 
-// ── CHART ───────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// CHART
+// ══════════════════════════════════════════════════
 function updateChart() {
-    const ctx = document.getElementById('historyChart').getContext('2d');
-    const last7 = [], labels = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date(); d.setDate(d.getDate() - i);
+    const ctx = document.getElementById('historyChart')?.getContext('2d');
+    if (!ctx) return;
+    const last7=[], labels=[];
+    for (let i=6; i>=0; i--) {
+        const d = new Date(); d.setDate(d.getDate()-i);
         const key = d.toLocaleDateString('en-CA');
-        labels.push(d.toLocaleDateString('es-ES', { weekday: 'short' }));
-        last7.push(state.days[key] ? (state.days[key].percent || 0) : 0);
+        labels.push(d.toLocaleDateString('es-ES',{weekday:'short'}));
+        last7.push(state.days[key]?(state.days[key].percent||0):0);
     }
     if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
+        type:'line',
+        data:{
             labels,
-            datasets: [{
-                label: '% Cumplimiento',
-                data: last7,
-                borderColor: '#52b788',
-                backgroundColor: 'rgba(82,183,136,0.08)',
-                fill: true, tension: 0.4, borderWidth: 2.5, pointRadius: 4,
-                pointBackgroundColor: '#52b788',
+            datasets:[{
+                label:'% Cumplimiento', data:last7,
+                borderColor:'#52b788', backgroundColor:'rgba(82,183,136,0.08)',
+                fill:true, tension:0.4, borderWidth:2.5, pointRadius:4,
+                pointBackgroundColor:'#52b788',
             }]
         },
-        options: {
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, max: 100, grid: { color: '#1e293b' }, ticks: { color: '#475569' } },
-                x: { grid: { display: false }, ticks: { color: '#475569' } }
+        options:{
+            plugins:{legend:{display:false}},
+            scales:{
+                y:{beginAtZero:true, max:100, grid:{color:'#1e293b'}, ticks:{color:'#475569'}},
+                x:{grid:{display:false}, ticks:{color:'#475569'}}
             }
         }
     });
 }
 
-// ── AI ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// AI
+// ══════════════════════════════════════════════════
 function askAI() {
     const input = document.getElementById('aiInput').value.toLowerCase().trim();
     const box   = document.getElementById('aiResponse');
     if (!input) return;
-
     let reply = "Analiza tu semana: ¿qué misión completas siempre y cuál nunca? Empieza por la que evitas.";
-    if (input.includes('motivaci'))  reply = `${userName}, la motivación arranca. El hábito mantiene. Haz la misión más pequeña ahora mismo.`;
-    if (input.includes('fitness'))   reply = "Regla de 2 minutos: si tarda menos de 2 minutos, hazla ya. Para fitness, empieza con 5 repeticiones.";
-    if (input.includes('finanza'))   reply = "Registra cada gasto esta semana, sin juzgar. La consciencia es el primer paso al control.";
-    if (input.includes('social'))    reply = "Una conversación real vale más que 10 mensajes. Agenda una llamada hoy.";
-    if (input.includes('mejorar'))   reply = "La clave no es hacer más, sino eliminar lo innecesario. Revisa tus misiones de baja puntuación.";
-    if (input.includes('cansado') || input.includes('agotado')) reply = "El descanso es parte del entrenamiento. Hoy es día de recuperación activa.";
-    if (input.includes('racha'))     reply = `Tu racha: ${state.streak || 0} días. Para mantenerla, completa al menos el 60% hoy.`;
-
-    box.textContent = `"${reply}"`;
-    document.getElementById('aiInput').value = '';
+    if (input.includes('motivaci'))  reply=`${userName}, la motivación arranca. El hábito mantiene. Haz la misión más pequeña ahora mismo.`;
+    if (input.includes('fitness'))   reply="Regla de 2 minutos: si tarda menos de 2 minutos, hazla ya. Para fitness, empieza con 5 repeticiones.";
+    if (input.includes('finanza'))   reply="Registra cada gasto esta semana, sin juzgar. La consciencia es el primer paso al control.";
+    if (input.includes('social'))    reply="Una conversación real vale más que 10 mensajes. Agenda una llamada hoy.";
+    if (input.includes('mejorar'))   reply="La clave no es hacer más, sino eliminar lo innecesario. Revisa tus misiones de baja puntuación.";
+    if (input.includes('cansado')||input.includes('agotado')) reply="El descanso es parte del entrenamiento. Hoy es día de recuperación activa.";
+    if (input.includes('racha'))     reply=`Tu racha: ${state.streak||0} días. Para mantenerla, completa al menos el 60% hoy.`;
+    box.textContent=`"${reply}"`;
+    document.getElementById('aiInput').value='';
 }
 
-// ── NOTIFICATIONS ───────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════════
 function requestNotifications() {
-    if (!("Notification" in window)) { showToast('Navegador no soporta alertas.', 'error'); return; }
-    Notification.requestPermission().then(p => {
-        if (p === "granted") {
-            new Notification("Comando Élite", { body: "¡Alertas activadas!" });
-            showToast('Alertas activadas ✓', 'success');
+    if (!("Notification" in window)) { showToast('Navegador no soporta alertas.','error'); return; }
+    Notification.requestPermission().then(p=>{
+        if (p==="granted") {
+            new Notification("Comando Élite",{body:"¡Alertas activadas!"});
+            showToast('Alertas activadas ✓','success');
         }
     });
 }
 
+// ══════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════
 init();
 </script>
 </body>
