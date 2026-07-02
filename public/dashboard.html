@@ -7,121 +7,61 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --green-dark:   #1a3a2a;
-            --green-mid:    #2d6a4f;
-            --green-accent: #52b788;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --green-dark:#1a3a2a; --green-mid:#2d6a4f; --green-accent:#52b788; }
+        * { box-sizing:border-box; margin:0; padding:0; }
         body {
-            background: #020617;
-            color: #f8fafc;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-image:
-                radial-gradient(circle at top right, #1a3a2a55, transparent 60%),
-                radial-gradient(circle at bottom left, #0f172a, transparent);
-            min-height: 100vh;
-            display: flex;
+            background:#020617; color:#f8fafc;
+            font-family:'Plus Jakarta Sans',sans-serif;
+            background-image: radial-gradient(circle at top right,#1a3a2a55,transparent 60%),
+                              radial-gradient(circle at bottom left,#0f172a,transparent);
+            min-height:100vh; display:flex;
         }
         .sidebar {
-            width: 220px; min-height: 100vh;
-            background: rgba(26,58,42,0.95);
-            backdrop-filter: blur(16px);
-            border-right: 1px solid rgba(82,183,136,0.15);
-            display: flex; flex-direction: column;
-            padding: 28px 0;
-            position: fixed; top: 0; left: 0; z-index: 100;
+            width:220px; min-height:100vh;
+            background:rgba(26,58,42,0.95); backdrop-filter:blur(16px);
+            border-right:1px solid rgba(82,183,136,0.15);
+            display:flex; flex-direction:column; padding:28px 0;
+            position:fixed; top:0; left:0; z-index:100;
         }
-        .sidebar-brand {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 20px 28px;
-            border-bottom: 1px solid rgba(82,183,136,0.15);
-        }
-        .brand-icon {
-            width: 36px; height: 36px;
-            background: var(--green-accent); border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; flex-shrink: 0;
-        }
-        .brand-name { font-family: 'DM Serif Display',serif; font-size:16px; color:#fff; line-height:1.2; }
-        .brand-sub  { font-size:9px; color:var(--green-accent); letter-spacing:0.1em; text-transform:uppercase; font-family:'Plus Jakarta Sans',sans-serif; }
+        .sidebar-brand { display:flex; align-items:center; gap:10px; padding:0 20px 28px; border-bottom:1px solid rgba(82,183,136,0.15); }
+        .brand-icon { width:36px; height:36px; background:var(--green-accent); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+        .brand-name { font-family:'DM Serif Display',serif; font-size:16px; color:#fff; }
+        .brand-sub  { font-size:9px; color:var(--green-accent); letter-spacing:0.1em; text-transform:uppercase; }
         .nav { flex:1; padding:20px 12px; display:flex; flex-direction:column; gap:3px; }
         .nav-label { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(82,183,136,0.5); padding:0 10px; margin:14px 0 5px; }
-        .nav-item {
-            display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px;
-            color:rgba(168,196,178,0.8); font-size:13px; font-weight:500;
-            cursor:pointer; text-decoration:none; transition:background 0.15s, color 0.15s;
-        }
+        .nav-item { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; color:rgba(168,196,178,0.8); font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; }
         .nav-item:hover { background:rgba(82,183,136,0.12); color:#fff; }
         .nav-item.active { background:var(--green-accent); color:#fff; }
         .sidebar-footer { padding:16px 20px 0; border-top:1px solid rgba(82,183,136,0.15); }
         .user-card { display:flex; align-items:center; gap:10px; }
-        .avatar {
-            width:34px; height:34px; border-radius:50%;
-            background:var(--green-mid);
-            display:flex; align-items:center; justify-content:center;
-            color:#fff; font-weight:700; font-size:13px; flex-shrink:0;
-            border:2px solid var(--green-accent);
-        }
+        .avatar { width:34px; height:34px; border-radius:50%; background:var(--green-mid); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; border:2px solid var(--green-accent); }
         .user-name { display:block; color:#fff; font-size:12px; font-weight:600; }
         .user-rank { font-size:10px; color:var(--green-accent); }
-        .logout-btn {
-            background:none; border:none; color:rgba(168,196,178,0.5);
-            font-size:11px; cursor:pointer; padding:8px 0 0;
-            font-family:'Plus Jakarta Sans',sans-serif;
-            transition:color 0.15s; display:flex; align-items:center; gap:5px;
-        }
+        .logout-btn { background:none; border:none; color:rgba(168,196,178,0.5); font-size:11px; cursor:pointer; padding:8px 0 0; font-family:'Plus Jakarta Sans',sans-serif; transition:color 0.15s; display:flex; align-items:center; gap:5px; }
         .logout-btn:hover { color:#f87171; }
         .main { margin-left:220px; flex:1; padding:32px 36px; min-height:100vh; }
-        .glass {
-            background:rgba(30,41,59,0.6); backdrop-filter:blur(12px);
-            border:1px solid rgba(82,183,136,0.12); border-radius:16px;
-        }
-        .glass-green {
-            background:rgba(26,58,42,0.5); backdrop-filter:blur(12px);
-            border:1px solid rgba(82,183,136,0.2); border-radius:16px;
-        }
-        .gradient-text {
-            background:linear-gradient(90deg, var(--green-accent), #818cf8);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-        }
-        #loadingOverlay {
-            position:fixed; inset:0; background:#020617;
-            display:flex; align-items:center; justify-content:center;
-            z-index:9999; transition:opacity 0.4s;
-        }
-        .spinner {
-            width:40px; height:40px; border:3px solid #1e293b;
-            border-top-color:var(--green-accent); border-radius:50%;
-            animation:spin 0.8s linear infinite;
-        }
+        .glass { background:rgba(30,41,59,0.6); backdrop-filter:blur(12px); border:1px solid rgba(82,183,136,0.12); border-radius:16px; }
+        .glass-green { background:rgba(26,58,42,0.5); backdrop-filter:blur(12px); border:1px solid rgba(82,183,136,0.2); border-radius:16px; }
+        .gradient-text { background:linear-gradient(90deg,var(--green-accent),#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        #loadingOverlay { position:fixed; inset:0; background:#020617; display:flex; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.4s; }
+        .spinner { width:40px; height:40px; border:3px solid #1e293b; border-top-color:var(--green-accent); border-radius:50%; animation:spin 0.8s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
-        #toast {
-            position:fixed; bottom:24px; right:24px;
-            background:#1a3a2a; border:1px solid rgba(82,183,136,0.3);
-            color:#f8fafc; padding:11px 18px; border-radius:10px; font-size:13px;
-            opacity:0; transform:translateY(8px); transition:all 0.3s;
-            z-index:1000; pointer-events:none;
-        }
+        #toast { position:fixed; bottom:24px; right:24px; background:#1a3a2a; border:1px solid rgba(82,183,136,0.3); color:#f8fafc; padding:11px 18px; border-radius:10px; font-size:13px; opacity:0; transform:translateY(8px); transition:all 0.3s; z-index:1000; pointer-events:none; }
         #toast.show    { opacity:1; transform:translateY(0); }
         #toast.success { border-color:#22c55e; color:#86efac; }
         #toast.error   { border-color:#ef4444; color:#fca5a5; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:rgba(82,183,136,0.2); border-radius:2px; }
-        @media (max-width:768px) {
-            .sidebar { display:none; }
-            .main { margin-left:0; padding:20px 16px; }
-        }
+        @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:20px 16px; } }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen">
+<body>
 
 <div id="loadingOverlay">
-    <div class="text-center">
-        <div class="spinner mx-auto mb-4"></div>
-        <p style="color:rgba(82,183,136,0.6);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;">Cargando comando...</p>
+    <div style="text-align:center;">
+        <div class="spinner" style="margin:0 auto 16px;"></div>
+        <p id="loadingMsg" style="color:rgba(82,183,136,0.7);font-size:13px;">Conectando con el servidor...</p>
     </div>
 </div>
 
@@ -148,42 +88,40 @@
         <div class="user-card">
             <div class="avatar" id="sidebarAvatar">?</div>
             <div>
-                <span class="user-name" id="sidebarName">Cargando...</span>
+                <span class="user-name" id="sidebarName">...</span>
                 <span class="user-rank" id="sidebarRank">Recluta 🛡️</span>
             </div>
         </div>
         <button class="logout-btn" onclick="doLogout()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Cerrar sesión
         </button>
     </div>
 </aside>
 
 <main class="main">
-    <div class="flex justify-between items-start mb-8">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
         <div>
             <h1 style="font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-bottom:4px;">
                 <span class="gradient-text">COMANDO ÉLITE</span>
             </h1>
             <p style="font-size:13px;color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
         </div>
-        <div class="flex items-center gap-3">
-            <div id="syncStatus" class="flex items-center gap-1" style="font-size:11px;color:rgba(148,163,184,0.5);">
-                <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#334155;transition:background 0.3s;"></div>
-                <span id="syncText">Sin cambios</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <!-- Sync indicator -->
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(148,163,184,0.6);">
+                <div id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#334155;transition:background 0.3s;"></div>
+                <span id="syncText">Sincronizando...</span>
             </div>
-            <button onclick="requestNotifications()"
+            <button onclick="manualSync()"
                 style="font-size:11px;background:rgba(30,41,59,0.8);border:1px solid rgba(82,183,136,0.2);color:rgba(148,163,184,0.8);padding:6px 14px;border-radius:20px;cursor:pointer;">
-                Alertas 🔔
+                🔄 Sincronizar
             </button>
         </div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
-        <div class="glass p-5 text-center" style="box-shadow:0 0 18px rgba(82,183,136,0.25);">
+        <div class="glass p-5 text-center" style="box-shadow:0 0 18px rgba(82,183,136,0.2);">
             <div style="font-size:32px;font-weight:800;color:#52b788;font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
             <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Éxito Diario</div>
         </div>
@@ -223,9 +161,7 @@
                 <div id="areaGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
             </div>
             <div style="background:rgba(49,46,129,0.2);border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:20px;">
-                <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#a5b4fc;display:flex;align-items:center;gap:7px;">
-                    🤖 Comando AI
-                </h3>
+                <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#a5b4fc;">🤖 Comando AI</h3>
                 <div id="aiResponse" style="font-size:13px;color:#cbd5e1;margin-bottom:14px;height:88px;overflow-y:auto;font-style:italic;line-height:1.6;">
                     "Listo para optimizar tu rutina. ¿En qué área nos enfocamos hoy?"
                 </div>
@@ -233,8 +169,7 @@
                     <input type="text" id="aiInput" placeholder="Pide un consejo..."
                         style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;font-size:13px;width:100%;outline:none;color:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;"
                         onkeydown="if(event.key==='Enter')askAI()">
-                    <button onclick="askAI()"
-                        style="background:#4f46e5;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#fff;flex-shrink:0;">➤</button>
+                    <button onclick="askAI()" style="background:#4f46e5;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#fff;flex-shrink:0;">➤</button>
                 </div>
             </div>
         </div>
@@ -261,13 +196,9 @@
             </div>
             <div style="display:flex;gap:10px;margin-top:8px;">
                 <button onclick="closeModal()"
-                    style="flex:1;background:#1e293b;border:none;border-radius:10px;padding:12px;font-weight:700;color:#94a3b8;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
-                    Cancelar
-                </button>
+                    style="flex:1;background:#1e293b;border:none;border-radius:10px;padding:12px;font-weight:700;color:#94a3b8;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Cancelar</button>
                 <button onclick="saveNewTask()"
-                    style="flex:1;background:var(--green-dark);border:1px solid var(--green-accent);border-radius:10px;padding:12px;font-weight:700;color:#fff;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
-                    Guardar Misión
-                </button>
+                    style="flex:1;background:var(--green-dark);border:1px solid var(--green-accent);border-radius:10px;padding:12px;font-weight:700;color:#fff;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Guardar Misión</button>
             </div>
             <div id="modalTaskList" style="max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:4px;"></div>
         </div>
@@ -276,126 +207,176 @@
 
 <script>
 // ══════════════════════════════════════════════════
-// AUTH — simple and safe, no redirect on page load
+// 1. AUTH — runs synchronously before anything else
 // ══════════════════════════════════════════════════
 function parseJwt(t) {
     try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
 }
 
-function getToken() {
-    return localStorage.getItem('token');
-}
+const _token = localStorage.getItem('token');
+if (!_token) { window.location.replace('login.html'); }
+
+const _payload = parseJwt(_token);
+if (!_payload) { localStorage.removeItem('token'); window.location.replace('login.html'); }
+
+const userEmail = _payload.email || '';
+const userName  = _payload.name  || userEmail.split('@')[0] || 'Soldado';
 
 function doLogout() {
     localStorage.removeItem('token');
     window.location.replace('login.html');
 }
 
-// Only check token when actually making API calls, not on page load
-// This prevents redirect loops caused by timing issues on mobile
-function isTokenValid() {
-    const t = getToken();
-    if (!t) return false;
-    const p = parseJwt(t);
-    if (!p) return false;
-    // Allow 1 hour past expiry as grace period for mobile background resumption
-    return Date.now() < (p.exp * 1000) + (60 * 60 * 1000);
-}
-
-// Check on load — but only redirect if clearly no token at all
-const _initialToken = getToken();
-if (!_initialToken) {
-    window.location.replace('login.html');
-}
-
-const _payload = parseJwt(_initialToken);
-if (!_payload) {
-    localStorage.removeItem('token');
-    window.location.replace('login.html');
-}
-
-// Extract user info
-const userEmail = _payload.email || '';
-const userName  = _payload.name  || userEmail.split('@')[0] || 'Soldado';
-
 // ══════════════════════════════════════════════════
-// STATE
+// 2. STATE MANAGEMENT
 // ══════════════════════════════════════════════════
 const AREAS     = ['Personal','Familiar','Fitness','Social','Finanzas','Profesional','Negocios'];
 const today     = new Date().toLocaleDateString('en-CA');
-const LOCAL_KEY = `comando_elite_${userEmail}`;
+const LOCAL_KEY = `ce_${userEmail}`;
 
-let state        = (() => {
-    try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || { days:{}, weekly:[], streak:0 }; }
-    catch { return { days:{}, weekly:[], streak:0 }; }
-})();
+// Default empty state
+const EMPTY_STATE = () => ({ days:{}, weekly:[], streak:0 });
+
+let state        = EMPTY_STATE();
 let currentArea  = null;
-let saveTimeout  = null;
-let chartInstance = null;
+let saveTimer    = null;
+let chartInst    = null;
+let isSaving     = false;
 
 // ══════════════════════════════════════════════════
-// API — never redirect on 401, just show error
+// 3. API — returns null on any failure, never redirects
 // ══════════════════════════════════════════════════
-async function apiGet(path) {
+async function apiFetch(method, path, body) {
     try {
-        const res = await fetch(path, {
-            headers: { Authorization: `Bearer ${getToken()}` }
-        });
-        if (!res.ok) return null;
-        return await res.json();
-    } catch { return null; }
-}
-
-async function apiPost(path, body) {
-    try {
-        const res = await fetch(path, {
-            method: 'POST',
+        const opts = {
+            method,
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(body),
-        });
-        if (!res.ok) return null;
+                'Authorization': `Bearer ${_token}`
+            }
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(path, opts);
+        if (!res.ok) {
+            console.warn(`API ${method} ${path} → ${res.status}`);
+            return null;
+        }
         return await res.json();
-    } catch { return null; }
+    } catch (err) {
+        console.warn(`API ${method} ${path} → network error:`, err.message);
+        return null;
+    }
 }
 
 // ══════════════════════════════════════════════════
-// SAVE
+// 4. LOAD STATE FROM SERVER — priority over localStorage
 // ══════════════════════════════════════════════════
-function save() {
+async function loadStateFromServer() {
+    setLoading('Cargando tus misiones del servidor...');
+    const data = await apiFetch('GET', '/api/state');
+
+    if (data && data.state && data.state.weekly) {
+        // ✅ Got real data from server — use it and overwrite localStorage
+        state = data.state;
+        saveToLocal();
+        setSyncStatus('synced', `Sincronizado ✓`);
+        console.log('✅ State loaded from SERVER:', state.weekly.length, 'missions');
+        return true;
+    }
+
+    // ⚠️ Server returned nothing — try localStorage as fallback
+    const local = loadFromLocal();
+    if (local && local.weekly) {
+        state = local;
+        setSyncStatus('local', 'Datos locales (sin conexión)');
+        console.log('⚠️ State loaded from LOCALSTORAGE:', state.weekly.length, 'missions');
+        return false;
+    }
+
+    // Nothing anywhere — start fresh
+    state = EMPTY_STATE();
+    setSyncStatus('local', 'Sin datos previos');
+    console.log('🆕 Starting with empty state');
+    return false;
+}
+
+function saveToLocal() {
     try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch {}
-    setSyncStatus('pending');
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(async () => {
-        const result = await apiPost('/api/state', { state });
-        setSyncStatus(result ? 'saved' : 'error');
-    }, 3000);
 }
 
-function setSyncStatus(s) {
+function loadFromLocal() {
+    try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || null; } catch { return null; }
+}
+
+// ══════════════════════════════════════════════════
+// 5. SAVE STATE TO SERVER — debounced 2 seconds
+// ══════════════════════════════════════════════════
+function scheduleSave() {
+    saveToLocal();
+    setSyncStatus('pending', 'Guardando...');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(pushToServer, 2000);
+}
+
+async function pushToServer() {
+    if (isSaving) return;
+    isSaving = true;
+    const result = await apiFetch('POST', '/api/state', { state });
+    isSaving = false;
+    if (result) {
+        setSyncStatus('synced', 'Guardado en la nube ✓');
+    } else {
+        setSyncStatus('error', 'Error al guardar (datos en local)');
+        showToast('Sin conexión — datos guardados localmente', 'error');
+    }
+}
+
+// Manual sync button
+async function manualSync() {
+    setSyncStatus('pending', 'Sincronizando...');
+    const data = await apiFetch('GET', '/api/state');
+    if (data && data.state && data.state.weekly) {
+        state = data.state;
+        saveToLocal();
+        setSyncStatus('synced', 'Sincronizado ✓');
+        render();
+        showToast('Datos actualizados del servidor ✓', 'success');
+    } else {
+        setSyncStatus('error', 'No se pudo conectar');
+        showToast('No se pudo conectar al servidor', 'error');
+    }
+}
+
+// ══════════════════════════════════════════════════
+// 6. SYNC STATUS UI
+// ══════════════════════════════════════════════════
+function setSyncStatus(type, text) {
     const dot = document.getElementById('syncDot');
     const txt = document.getElementById('syncText');
     if (!dot || !txt) return;
-    if (s === 'pending') { dot.style.background='#eab308'; txt.textContent='Guardando...'; }
-    if (s === 'saved')   { dot.style.background='#22c55e'; txt.textContent='Guardado ✓'; }
-    if (s === 'error')   { dot.style.background='#ef4444'; txt.textContent='Sin conexión'; }
+    const colors = { synced:'#22c55e', pending:'#eab308', error:'#ef4444', local:'#94a3b8' };
+    dot.style.background = colors[type] || '#334155';
+    txt.textContent = text;
+}
+
+function setLoading(msg) {
+    const el = document.getElementById('loadingMsg');
+    if (el) el.textContent = msg;
 }
 
 // ══════════════════════════════════════════════════
-// TOAST
+// 7. TOAST
 // ══════════════════════════════════════════════════
 function showToast(msg, type='') {
     const el = document.getElementById('toast');
     if (!el) return;
     el.textContent = msg;
     el.className = `show ${type}`;
-    setTimeout(() => { el.className=''; }, 3000);
+    setTimeout(() => { el.className=''; }, 3500);
 }
 
 // ══════════════════════════════════════════════════
-// RANK
+// 8. RANK
 // ══════════════════════════════════════════════════
 function getRank(avg) {
     if (avg < 30) return 'Novato 🥚';
@@ -406,58 +387,52 @@ function getRank(avg) {
 }
 
 // ══════════════════════════════════════════════════
-// INIT
+// 9. INIT — awaits server load before showing UI
 // ══════════════════════════════════════════════════
 async function init() {
-    // Set user info in sidebar
+    // Set sidebar user info immediately
     document.getElementById('sidebarAvatar').textContent = userName.slice(0,2).toUpperCase();
     document.getElementById('sidebarName').textContent   = userName;
     document.getElementById('dateDisplay').textContent   =
-        new Date().toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-    // Load state from server — no redirect if it fails
-    const data = await apiGet('/api/state');
-    if (data?.state) {
-        state = data.state;
-        try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch {}
-    }
+    // ⚠️ WAIT for server state before rendering — this is the key fix
+    await loadStateFromServer();
 
     if (!state.days[today]) state.days[today] = { done:[], percent:0 };
 
     // Hide loading overlay
     const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 400);
-    }
+    if (overlay) { overlay.style.opacity='0'; setTimeout(()=>overlay.remove(), 400); }
 
     render();
     showToast(`Bienvenido, ${userName} 👋`, 'success');
 }
 
 // ══════════════════════════════════════════════════
-// RENDER
+// 10. RENDER
 // ══════════════════════════════════════════════════
 function render() {
     const dow           = new Date().getDay();
-    const missionsToday = state.weekly.filter(m => m.days.includes(dow));
+    const missionsToday = (state.weekly || []).filter(m => m.days && m.days.includes(dow));
     const missionList   = document.getElementById('missionList');
     const emptyMsg      = document.getElementById('emptyMissions');
     if (!missionList) return;
     missionList.innerHTML = '';
 
     let totalPts=0, earnedPts=0;
+    const donelist = state.days[today]?.done || [];
     missionsToday.forEach(m => {
-        totalPts += m.pts;
-        if (state.days[today]?.done?.includes(m.id)) earnedPts += m.pts;
+        totalPts += (m.pts||0);
+        if (donelist.includes(m.id)) earnedPts += (m.pts||0);
     });
 
     const dailyPct = totalPts > 0 ? Math.round((earnedPts/totalPts)*100) : 0;
     if (state.days[today]) state.days[today].percent = dailyPct;
 
-    const allDays = Object.values(state.days);
+    const allDays = Object.values(state.days||{});
     const avg = allDays.length
-        ? Math.round(allDays.reduce((a,b) => a+(b.percent||0), 0) / allDays.length)
+        ? Math.round(allDays.reduce((a,b)=>a+(b.percent||0),0)/allDays.length)
         : 0;
 
     document.getElementById('dailyScore').textContent  = `${dailyPct}%`;
@@ -471,13 +446,13 @@ function render() {
     } else {
         emptyMsg.style.display = 'none';
         missionsToday.forEach(m => {
-            const isDone = state.days[today]?.done?.includes(m.id);
+            const isDone = donelist.includes(m.id);
             const div = document.createElement('div');
-            div.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:12px;background:${isDone?'rgba(82,183,136,0.08)':'rgba(30,41,59,0.5)'};border:1px solid ${isDone?'rgba(82,183,136,0.25)':'rgba(255,255,255,0.06)'};opacity:${isDone?'0.65':'1'};`;
-            div.innerHTML = `
+            div.style.cssText=`display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:12px;background:${isDone?'rgba(82,183,136,0.08)':'rgba(30,41,59,0.5)'};border:1px solid ${isDone?'rgba(82,183,136,0.25)':'rgba(255,255,255,0.06)'};opacity:${isDone?'0.65':'1'};`;
+            div.innerHTML=`
                 <div>
                     <div style="font-weight:600;font-size:14px;${isDone?'text-decoration:line-through;color:#64748b;':'color:#f8fafc;'}">${m.text}</div>
-                    <div style="font-size:10px;color:var(--green-accent);text-transform:uppercase;margin-top:2px;letter-spacing:0.06em;">${m.area} • ${m.pts} PTS</div>
+                    <div style="font-size:10px;color:var(--green-accent);text-transform:uppercase;margin-top:2px;">${m.area} • ${m.pts} PTS</div>
                 </div>
                 <button onclick="toggleMission(${m.id})"
                     style="padding:8px 12px;border-radius:9px;border:1px solid ${isDone?'#334155':'var(--green-accent)'};cursor:pointer;font-weight:700;font-size:12px;background:${isDone?'#1e293b':'var(--green-dark)'};color:${isDone?'#64748b':'var(--green-accent)'};">
@@ -492,21 +467,20 @@ function render() {
     if (areaGrid) {
         areaGrid.innerHTML = '';
         AREAS.forEach(a => {
-            const count = state.weekly.filter(t => t.area===a).length;
+            const count = (state.weekly||[]).filter(t=>t.area===a).length;
             const btn   = document.createElement('button');
-            btn.style.cssText = `background:rgba(26,58,42,0.5);border:1px solid rgba(82,183,136,0.15);border-radius:10px;padding:10px 8px;font-size:11px;font-weight:700;color:#a8c4b2;cursor:pointer;text-align:left;font-family:'Plus Jakarta Sans',sans-serif;`;
-            btn.innerHTML = `${a}${count>0?`<span style="display:block;font-size:9px;color:var(--green-accent);margin-top:2px;">${count} misión${count>1?'es':''}</span>`:''}`;
-            btn.onclick = () => openModal(a);
+            btn.style.cssText=`background:rgba(26,58,42,0.5);border:1px solid rgba(82,183,136,0.15);border-radius:10px;padding:10px 8px;font-size:11px;font-weight:700;color:#a8c4b2;cursor:pointer;text-align:left;font-family:'Plus Jakarta Sans',sans-serif;`;
+            btn.innerHTML=`${a}${count>0?`<span style="display:block;font-size:9px;color:var(--green-accent);margin-top:2px;">${count} misión${count>1?'es':''}</span>`:''}`;
+            btn.onclick=()=>openModal(a);
             areaGrid.appendChild(btn);
         });
     }
 
-    save();
     updateChart();
 }
 
 // ══════════════════════════════════════════════════
-// TOGGLE MISSION
+// 11. TOGGLE MISSION
 // ══════════════════════════════════════════════════
 function toggleMission(id) {
     if (!state.days[today]) state.days[today] = { done:[], percent:0 };
@@ -514,10 +488,11 @@ function toggleMission(id) {
     if (idx > -1) state.days[today].done.splice(idx, 1);
     else state.days[today].done.push(id);
     render();
+    scheduleSave();
 }
 
 // ══════════════════════════════════════════════════
-// MODAL
+// 12. MODAL
 // ══════════════════════════════════════════════════
 function openModal(area) {
     currentArea = area;
@@ -525,21 +500,18 @@ function openModal(area) {
     document.getElementById('modal').style.display = 'flex';
     document.getElementById('taskText').value = '';
     document.getElementById('taskPoints').value = '';
-    document.querySelectorAll('#modal input[type=checkbox]').forEach(c => c.checked=false);
+    document.querySelectorAll('#modal input[type=checkbox]').forEach(c=>c.checked=false);
     renderModalTasks();
 }
 
-function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-}
+function closeModal() { document.getElementById('modal').style.display='none'; }
 
 function saveNewTask() {
     const text   = document.getElementById('taskText').value.trim();
     const pts    = parseInt(document.getElementById('taskPoints').value);
     const checks = Array.from(document.querySelectorAll('#modal input[type=checkbox]:checked')).map(c=>parseInt(c.value));
-    if (!text || !pts || pts<1 || pts>100 || checks.length===0) {
-        showToast('Completa todos los campos.','error'); return;
-    }
+    if (!text||!pts||pts<1||pts>100||checks.length===0) { showToast('Completa todos los campos.','error'); return; }
+    if (!state.weekly) state.weekly = [];
     state.weekly.push({ id:Date.now(), area:currentArea, text, pts, days:checks });
     document.getElementById('taskText').value='';
     document.getElementById('taskPoints').value='';
@@ -547,93 +519,67 @@ function saveNewTask() {
     showToast(`"${text}" agregada ✓`,'success');
     renderModalTasks();
     render();
+    scheduleSave();
 }
 
 function renderModalTasks() {
-    const container = document.getElementById('modalTaskList');
-    container.innerHTML = '';
-    state.weekly.filter(t=>t.area===currentArea).forEach(t=>{
-        const d = document.createElement('div');
+    const c = document.getElementById('modalTaskList');
+    c.innerHTML='';
+    (state.weekly||[]).filter(t=>t.area===currentArea).forEach(t=>{
+        const d=document.createElement('div');
         d.style.cssText='display:flex;justify-content:space-between;background:#0f172a;padding:8px 12px;border-radius:8px;font-size:12px;align-items:center;border:1px solid #1e293b;';
         d.innerHTML=`<span style="color:#cbd5e1;">${t.text} <span style="color:var(--green-accent);">${t.pts}pts</span></span>
                      <button onclick="deleteTask(${t.id})" style="background:none;border:none;cursor:pointer;color:#f87171;font-size:14px;">🗑️</button>`;
-        container.appendChild(d);
+        c.appendChild(d);
     });
 }
 
 function deleteTask(id) {
-    state.weekly = state.weekly.filter(t=>t.id!==id);
-    if (state.days[today]) state.days[today].done = state.days[today].done.filter(d=>d!==id);
+    state.weekly=(state.weekly||[]).filter(t=>t.id!==id);
+    if (state.days[today]) state.days[today].done=(state.days[today].done||[]).filter(d=>d!==id);
     showToast('Misión eliminada.');
     renderModalTasks();
     render();
+    scheduleSave();
 }
 
 // ══════════════════════════════════════════════════
-// CHART
+// 13. CHART
 // ══════════════════════════════════════════════════
 function updateChart() {
     const ctx = document.getElementById('historyChart')?.getContext('2d');
     if (!ctx) return;
     const last7=[], labels=[];
-    for (let i=6; i>=0; i--) {
-        const d = new Date(); d.setDate(d.getDate()-i);
-        const key = d.toLocaleDateString('en-CA');
+    for (let i=6;i>=0;i--) {
+        const d=new Date(); d.setDate(d.getDate()-i);
+        const key=d.toLocaleDateString('en-CA');
         labels.push(d.toLocaleDateString('es-ES',{weekday:'short'}));
-        last7.push(state.days[key]?(state.days[key].percent||0):0);
+        last7.push(state.days&&state.days[key]?(state.days[key].percent||0):0);
     }
-    if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(ctx, {
+    if (chartInst) chartInst.destroy();
+    chartInst=new Chart(ctx,{
         type:'line',
-        data:{
-            labels,
-            datasets:[{
-                label:'% Cumplimiento', data:last7,
-                borderColor:'#52b788', backgroundColor:'rgba(82,183,136,0.08)',
-                fill:true, tension:0.4, borderWidth:2.5, pointRadius:4,
-                pointBackgroundColor:'#52b788',
-            }]
-        },
-        options:{
-            plugins:{legend:{display:false}},
-            scales:{
-                y:{beginAtZero:true, max:100, grid:{color:'#1e293b'}, ticks:{color:'#475569'}},
-                x:{grid:{display:false}, ticks:{color:'#475569'}}
-            }
-        }
+        data:{ labels, datasets:[{ label:'% Cumplimiento', data:last7, borderColor:'#52b788', backgroundColor:'rgba(82,183,136,0.08)', fill:true, tension:0.4, borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#52b788' }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,max:100,grid:{color:'#1e293b'},ticks:{color:'#475569'}}, x:{grid:{display:false},ticks:{color:'#475569'}} } }
     });
 }
 
 // ══════════════════════════════════════════════════
-// AI
+// 14. AI
 // ══════════════════════════════════════════════════
 function askAI() {
-    const input = document.getElementById('aiInput').value.toLowerCase().trim();
-    const box   = document.getElementById('aiResponse');
+    const input=document.getElementById('aiInput').value.toLowerCase().trim();
+    const box=document.getElementById('aiResponse');
     if (!input) return;
-    let reply = "Analiza tu semana: ¿qué misión completas siempre y cuál nunca? Empieza por la que evitas.";
-    if (input.includes('motivaci'))  reply=`${userName}, la motivación arranca. El hábito mantiene. Haz la misión más pequeña ahora mismo.`;
-    if (input.includes('fitness'))   reply="Regla de 2 minutos: si tarda menos de 2 minutos, hazla ya. Para fitness, empieza con 5 repeticiones.";
-    if (input.includes('finanza'))   reply="Registra cada gasto esta semana, sin juzgar. La consciencia es el primer paso al control.";
-    if (input.includes('social'))    reply="Una conversación real vale más que 10 mensajes. Agenda una llamada hoy.";
-    if (input.includes('mejorar'))   reply="La clave no es hacer más, sino eliminar lo innecesario. Revisa tus misiones de baja puntuación.";
-    if (input.includes('cansado')||input.includes('agotado')) reply="El descanso es parte del entrenamiento. Hoy es día de recuperación activa.";
-    if (input.includes('racha'))     reply=`Tu racha: ${state.streak||0} días. Para mantenerla, completa al menos el 60% hoy.`;
-    box.textContent=`"${reply}"`;
+    let r="Analiza tu semana: ¿qué misión completas siempre y cuál nunca? Empieza por la que evitas.";
+    if (input.includes('motivaci'))  r=`${userName}, la motivación arranca. El hábito mantiene. Haz la misión más pequeña ahora mismo.`;
+    if (input.includes('fitness'))   r="Regla de 2 minutos: si tarda menos de 2 minutos, hazla ya. Para fitness, empieza con 5 repeticiones.";
+    if (input.includes('finanza'))   r="Registra cada gasto esta semana. La consciencia es el primer paso al control.";
+    if (input.includes('social'))    r="Una conversación real vale más que 10 mensajes. Agenda una llamada hoy.";
+    if (input.includes('cansado')||input.includes('agotado')) r="El descanso es parte del entrenamiento. Hoy es día de recuperación activa.";
+    if (input.includes('racha'))     r=`Tu racha: ${state.streak||0} días. Para mantenerla, completa al menos el 60% hoy.`;
+    box.textContent=`"${r}"`;
     document.getElementById('aiInput').value='';
-}
-
-// ══════════════════════════════════════════════════
-// NOTIFICATIONS
-// ══════════════════════════════════════════════════
-function requestNotifications() {
-    if (!("Notification" in window)) { showToast('Navegador no soporta alertas.','error'); return; }
-    Notification.requestPermission().then(p=>{
-        if (p==="granted") {
-            new Notification("Comando Élite",{body:"¡Alertas activadas!"});
-            showToast('Alertas activadas ✓','success');
-        }
-    });
 }
 
 // ══════════════════════════════════════════════════

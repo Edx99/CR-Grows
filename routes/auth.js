@@ -6,31 +6,35 @@ const { getContainer } = require("../config/cosmos");
 
 const router = express.Router();
 
-// ── HELPER: verify JWT from Authorization header ──────────
+// ── HELPER: verify JWT ────────────────────────────────────
 function verifyToken(req) {
   const header = req.headers.authorization;
-  if (!header) throw new Error("No token provided.");
+  if (!header) throw new Error("No token.");
   const token = header.split(" ")[1];
   return jwt.verify(token, process.env.JWT_SECRET);
+}
+
+// ── HELPER: find user by email ────────────────────────────
+async function findUser(email) {
+  const usersContainer = getContainer();
+  const { resources } = await usersContainer.items
+    .query({
+      query: "SELECT * FROM c WHERE c.email = @e",
+      parameters: [{ name: "@e", value: email }],
+    })
+    .fetchAll();
+  return { usersContainer, user: resources[0] || null };
 }
 
 // ── REGISTER ──────────────────────────────────────────────
 router.post("/register", async (req, res) => {
   try {
-    const usersContainer = getContainer();
     const { name, email, password } = req.body;
-
     if (!email || !password)
       return res.status(400).json({ error: "All fields are required." });
 
-    const { resources } = await usersContainer.items
-      .query({
-        query: "SELECT * FROM c WHERE c.email = @e",
-        parameters: [{ name: "@e", value: email }],
-      })
-      .fetchAll();
-
-    if (resources.length > 0)
+    const { usersContainer, user: existing } = await findUser(email);
+    if (existing)
       return res.status(400).json({ error: "Email already registered." });
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -52,20 +56,11 @@ router.post("/register", async (req, res) => {
 // ── LOGIN ─────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
-    const usersContainer = getContainer();
     const { email, password } = req.body;
-
     if (!email || !password)
       return res.status(400).json({ error: "All fields are required." });
 
-    const { resources } = await usersContainer.items
-      .query({
-        query: "SELECT * FROM c WHERE c.email = @e",
-        parameters: [{ name: "@e", value: email }],
-      })
-      .fetchAll();
-
-    const user = resources[0];
+    const { user } = await findUser(email);
     if (!user || !(await bcrypt.compare(password, user.passwordHash)))
       return res.status(401).json({ error: "Invalid email or password." });
 
@@ -85,17 +80,9 @@ router.post("/login", async (req, res) => {
 // ── FORGOT PASSWORD ───────────────────────────────────────
 router.post("/forgot-password", async (req, res) => {
   try {
-    const usersContainer = getContainer();
     const { email } = req.body;
+    const { usersContainer, user } = await findUser(email);
 
-    const { resources } = await usersContainer.items
-      .query({
-        query: "SELECT * FROM c WHERE c.email = @e",
-        parameters: [{ name: "@e", value: email }],
-      })
-      .fetchAll();
-
-    const user = resources[0];
     if (!user)
       return res.json({ message: "If that email exists, a reset link was sent." });
 
@@ -126,17 +113,9 @@ router.post("/forgot-password", async (req, res) => {
 // ── RESET PASSWORD ────────────────────────────────────────
 router.post("/reset-password", async (req, res) => {
   try {
-    const usersContainer = getContainer();
     const { email, token, newPassword } = req.body;
+    const { usersContainer, user } = await findUser(email);
 
-    const { resources } = await usersContainer.items
-      .query({
-        query: "SELECT * FROM c WHERE c.email = @e",
-        parameters: [{ name: "@e", value: email }],
-      })
-      .fetchAll();
-
-    const user = resources[0];
     if (!user || user.resetToken !== token || Date.now() > user.resetTokenExpiry)
       return res.status(400).json({ error: "Invalid or expired token." });
 
@@ -152,22 +131,16 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// ── GET STATE — load user's app data ─────────────────────
+// ── GET STATE ─────────────────────────────────────────────
 router.get("/state", async (req, res) => {
   try {
-    const payload        = verifyToken(req);
-    const usersContainer = getContainer();
+    const payload = verifyToken(req);
+    const { user } = await findUser(payload.email);
 
-    const { resources } = await usersContainer.items
-      .query({
-        query: "SELECT * FROM c WHERE c.email = @e",
-        parameters: [{ name: "@e", value: payload.email }],
-      })
-      .fetchAll();
+    if (!user)
+      return res.status(404).json({ error: "User not found." });
 
-    const user = resources[0];
-    if (!user) return res.status(404).json({ error: "User not found." });
-
+    console.log(`GET /state for ${payload.email} → appState exists: ${!!user.appState}`);
     res.json({ state: user.appState || null });
   } catch (err) {
     console.error("Get state error:", err.message);
@@ -175,25 +148,19 @@ router.get("/state", async (req, res) => {
   }
 });
 
-// ── POST STATE — save user's app data ────────────────────
+// ── POST STATE ────────────────────────────────────────────
 router.post("/state", async (req, res) => {
   try {
-    const payload        = verifyToken(req);
-    const usersContainer = getContainer();
+    const payload = verifyToken(req);
+    const { usersContainer, user } = await findUser(payload.email);
 
-    const { resources } = await usersContainer.items
-      .query({
-        query: "SELECT * FROM c WHERE c.email = @e",
-        parameters: [{ name: "@e", value: payload.email }],
-      })
-      .fetchAll();
-
-    const user = resources[0];
-    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!user)
+      return res.status(404).json({ error: "User not found." });
 
     user.appState = req.body.state;
     await usersContainer.item(user.id, user.email).replace(user);
 
+    console.log(`POST /state for ${payload.email} → saved OK`);
     res.json({ message: "State saved." });
   } catch (err) {
     console.error("Save state error:", err.message);
