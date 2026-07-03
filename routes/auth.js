@@ -157,6 +157,7 @@ router.get("/state", async (req, res) => {
       return res.status(404).json({ error: "User not found." });
 
     console.log(`GET /state for ${payload.email} → appState exists: ${!!user.appState}`);
+    console.log('GET /state returning appState:', user.appState);
     res.json({ state: user.appState || null });
   } catch (err) {
     console.error("Get state error:", err);
@@ -170,6 +171,7 @@ router.post("/state", async (req, res) => {
     const payload = verifyToken(req);
     const { usersContainer, user } = await findUser(payload.email);
 
+    console.log(`POST /state received for ${payload.email} with body:`, req.body);
     if (!user)
       return res.status(404).json({ error: "User not found." });
 
