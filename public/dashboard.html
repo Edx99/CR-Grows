@@ -316,34 +316,46 @@ function loadFromLocal() {
 // ══════════════════════════════════════════════════
 function scheduleSave() {
     saveToLocal();
+    console.log('scheduleSave() fired — state queued for server push', state);
     setSyncStatus('pending', 'Guardando...');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(pushToServer, 2000);
 }
 
 async function pushToServer() {
-    if (isSaving) return;
+    if (isSaving) {
+        console.log('pushToServer skipped because a save is already in progress');
+        return;
+    }
     isSaving = true;
+    console.log('pushToServer() sending state to /api/state');
     const result = await apiFetch('POST', '/api/state', { state });
     isSaving = false;
     if (result) {
         setSyncStatus('synced', 'Guardado en la nube ✓');
+        console.log('pushToServer() success:', result);
     } else {
         setSyncStatus('error', 'Error al guardar (datos en local)');
         showToast('Sin conexión — datos guardados localmente', 'error');
+        console.warn('pushToServer() failed — server did not return success');
     }
 }
 
 // Manual sync button
 async function manualSync() {
+    console.log('manualSync() called');
     setSyncStatus('pending', 'Sincronizando...');
     const data = await apiFetch('GET', '/api/state');
+    console.log('manualSync() response:', data);
     if (data && data.state && data.state.weekly) {
         state = data.state;
         saveToLocal();
         setSyncStatus('synced', 'Sincronizado ✓');
         render();
         showToast('Datos actualizados del servidor ✓', 'success');
+    } else if (data && data.state === null) {
+        setSyncStatus('error', 'Servidor vacío');
+        showToast('No hay estado guardado en el servidor', 'error');
     } else {
         setSyncStatus('error', 'No se pudo conectar');
         showToast('No se pudo conectar al servidor', 'error');
