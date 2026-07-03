@@ -38,13 +38,18 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already registered." });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    await usersContainer.items.create({
+    // Ensure we write a stable `id` so future replace() calls can target the item reliably
+    const id = crypto.randomBytes(12).toString('hex');
+    const { resource: created } = await usersContainer.items.create({
+      id,
       name: name || "",
       email,
       passwordHash,
       appState: null,
       createdAt: new Date().toISOString(),
     });
+
+    console.log(`User registered: email=${email} id=${created.id}`);
 
     res.json({ message: "Account created successfully." });
   } catch (err) {
@@ -89,7 +94,13 @@ router.post("/forgot-password", async (req, res) => {
     const resetToken      = crypto.randomBytes(32).toString("hex");
     user.resetToken       = resetToken;
     user.resetTokenExpiry = Date.now() + 3600000;
-    await usersContainer.item(user.id, user.email).replace(user);
+    try {
+      console.log(`Replacing user item (forgot-password): id=${user.id} partition=${user.email}`);
+      await usersContainer.item(user.id, user.email).replace(user);
+    } catch (errReplace) {
+      console.error('Error replacing user item (forgot-password):', errReplace);
+      throw errReplace;
+    }
 
     const resetLink = `https://wapedxtest01.azurewebsites.net/reset-password.html?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
@@ -122,7 +133,13 @@ router.post("/reset-password", async (req, res) => {
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     delete user.resetToken;
     delete user.resetTokenExpiry;
-    await usersContainer.item(user.id, user.email).replace(user);
+    try {
+      console.log(`Replacing user item (reset-password): id=${user.id} partition=${user.email}`);
+      await usersContainer.item(user.id, user.email).replace(user);
+    } catch (errReplace) {
+      console.error('Error replacing user item (reset-password):', errReplace);
+      throw errReplace;
+    }
 
     res.json({ message: "Password updated successfully." });
   } catch (err) {
@@ -143,7 +160,7 @@ router.get("/state", async (req, res) => {
     console.log(`GET /state for ${payload.email} → appState exists: ${!!user.appState}`);
     res.json({ state: user.appState || null });
   } catch (err) {
-    console.error("Get state error:", err.message);
+    console.error("Get state error:", err);
     res.status(401).json({ error: "Invalid or expired token." });
   }
 });
@@ -158,13 +175,22 @@ router.post("/state", async (req, res) => {
       return res.status(404).json({ error: "User not found." });
 
     user.appState = req.body.state;
-    await usersContainer.item(user.id, user.email).replace(user);
-
-    console.log(`POST /state for ${payload.email} → saved OK`);
-    res.json({ message: "State saved." });
+    try {
+      console.log(`Replacing user item (/state): id=${user.id} partition=${user.email}`);
+      await usersContainer.item(user.id, user.email).replace(user);
+      console.log(`POST /state for ${payload.email} → saved OK`);
+      res.json({ message: "State saved." });
+    } catch (errReplace) {
+      console.error('Error replacing user item (/state):', errReplace);
+      return res.status(500).json({ error: 'Failed to save state to database.' });
+    }
   } catch (err) {
-    console.error("Save state error:", err.message);
-    res.status(401).json({ error: "Invalid or expired token." });
+    console.error("Save state error:", err);
+    if (err.message && err.message.toLowerCase().includes('token')) {
+      res.status(401).json({ error: "Invalid or expired token." });
+    } else {
+      res.status(500).json({ error: "Internal server error." });
+    }
   }
 });
 
