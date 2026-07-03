@@ -38,7 +38,6 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already registered." });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    // Ensure we write a stable `id` so future replace() calls can target the item reliably
     const id = crypto.randomBytes(12).toString('hex');
     const { resource: created } = await usersContainer.items.create({
       id,
@@ -95,10 +94,10 @@ router.post("/forgot-password", async (req, res) => {
     user.resetToken       = resetToken;
     user.resetTokenExpiry = Date.now() + 3600000;
     try {
-      console.log(`Replacing user item (forgot-password): id=${user.id} partition=${user.email}`);
-      await usersContainer.item(user.id, user.email).replace(user);
+      console.log(`Upserting user item (forgot-password): id=${user.id}`);
+      await usersContainer.items.upsert(user);
     } catch (errReplace) {
-      console.error('Error replacing user item (forgot-password):', errReplace);
+      console.error('Error upserting user item (forgot-password):', errReplace);
       throw errReplace;
     }
 
@@ -134,10 +133,10 @@ router.post("/reset-password", async (req, res) => {
     delete user.resetToken;
     delete user.resetTokenExpiry;
     try {
-      console.log(`Replacing user item (reset-password): id=${user.id} partition=${user.email}`);
-      await usersContainer.item(user.id, user.email).replace(user);
+      console.log(`Upserting user item (reset-password): id=${user.id}`);
+      await usersContainer.items.upsert(user);
     } catch (errReplace) {
-      console.error('Error replacing user item (reset-password):', errReplace);
+      console.error('Error upserting user item (reset-password):', errReplace);
       throw errReplace;
     }
 
@@ -176,12 +175,12 @@ router.post("/state", async (req, res) => {
 
     user.appState = req.body.state;
     try {
-      console.log(`Replacing user item (/state): id=${user.id} partition=${user.email}`);
-      await usersContainer.item(user.id, user.email).replace(user);
+      console.log(`Upserting user item (/state): id=${user.id}`);
+      await usersContainer.items.upsert(user);
       console.log(`POST /state for ${payload.email} → saved OK`);
       res.json({ message: "State saved." });
     } catch (errReplace) {
-      console.error('Error replacing user item (/state):', errReplace);
+      console.error('Error upserting user item (/state):', errReplace);
       return res.status(500).json({ error: 'Failed to save state to database.' });
     }
   } catch (err) {
