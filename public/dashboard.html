@@ -257,11 +257,14 @@ async function apiFetch(method, path, body) {
         };
         if (body) opts.body = JSON.stringify(body);
         const res = await fetch(path, opts);
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (err) { data = text; }
+        console.log(`API ${method} ${path} → status=${res.status}`, data);
         if (!res.ok) {
-            console.warn(`API ${method} ${path} → ${res.status}`);
             return null;
         }
-        return await res.json();
+        return data;
     } catch (err) {
         console.warn(`API ${method} ${path} → network error:`, err.message);
         return null;
