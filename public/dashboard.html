@@ -274,25 +274,40 @@ async function apiFetch(method, path, body) {
 // ══════════════════════════════════════════════════
 // 4. LOAD STATE FROM SERVER — priority over localStorage
 // ══════════════════════════════════════════════════
+function hasUsableState(value) {
+    if (!value || typeof value !== 'object') return false;
+    const hasDays = !!(value.days && Object.keys(value.days).length > 0);
+    const hasWeekly = Array.isArray(value.weekly);
+    const hasStreak = typeof value.streak === 'number' && value.streak > 0;
+    return hasDays || hasWeekly || hasStreak;
+}
+
 async function loadStateFromServer() {
     setLoading('Cargando tus misiones del servidor...');
     const data = await apiFetch('GET', '/api/state');
 
-    if (data && data.state && data.state.weekly) {
+    if (data && hasUsableState(data.state)) {
         // ✅ Got real data from server — use it and overwrite localStorage
         state = data.state;
         saveToLocal();
         setSyncStatus('synced', `Sincronizado ✓`);
-        console.log('✅ State loaded from SERVER:', state.weekly.length, 'missions');
+        console.log('✅ State loaded from SERVER:', state.weekly?.length || 0, 'missions');
         return true;
     }
 
     // ⚠️ Server returned nothing — try localStorage as fallback
     const local = loadFromLocal();
-    if (local && local.weekly) {
+    if (local && hasUsableState(local)) {
         state = local;
+        saveToLocal();
+        const pushed = await apiFetch('POST', '/api/state', { state });
+        if (pushed) {
+            setSyncStatus('synced', 'Sincronizado ✓');
+            console.log('⚠️ Local state uploaded to SERVER');
+            return true;
+        }
         setSyncStatus('local', 'Datos locales (sin conexión)');
-        console.log('⚠️ State loaded from LOCALSTORAGE:', state.weekly.length, 'missions');
+        console.log('⚠️ State loaded from LOCALSTORAGE:', state.weekly?.length || 0, 'missions');
         return false;
     }
 
@@ -347,13 +362,33 @@ async function manualSync() {
     setSyncStatus('pending', 'Sincronizando...');
     const data = await apiFetch('GET', '/api/state');
     console.log('manualSync() response:', data);
-    if (data && data.state && data.state.weekly) {
+
+    if (data && hasUsableState(data.state)) {
         state = data.state;
         saveToLocal();
         setSyncStatus('synced', 'Sincronizado ✓');
         render();
         showToast('Datos actualizados del servidor ✓', 'success');
-    } else if (data && data.state === null) {
+        return;
+    }
+
+    const local = loadFromLocal();
+    if (local && hasUsableState(local)) {
+        const pushed = await apiFetch('POST', '/api/state', { state: local });
+        if (pushed) {
+            state = local;
+            saveToLocal();
+            setSyncStatus('synced', 'Sincronizado ✓');
+            render();
+            showToast('Configuración enviada a tu cuenta ✓', 'success');
+            return;
+        }
+        setSyncStatus('error', 'No se pudo guardar en la nube');
+        showToast('No se pudo guardar en la nube. Revisa la conexión.', 'error');
+        return;
+    }
+
+    if (data && data.state === null) {
         setSyncStatus('error', 'Servidor vacío');
         showToast('No hay estado guardado en el servidor', 'error');
     } else {
