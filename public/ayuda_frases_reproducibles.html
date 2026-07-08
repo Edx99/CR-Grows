@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Rutina de Práctica (Secuencial)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #4e9af1;
+            --danger-color: #f14e4e;
+            --dark-bg: #141E30;
+            --light-bg: #243B55;
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0c0c0;
+            --card-bg: rgba(0, 0, 0, 0.2);
+            --container-bg: rgba(255, 255, 255, 0.05);
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--dark-bg);
+            background: -webkit-linear-gradient(to right, var(--light-bg), var(--dark-bg));
+            background: linear-gradient(to right, var(--light-bg), var(--dark-bg));
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background-color: var(--container-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-light);
+            text-align: center;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 25px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: color 0.3s ease;
+        }
+        .back-btn:hover {
+            color: var(--primary-color);
+        }
+
+        /* --- Pantalla de Configuración --- */
+        #setup-screen h1 {
+            color: var(--primary-color);
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        #setup-screen p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 15px auto 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-item label {
+            font-size: 1em;
+            color: var(--text-secondary);
+        }
+
+        .time-input {
+            width: 100px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--primary-color);
+            background-color: transparent;
+            color: var(--text-primary);
+            font-size: 1.2em;
+            text-align: center;
+            -moz-appearance: textfield;
+        }
+
+        .time-input::-webkit-outer-spin-button,
+        .time-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .start-btn {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(78, 154, 241, 0.4);
+        }
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 154, 241, 0.6);
+        }
+
+        /* --- Pantalla de Práctica --- */
+        #practice-screen {
+            display: none;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-left: 5px solid var(--primary-color);
+            padding: 40px;
+            border-radius: 10px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease-in-out;
+            margin-bottom: 30px;
+        }
+
+        .card-content {
+            font-size: 1.8em;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        .timer {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+        }
+
+        .stop-btn {
+            background-color: var(--danger-color);
+            color: #ffffff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(241, 78, 78, 0.4);
+        }
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(241, 78, 78, 0.6);
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 600px) {
+            .container { padding: 25px; }
+            .card { padding: 30px; min-height: 200px; }
+            .card-content { font-size: 1.4em; }
+            .timer { font-size: 2em; }
+            .input-group { 
+                flex-direction: column;
+                gap: 15px;
+            }
+            .back-btn { top: 15px; left: 20px; }
+            #setup-screen h1 { margin-top: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="javascript:history.back()" class="back-btn" aria-label="Regresar a la página anterior">&larr; Regresar</a>
+
+    <div id="setup-screen">
+        <h1>Mi Rutina de Práctica</h1>
+        <p>Define el tiempo total de tu sesión y cuántos segundos quieres dedicar a cada ejercicio.</p>
+        
+        <div class="input-group">
+            <div class="input-item">
+                <label for="practice-time">Tiempo Total (minutos)</label>
+                <input type="number" id="practice-time" class="time-input" min="1" value="5" aria-label="Minutos totales de práctica">
+            </div>
+            <div class="input-item">
+                <label for="exercise-time">Tiempo por Ejercicio (segundos)</label>
+                <input type="number" id="exercise-time" class="time-input" min="5" value="30" aria-label="Segundos por ejercicio">
+            </div>
+        </div>
+
+        <button id="start-btn" class="start-btn">Comenzar Práctica</button>
+    </div>
+
+    <div id="practice-screen">
+        <div id="card" class="card">
+            <div id="card-content" class="card-content">Cargando ejercicio...</div>
+        </div>
+        <div id="timer" class="timer">--:--</div>
+        <button id="stop-btn" class="stop-btn">Detener</button>
+    </div>
+</div>
+
+<script>
+    // --- SET DE EJERCICIOS ---
+    const exercisePool = [
+        // Pilares
+        "Mi amor propio es infinito; por eso me cuido, me protejo y crezco. Vivo con propósito, estrategia y disciplina inquebrantable, actuando siempre con ética y decisión.",
+
+        // Afirmaciones 
+        "1. Soy un líder nato, decidido e imparable",
+        "2. Soy fuerte, ágil y experto en defensa personal; mi resistencia es inquebrantable.",
+        "3. Amo y protejo a mi familia, guiándolos para ser mejores cada día.",
+        "4. Invierto con sabiduría y valoro cada centavo, gastando solo en lo que suma a mi vida.",
+        "5. Disfruto y cultivo relaciones sociales enriquecedoras.",
+        "6. Me capacito y entreno constantemente para ser el mejor en lo que hago.",
+        "7. Mi misión es crear un mundo mejor aplicando mis habilidades y conocimientos.", 
+        "8. Logro mis metas con acciones claras y decididas.",
+        "9. Cuidar de mí mismo es mi máximo respeto y compromiso personal.",
+        "10. Cada desafío me impulsa a nuevas alturas de excelencia.",
+        "11. Cada día soy una mejor versión de mí mismo.",
+        "12. Soy la persona que quiero ser y ya poseo todo lo que deseo."
+    ];
+
+    // --- Elementos del DOM ---
+    const setupScreen = document.getElementById('setup-screen');
+    const practiceScreen = document.getElementById('practice-screen');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    
+    const practiceTimeInput = document.getElementById('practice-time');
+    const exerciseTimeInput = document.getElementById('exercise-time');
+    
+    const card = document.getElementById('card');
+    const cardContent = document.getElementById('card-content');
+    const timerDisplay = document.getElementById('timer');
+
+    // --- Variables de Timers ---
+    let mainTimerInterval;
+    let exerciseSwitcherInterval;
+    
+    // --- NUEVO: Variable para control secuencial ---
+    let currentIndex = 0; 
+
+    // --- Funciones ---
+
+    /**
+     * Muestra el ejercicio actual y avanza el índice al siguiente.
+     * Si llega al final, vuelve al inicio (índice 0).
+     */
+    function displayNextExercise() {
+        card.style.opacity = 0;
+        
+        setTimeout(() => {
+            // Selecciona el ejercicio actual
+            const exerciseText = exercisePool[currentIndex];
+            cardContent.innerText = exerciseText;
+            card.style.opacity = 1;
+
+            // Prepara el índice para la próxima vez
+            currentIndex++;
+            
+            // Si llegamos al final de la lista, volver al principio
+            if (currentIndex >= exercisePool.length) {
+                currentIndex = 0;
+            }
+
+        }, 500); // 500ms para la transición de fundido
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+    }
+
+    function validateInput(inputElement) {
+        const value = parseInt(inputElement.value);
+        const min = parseInt(inputElement.min);
+        
+        if (isNaN(value) || value < min) {
+            inputElement.style.border = "2px solid var(--danger-color)";
+            setTimeout(() => {
+                inputElement.style.border = "1px solid var(--primary-color)";
+            }, 2000);
+            return false;
+        }
+        return true;
+    }
+
+    function stopTimers() {
+        clearInterval(mainTimerInterval);
+        clearInterval(exerciseSwitcherInterval);
+    }
+
+    // --- Event Listeners ---
+
+    startBtn.addEventListener('click', () => {
+        const isPracticeTimeValid = validateInput(practiceTimeInput);
+        const isExerciseTimeValid = validateInput(exerciseTimeInput);
+
+        if (!isPracticeTimeValid || !isExerciseTimeValid) {
+            return;
+        }
+
+        const totalMinutes = parseInt(practiceTimeInput.value);
+        const exerciseSeconds = parseInt(exerciseTimeInput.value);
+        
+        let totalSeconds = totalMinutes * 60;
+
+        // Resetear índice al principio cada vez que se inicia
+        currentIndex = 0;
+
+        // Cambiar pantallas
+        setupScreen.style.display = 'none';
+        practiceScreen.style.display = 'block';
+
+        // Iniciar inmediatamente con el primero
+        displayNextExercise();
+        timerDisplay.innerText = formatTime(totalSeconds);
+
+        // Configurar el intervalo para cambiar ejercicios
+        exerciseSwitcherInterval = setInterval(displayNextExercise, exerciseSeconds * 1000);
+
+        // Configurar el temporizador principal
+        mainTimerInterval = setInterval(() => {
+            totalSeconds--;
+            timerDisplay.innerText = formatTime(totalSeconds);
+
+            if (totalSeconds <= 0) {
+                stopTimers();
+                card.style.opacity = 0;
+                setTimeout(() => {
+                    cardContent.innerText = "¡Práctica Completada! Buen trabajo.";
+                    card.style.opacity = 1;
+                    timerDisplay.innerText = "00:00";
+                    stopBtn.innerText = "Regresar al Inicio";
+                }, 500);
+            }
+        }, 1000);
+    });
+
+    stopBtn.addEventListener('click', () => {
+        stopTimers();
+        
+        practiceScreen.style.display = 'none';
+        setupScreen.style.display = 'block';
+
+        timerDisplay.innerText = "--:--";
+        cardContent.innerText = "Cargando ejercicio...";
+        stopBtn.innerText = "Detener";
+    });
+
+</script>
+
+</body>
+</html>
