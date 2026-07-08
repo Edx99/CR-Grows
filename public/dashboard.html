@@ -86,6 +86,7 @@
         <span class="nav-label">Operaciones</span>
         <a class="nav-item active" href="#" data-view="dashboard" onclick="event.preventDefault(); showView('dashboard')"><span>🎯</span> Dashboard</a>
         <a class="nav-item" href="#" data-view="help" onclick="event.preventDefault(); showView('help')"><span>🧭</span> Ayuda</a>
+        <a class="nav-item" href="#" data-view="templates" onclick="event.preventDefault(); showView('templates')"><span>📦</span> Templates</a>
         <a class="nav-item" onclick="showToast('Próximamente...')"><span>📊</span> Estadísticas</a>
         <a class="nav-item" onclick="showToast('Próximamente...')"><span>🏆</span> Logros</a>
         <span class="nav-label">Personal</span>
@@ -231,12 +232,24 @@
                             <option value="frases">Frases reproducibles</option>
                         </select>
                         <textarea id="customRoutineItems" rows="6" placeholder="Escribe una actividad o frase por línea. Ejemplo:&#10;Burpee&#10;Saltos&#10;Plancha" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;resize:vertical;"></textarea>
-                        <button class="template-btn" type="submit" style="align-self:flex-start;">📦 Generar archivo HTML</button>
+                        <button id="customRoutineSubmit" class="template-btn" type="submit" style="align-self:flex-start;">📦 Generar archivo HTML</button>
                     </div>
                 </form>
                 <div id="customRoutineMessage" style="margin-top:10px;font-size:12px;color:#86efac;min-height:18px;"></div>
             </div>
         </div>
+    </section>
+
+    <section id="templatesView" style="display:none;">
+        <div class="glass p-6" style="margin-bottom:20px;">
+            <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="color:var(--green-accent);">📦</span> Templates guardados
+            </h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+                Aquí aparecerán tus rutinas personalizadas para abrirlas, descargarlas o actualizarlas con nuevas actividades.
+            </p>
+        </div>
+        <div id="templatesList" class="help-grid"></div>
     </section>
 </main>
 
@@ -307,6 +320,9 @@ let saveTimer    = null;
 let chartInst    = null;
 let isSaving     = false;
 let currentView  = 'dashboard';
+let editingTemplateId = null;
+let savedTemplates = [];
+const TEMPLATES_STORAGE_KEY = 'cr_grows_saved_templates';
 
 function setActiveNav(view) {
     document.querySelectorAll('.nav-item[data-view]').forEach(item => {
@@ -318,8 +334,10 @@ function showView(view) {
     currentView = view;
     const dashboardView = document.getElementById('dashboardView');
     const helpView = document.getElementById('helpView');
+    const templatesView = document.getElementById('templatesView');
     if (dashboardView) dashboardView.style.display = view === 'dashboard' ? 'block' : 'none';
     if (helpView) helpView.style.display = view === 'help' ? 'block' : 'none';
+    if (templatesView) templatesView.style.display = view === 'templates' ? 'block' : 'none';
     setActiveNav(view);
 }
 
@@ -368,6 +386,138 @@ function buildTemplateContent(templateText, type, items, title) {
     return templateText;
 }
 
+function loadSavedTemplates() {
+    try {
+        const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
+        savedTemplates = raw ? JSON.parse(raw) : [];
+    } catch (err) {
+        savedTemplates = [];
+    }
+    renderSavedTemplates();
+}
+
+function saveSavedTemplates() {
+    try {
+        localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
+    } catch (err) {
+        console.warn('No se pudieron guardar los templates:', err);
+    }
+}
+
+function resetRoutineForm() {
+    const nameInput = document.getElementById('customRoutineName');
+    const typeSelect = document.getElementById('customRoutineType');
+    const itemsTextarea = document.getElementById('customRoutineItems');
+    const submitButton = document.getElementById('customRoutineSubmit');
+    if (nameInput) nameInput.value = '';
+    if (typeSelect) typeSelect.value = 'hiit';
+    if (itemsTextarea) itemsTextarea.value = '';
+    if (submitButton) submitButton.textContent = '📦 Generar archivo HTML';
+    editingTemplateId = null;
+}
+
+function populateRoutineForm(template) {
+    const nameInput = document.getElementById('customRoutineName');
+    const typeSelect = document.getElementById('customRoutineType');
+    const itemsTextarea = document.getElementById('customRoutineItems');
+    const submitButton = document.getElementById('customRoutineSubmit');
+    const message = document.getElementById('customRoutineMessage');
+
+    if (nameInput) nameInput.value = template.title || '';
+    if (typeSelect) typeSelect.value = template.type || 'hiit';
+    if (itemsTextarea) itemsTextarea.value = (template.items || []).join('\n');
+    if (submitButton) submitButton.textContent = '📝 Actualizar plantilla';
+    editingTemplateId = template.id;
+    showView('help');
+    if (message) message.textContent = `Editando: ${template.title}`;
+    if (itemsTextarea) itemsTextarea.focus();
+}
+
+function renderSavedTemplates() {
+    const container = document.getElementById('templatesList');
+    if (!container) return;
+
+    if (!savedTemplates.length) {
+        container.innerHTML = `
+            <div class="template-card" style="grid-column:1 / -1;">
+                <h4>Aún no tienes templates</h4>
+                <p>Genera tu primera rutina personalizada desde Ayuda y aparecerá aquí para abrirla o editarla.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    savedTemplates.forEach(template => {
+        const card = document.createElement('div');
+        card.className = 'template-card';
+
+        const title = document.createElement('h4');
+        title.textContent = template.title;
+        const type = document.createElement('p');
+        type.textContent = template.type === 'hiit' ? 'HIIT interactiva' : 'Frases reproducibles';
+        const preview = document.createElement('pre');
+        preview.textContent = (template.items || []).slice(0, 6).join('\n') + ((template.items || []).length > 6 ? '\n...' : '');
+
+        const actions = document.createElement('div');
+        actions.style.display = 'flex';
+        actions.style.gap = '8px';
+        actions.style.flexWrap = 'wrap';
+
+        const openBtn = document.createElement('button');
+        openBtn.className = 'template-btn';
+        openBtn.textContent = '▶ Abrir';
+        openBtn.onclick = () => openSavedTemplate(template.id);
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'template-btn';
+        editBtn.textContent = '✏️ Editar';
+        editBtn.onclick = () => populateRoutineForm(template);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'template-btn';
+        deleteBtn.textContent = '🗑️ Borrar';
+        deleteBtn.onclick = () => deleteSavedTemplate(template.id);
+
+        actions.appendChild(openBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(deleteBtn);
+
+        card.appendChild(title);
+        card.appendChild(type);
+        card.appendChild(preview);
+        card.appendChild(actions);
+        container.appendChild(card);
+    });
+}
+
+function deleteSavedTemplate(templateId) {
+    savedTemplates = savedTemplates.filter(item => item.id !== templateId);
+    saveSavedTemplates();
+    renderSavedTemplates();
+    showToast('Template eliminado', 'success');
+}
+
+async function openSavedTemplate(templateId) {
+    const template = savedTemplates.find(item => item.id === templateId);
+    if (!template) return;
+
+    try {
+        const templateFile = template.type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_reproducibles.html';
+        const response = await fetch(templateFile);
+        if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
+        const templateText = await response.text();
+        const generated = buildTemplateContent(templateText, template.type, template.items.join('\n'), template.title);
+        const blob = new Blob([generated], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        showToast('Template abierto ✓', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('No se pudo abrir el template', 'error');
+    }
+}
+
 async function createCustomRoutine(event) {
     event.preventDefault();
     const nameInput = document.getElementById('customRoutineName');
@@ -401,8 +551,31 @@ async function createCustomRoutine(event) {
         link.remove();
         URL.revokeObjectURL(url);
 
+        const cleanItems = items
+            .split(/\n|\r/)
+            .map(item => item.trim())
+            .filter(Boolean);
+
+        if (editingTemplateId) {
+            savedTemplates = savedTemplates.map(template => template.id === editingTemplateId
+                ? { ...template, title, type, items: cleanItems, updatedAt: new Date().toISOString() }
+                : template);
+        } else {
+            savedTemplates.unshift({
+                id: `${Date.now()}`,
+                title,
+                type,
+                items: cleanItems,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+        }
+
+        saveSavedTemplates();
+        renderSavedTemplates();
+        resetRoutineForm();
         message.textContent = `Listo. Se descargó ${fileName}`;
-        showToast('Rutina personalizada descargada ✓', 'success');
+        showToast(editingTemplateId ? 'Template actualizado ✓' : 'Template guardado ✓', 'success');
     } catch (err) {
         console.error(err);
         message.textContent = err.message || 'No se pudo generar la rutina.';
@@ -615,6 +788,7 @@ async function init() {
 
     // ⚠️ WAIT for server state before rendering — this is the key fix
     await loadStateFromServer();
+    loadSavedTemplates();
 
     if (!state.days[today]) state.days[today] = { done:[], percent:0 };
 
