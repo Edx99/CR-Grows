@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutina de Agilidad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Prevent double-tap zoom on mobile */
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container mx-auto max-w-lg w-full">
+
+        <!-- 1. Settings Screen (Visible by default) -->
+        <div id="settings-screen" class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center">
+            <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad</h1>
+            
+            <!-- Total Time Slider -->
+            <div class="mb-8">
+                <label for="total-time-slider" class="block text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">
+                    Tiempo Total de Rutina: <span id="total-time-label" class="text-indigo-600 dark:text-indigo-400 font-bold">5 min</span>
+                </label>
+                <input id="total-time-slider" type="range" min="1" max="30" value="5" class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg">
+            </div>
+            
+            <!-- Exercise Time Slider REMOVED -->
+            
+            <button id="start-routine-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-4 rounded-xl transition-transform transform hover:scale-105 shadow-lg text-2xl">
+                <i class="fas fa-play mr-2"></i>Empezar Rutina
+            </button>
+        </div>
+
+        <!-- 2. Workout Screen (Hidden by default) -->
+        <div id="workout-screen" class="hidden bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center">
+            <div class="mb-4">
+                <span class="text-lg font-semibold text-indigo-500 dark:text-indigo-400">Ejercicio Actual:</span>
+            </div>
+            
+            <h2 id="current-exercise" class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6" style="min-height: 120px;">
+                ¡Preparados!
+            </h2>
+
+            <!-- Bloque del Temporizador de Ejercicio OCULTO -->
+            <div class="mb-8 hidden">
+                <div class="text-2xl font-bold text-gray-700 dark:text-gray-200">Tiempo del Ejercicio</div>
+                <div id="exercise-timer" class="text-8xl font-extrabold text-gray-900 dark:text-white">
+                    --
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <div class="text-lg font-medium text-gray-500 dark:text-gray-400">Tiempo Total Restante</div>
+                <div id="total-timer" class="text-3xl font-bold text-gray-700 dark:text-gray-200">
+                    05:00
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button id="pause-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-xl transition-transform transform hover:scale-105 shadow-md text-lg">
+                    <i class="fas fa-pause mr-2"></i>Pausar
+                </button>
+                <button id="end-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl transition-transform transform hover:scale-105 shadow-md text-lg">
+                    <i class="fas fa-stop mr-2"></i>Terminar
+                </button>
+            </div>
+        </div>
+        
+        <!-- 3. Finish Screen (Hidden by default) -->
+        <div id="finish-screen" class="hidden bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg text-center">
+            <h1 class="text-4xl font-bold text-green-600 dark:text-green-400 mb-4">¡Felicidades!</h1>
+            <p class="text-xl text-gray-700 dark:text-gray-200 mb-8">Completaste tu rutina de agilidad.</p>
+            
+            <button id="reset-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-4 rounded-xl transition-transform transform hover:scale-105 shadow-lg text-xl">
+                <i class="fas fa-redo mr-2"></i>Volver a Empezar
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Agility Exercises (Spanish) ---
+        const exerciseList = [
+			// Rutina 33S2Febrero
+            "Saltos de Tijera",
+            "Escaladores",
+            "Burpees",
+            "Zancadas con Salto",
+            "Toques al Suelo",
+			"Planchas explosivas",
+			"Sentadilla saltando",
+			"Polichinelas",
+			"Abdominales"
+        ];
+
+        // --- DOM Elements ---
+        const settingsScreen = document.getElementById('settings-screen');
+        const workoutScreen = document.getElementById('workout-screen');
+        const finishScreen = document.getElementById('finish-screen');
+
+        // Settings
+        const totalTimeSlider = document.getElementById('total-time-slider');
+        const totalTimeLabel = document.getElementById('total-time-label');
+        const startBtn = document.getElementById('start-routine-btn');
+
+        // Workout
+        const currentExerciseEl = document.getElementById('current-exercise');
+        const exerciseTimerEl = document.getElementById('exercise-timer');
+        const totalTimerEl = document.getElementById('total-timer');
+        const pauseBtn = document.getElementById('pause-btn');
+        const endBtn = document.getElementById('end-btn');
+
+        // Finish
+        const resetBtn = document.getElementById('reset-btn');
+
+        // --- Timer State ---
+        let totalTime = 300; // in seconds (5 min default)
+        let currentTotalSeconds = 0;
+        let currentExerciseSeconds = 0;
+        let isPaused = false;
+        let mainInterval = null;
+
+        // --- Audio Context for Beep ---
+        let audioContext;
+        
+        function setupAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playBeep(frequency = 440, duration = 100, volume = 0.5) {
+            if (!audioContext) setupAudio();
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
+                oscillator.frequency.value = frequency;
+                gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            } catch (e) {
+                console.error("Web Audio API error:", e);
+            }
+        }
+
+        // --- Event Listeners for Sliders ---
+        totalTimeSlider.addEventListener('input', (e) => {
+            totalTime = parseInt(e.target.value, 10);
+            totalTimeLabel.textContent = `${totalTime} min`;
+        });
+
+        // REMOVED exerciseTimeSlider event listener
+        
+        // --- Event Listeners for Buttons ---
+        startBtn.addEventListener('click', startRoutine);
+        pauseBtn.addEventListener('click', pauseRoutine);
+        endBtn.addEventListener('click', resetRoutine);
+        resetBtn.addEventListener('click', resetRoutine);
+
+        // --- New Helper Function ---
+        function getRandomExerciseTime() {
+            // Random integer between 15 and 45 (inclusive)
+            return Math.floor(Math.random() * 21) + 15;
+        }
+
+        // --- Core Functions ---
+        function startRoutine() {
+            // 1. Setup audio context on user action
+            setupAudio();
+            playBeep(220, 50); // Short low beep to confirm start
+
+            // 2. Set initial timer values
+            totalTime = parseInt(totalTimeSlider.value, 10) * 60;
+            // REMOVED exerciseTime = ...
+            
+            currentTotalSeconds = totalTime;
+            currentExerciseSeconds = getRandomExerciseTime(); // Set first random time
+            isPaused = false;
+
+            // 3. Update UI
+            settingsScreen.classList.add('hidden');
+            finishScreen.classList.add('hidden');
+            workoutScreen.classList.remove('hidden');
+            pauseBtn.innerHTML = '<i class="fas fa-pause mr-2"></i>Pausar';
+            
+            selectRandomExercise();
+            updateDisplays();
+
+            // 4. Start main timer
+            clearInterval(mainInterval); // Clear any old timers
+            mainInterval = setInterval(tick, 1000);
+        }
+
+        function tick() {
+            if (isPaused) return;
+
+            currentTotalSeconds--;
+            currentExerciseSeconds--;
+
+            if (currentTotalSeconds <= 0) {
+                // Total routine finished
+                finishRoutine();
+            } else if (currentExerciseSeconds <= 0) {
+                // Exercise finished, switch to next
+                playBeep(880, 150); // High beep for switch
+                currentExerciseSeconds = getRandomExerciseTime(); // Reset with NEW random time
+                selectRandomExercise();
+            } 
+            // La advertencia de cuenta regresiva (else if) se eliminó de aquí
+            
+            updateDisplays();
+        }
+
+        function finishRoutine() {
+            clearInterval(mainInterval);
+            mainInterval = null;
+            playBeep(1046, 200); // High-pitched finish beep
+            
+            workoutScreen.classList.add('hidden');
+            finishScreen.classList.remove('hidden');
+        }
+
+        function pauseRoutine() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Continuar';
+            } else {
+                pauseBtn.innerHTML = '<i class="fas fa-pause mr-2"></i>Pausar';
+            }
+        }
+
+        function resetRoutine() {
+            clearInterval(mainInterval);
+            mainInterval = null;
+            isPaused = true;
+            
+            currentExerciseEl.textContent = "¡Preparados!";
+            // exerciseTimerEl.textContent = "--"; // Ya no es necesario
+            
+            finishScreen.classList.add('hidden');
+            workoutScreen.classList.add('hidden');
+            settingsScreen.classList.remove('hidden');
+        }
+
+        function selectRandomExercise() {
+            const currentExercise = currentExerciseEl.textContent;
+            let newExercise;
+            
+            // Ensure the new exercise is different from the current one
+            do {
+                newExercise = exerciseList[Math.floor(Math.random() * exerciseList.length)];
+            } while (newExercise === currentExercise && exerciseList.length > 1);
+            
+            currentExerciseEl.textContent = newExercise;
+        }
+
+        function updateDisplays() {
+            // Update Exercise Timer
+            // exerciseTimerEl.textContent = String(currentExerciseSeconds).padStart(2, '0'); // Ya no es necesario
+
+            // Update Total Timer
+            let minutes = Math.floor(currentTotalSeconds / 60);
+            let seconds = currentTotalSeconds % 60;
+            totalTimerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+    </script>
+</body>
+</html>

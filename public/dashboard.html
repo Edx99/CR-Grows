@@ -191,42 +191,50 @@
                 <span style="color:var(--green-accent);">🧭</span> Ayuda y plantillas reutilizables
             </h3>
             <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
-                Aquí puedes guardar modelos HTML simples que otras personas puedan adaptar para crear sus propias rutinas, actividades o configuraciones.
+                Aquí tienes dos modelos listos para adaptar. Puedes abrirlos directamente o crear una versión personalizada con tus propias actividades y descargarla como un archivo HTML nuevo.
             </p>
         </div>
         <div class="help-grid">
             <div class="template-card">
-                <h4>Plantilla de rutina diaria</h4>
-                <p>Ideal para organizar bloques de trabajo, descanso y seguimiento de hábitos.</p>
-                <pre>&lt;section class="rutina"&gt;
-  &lt;h2&gt;Rutina diaria&lt;/h2&gt;
-  &lt;ul&gt;
-    &lt;li&gt;Desayuno y planificación&lt;/li&gt;
-    &lt;li&gt;Trabajo principal&lt;/li&gt;
-    &lt;li&gt;Ejercicio o movimiento&lt;/li&gt;
-  &lt;/ul&gt;
-&lt;/section&gt;</pre>
-                <button class="template-btn" onclick="copyTemplate('daily')">📋 Copiar modelo</button>
+                <h4>Plantilla HIIT interactiva</h4>
+                <p>Ideal para rutinas rápidas con ejercicios que cambian automáticamente. Perfecta para entrenamientos de agilidad o fuerza.</p>
+                <pre>const exerciseList = [
+  "Burpee",
+  "Saltos",
+  "Plancha"
+];</pre>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="template-btn" onclick="openTemplate('ayuda_hiit.html')">▶ Abrir plantilla</button>
+                    <button class="template-btn" onclick="focusCustomRoutine('hiit')">⚡ Crear mi versión</button>
+                </div>
             </div>
             <div class="template-card">
-                <h4>Plantilla de checklist semanal</h4>
-                <p>Perfecta para registrar objetivos semanales y revisar progreso por día.</p>
-                <pre>&lt;div class="checklist"&gt;
-  &lt;h3&gt;Checklist semanal&lt;/h3&gt;
-  &lt;label&gt;&lt;input type="checkbox"&gt; Meta 1&lt;/label&gt;
-  &lt;label&gt;&lt;input type="checkbox"&gt; Meta 2&lt;/label&gt;
-&lt;/div&gt;</pre>
-                <button class="template-btn" onclick="copyTemplate('weekly')">📋 Copiar modelo</button>
+                <h4>Plantilla de frases reproducibles</h4>
+                <p>Útil para rutinas de afirmaciones, práctica verbal o sesiones de repetición secuencial.</p>
+                <pre>const exercisePool = [
+  "Soy fuerte",
+  "Soy disciplinado"
+];</pre>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="template-btn" onclick="openTemplate('ayuda_frases_reproducibles.html')">▶ Abrir plantilla</button>
+                    <button class="template-btn" onclick="focusCustomRoutine('frases')">⚡ Crear mi versión</button>
+                </div>
             </div>
-            <div class="template-card">
-                <h4>Plantilla de objetivos por área</h4>
-                <p>Útil para separar tareas por áreas como salud, estudio, negocio o creatividad.</p>
-                <pre>&lt;div class="area-card"&gt;
-  &lt;h3&gt;Área de enfoque&lt;/h3&gt;
-  &lt;p&gt;Objetivo principal&lt;/p&gt;
-  &lt;button&gt;Agregar actividad&lt;/button&gt;
-&lt;/div&gt;</pre>
-                <button class="template-btn" onclick="copyTemplate('areas')">📋 Copiar modelo</button>
+            <div class="template-card" style="grid-column:1 / -1;">
+                <h4>Crear una rutina personalizada</h4>
+                <p>Escribe las actividades o frases que quieras usar y el sistema generará un archivo HTML nuevo listo para descargar.</p>
+                <form id="customRoutineForm" onsubmit="createCustomRoutine(event)">
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+                        <input id="customRoutineName" type="text" placeholder="Nombre de tu rutina" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;" />
+                        <select id="customRoutineType" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;">
+                            <option value="hiit">HIIT</option>
+                            <option value="frases">Frases reproducibles</option>
+                        </select>
+                        <textarea id="customRoutineItems" rows="6" placeholder="Escribe una actividad o frase por línea. Ejemplo:&#10;Burpee&#10;Saltos&#10;Plancha" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;resize:vertical;"></textarea>
+                        <button class="template-btn" type="submit" style="align-self:flex-start;">📦 Generar archivo HTML</button>
+                    </div>
+                </form>
+                <div id="customRoutineMessage" style="margin-top:10px;font-size:12px;color:#86efac;min-height:18px;"></div>
             </div>
         </div>
     </section>
@@ -300,12 +308,6 @@ let chartInst    = null;
 let isSaving     = false;
 let currentView  = 'dashboard';
 
-const HELP_TEMPLATES = {
-    daily: `<section class="rutina">\n  <h2>Rutina diaria</h2>\n  <ul>\n    <li>Desayuno y planificación</li>\n    <li>Trabajo principal</li>\n    <li>Ejercicio o movimiento</li>\n  </ul>\n</section>`,
-    weekly: `<div class="checklist">\n  <h3>Checklist semanal</h3>\n  <label><input type="checkbox"> Meta 1</label>\n  <label><input type="checkbox"> Meta 2</label>\n</div>`,
-    areas: `<div class="area-card">\n  <h3>Área de enfoque</h3>\n  <p>Objetivo principal</p>\n  <button>Agregar actividad</button>\n</div>`
-};
-
 function setActiveNav(view) {
     document.querySelectorAll('.nav-item[data-view]').forEach(item => {
         item.classList.toggle('active', item.getAttribute('data-view') === view);
@@ -321,23 +323,90 @@ function showView(view) {
     setActiveNav(view);
 }
 
-async function copyTemplate(key) {
-    const value = HELP_TEMPLATES[key];
-    if (!value) return;
+function openTemplate(fileName) {
+    window.open(fileName, '_blank', 'noopener');
+}
+
+function focusCustomRoutine(type) {
+    const typeSelect = document.getElementById('customRoutineType');
+    const itemsTextarea = document.getElementById('customRoutineItems');
+    if (typeSelect) typeSelect.value = type;
+    if (itemsTextarea) {
+        itemsTextarea.focus();
+        itemsTextarea.placeholder = type === 'hiit'
+            ? 'Ejemplo:\nBurpee\nSaltos\nPlancha'
+            : 'Ejemplo:\nSoy disciplinado\nSoy constante\nSoy capaz';
+    }
+}
+
+function escapeForJsString(value) {
+    return JSON.stringify(value).slice(1, -1);
+}
+
+function buildTemplateContent(templateText, type, items, title) {
+    const cleanItems = items
+        .split(/\n|\r/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+    if (cleanItems.length === 0) {
+        throw new Error('Agrega al menos una actividad o frase.');
+    }
+
+    if (type === 'hiit') {
+        const replacement = `const exerciseList = [\n${cleanItems.map(item => `            "${escapeForJsString(item)}"`).join(',\n')}\n        ];`;
+        templateText = templateText.replace(/const exerciseList = \[(?:.|\n)*?\];/, replacement);
+        templateText = templateText.replace(/<title>Rutina de Agilidad<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
+        templateText = templateText.replace(/<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad<\/h1>/i, `<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">${title || 'Rutina personalizada'}</h1>`);
+    } else {
+        const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
+        templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/, replacement);
+        templateText = templateText.replace(/<title>Mi Rutina de Práctica \(Secuencial\)<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
+        templateText = templateText.replace(/<h1>Mi Rutina de Práctica<\/h1>/i, `<h1>${title || 'Rutina personalizada'}</h1>`);
+    }
+
+    return templateText;
+}
+
+async function createCustomRoutine(event) {
+    event.preventDefault();
+    const nameInput = document.getElementById('customRoutineName');
+    const typeSelect = document.getElementById('customRoutineType');
+    const itemsTextarea = document.getElementById('customRoutineItems');
+    const message = document.getElementById('customRoutineMessage');
+
+    if (!nameInput || !typeSelect || !itemsTextarea || !message) return;
+
+    const title = nameInput.value.trim() || 'Rutina personalizada';
+    const type = typeSelect.value;
+    const items = itemsTextarea.value;
+
+    message.textContent = 'Generando tu archivo...';
+
     try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(value);
-        } else {
-            const area = document.createElement('textarea');
-            area.value = value;
-            document.body.appendChild(area);
-            area.select();
-            document.execCommand('copy');
-            area.remove();
-        }
-        showToast('Modelo copiado al portapapeles ✓', 'success');
+        const templateFile = type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_reproducibles.html';
+        const response = await fetch(templateFile);
+        if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
+
+        const templateText = await response.text();
+        const generated = buildTemplateContent(templateText, type, items, title);
+        const fileName = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'rutina'}.html`;
+        const blob = new Blob([generated], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        message.textContent = `Listo. Se descargó ${fileName}`;
+        showToast('Rutina personalizada descargada ✓', 'success');
     } catch (err) {
-        showToast('No se pudo copiar el modelo', 'error');
+        console.error(err);
+        message.textContent = err.message || 'No se pudo generar la rutina.';
+        showToast('No se pudo generar la rutina', 'error');
     }
 }
 
