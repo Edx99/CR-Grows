@@ -30,9 +30,16 @@
         .brand-sub  { font-size:9px; color:var(--green-accent); letter-spacing:0.1em; text-transform:uppercase; }
         .nav { flex:1; padding:20px 12px; display:flex; flex-direction:column; gap:3px; }
         .nav-label { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(82,183,136,0.5); padding:0 10px; margin:14px 0 5px; }
-        .nav-item { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; color:rgba(168,196,178,0.8); font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; }
+        .nav-item { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; color:rgba(168,196,178,0.8); font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; background:none; border:none; text-align:left; width:100%; }
         .nav-item:hover { background:rgba(82,183,136,0.12); color:#fff; }
         .nav-item.active { background:var(--green-accent); color:#fff; }
+        .help-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+        .template-card { background:rgba(15,23,42,0.8); border:1px solid rgba(82,183,136,0.16); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+        .template-card h4 { color:#fff; font-size:14px; font-weight:700; }
+        .template-card p { color:#94a3b8; font-size:12px; line-height:1.5; }
+        .template-card pre { background:#020617; border:1px solid rgba(82,183,136,0.16); border-radius:10px; padding:10px; color:#cbd5e1; font-size:11px; overflow-x:auto; white-space:pre-wrap; }
+        .template-btn { background:rgba(82,183,136,0.14); border:1px solid rgba(82,183,136,0.24); color:#bbf7d0; border-radius:10px; padding:8px 10px; font-size:12px; cursor:pointer; }
+        .template-btn:hover { background:rgba(82,183,136,0.22); }
         .sidebar-footer { padding:16px 20px 0; border-top:1px solid rgba(82,183,136,0.15); }
         .user-card { display:flex; align-items:center; gap:10px; }
         .avatar { width:34px; height:34px; border-radius:50%; background:var(--green-mid); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; border:2px solid var(--green-accent); }
@@ -77,7 +84,8 @@
     </div>
     <nav class="nav">
         <span class="nav-label">Operaciones</span>
-        <a class="nav-item active"><span>🎯</span> Dashboard</a>
+        <a class="nav-item active" href="#" data-view="dashboard" onclick="event.preventDefault(); showView('dashboard')"><span>🎯</span> Dashboard</a>
+        <a class="nav-item" href="#" data-view="help" onclick="event.preventDefault(); showView('help')"><span>🧭</span> Ayuda</a>
         <a class="nav-item" onclick="showToast('Próximamente...')"><span>📊</span> Estadísticas</a>
         <a class="nav-item" onclick="showToast('Próximamente...')"><span>🏆</span> Logros</a>
         <span class="nav-label">Personal</span>
@@ -100,80 +108,128 @@
 </aside>
 
 <main class="main">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
-        <div>
-            <h1 style="font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-bottom:4px;">
-                <span class="gradient-text">COMANDO ÉLITE</span>
-            </h1>
-            <p style="font-size:13px;color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-            <!-- Sync indicator -->
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(148,163,184,0.6);">
-                <div id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#334155;transition:background 0.3s;"></div>
-                <span id="syncText">Sincronizando...</span>
+    <section id="dashboardView">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+            <div>
+                <h1 style="font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-bottom:4px;">
+                    <span class="gradient-text">COMANDO ÉLITE</span>
+                </h1>
+                <p style="font-size:13px;color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
             </div>
-            <button onclick="manualSync()"
-                style="font-size:11px;background:rgba(30,41,59,0.8);border:1px solid rgba(82,183,136,0.2);color:rgba(148,163,184,0.8);padding:6px 14px;border-radius:20px;cursor:pointer;">
-                🔄 Sincronizar
-            </button>
-        </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
-        <div class="glass p-5 text-center" style="box-shadow:0 0 18px rgba(82,183,136,0.2);">
-            <div style="font-size:32px;font-weight:800;color:#52b788;font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
-            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Éxito Diario</div>
-        </div>
-        <div class="glass p-5 text-center">
-            <div style="font-size:32px;font-weight:800;color:#818cf8;font-family:'DM Serif Display',serif;" id="avgScore">0%</div>
-            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Promedio 30D</div>
-        </div>
-        <div class="glass p-5 text-center" style="border-left:3px solid #f97316;">
-            <div style="font-size:32px;font-weight:800;color:#f97316;font-family:'DM Serif Display',serif;" id="streakCount">0</div>
-            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Racha (Días)</div>
-        </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
-        <div style="display:flex;flex-direction:column;gap:20px;">
-            <div class="glass p-6">
-                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:18px;">
-                    <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
-                </h3>
-                <div id="missionList" style="display:flex;flex-direction:column;gap:10px;"></div>
-                <div id="emptyMissions" style="display:none;text-align:center;color:#475569;font-size:13px;padding:32px 0;">
-                    No hay misiones para hoy.<br>
-                    <span style="font-size:11px;">Agrega misiones desde las Áreas Operativas →</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <!-- Sync indicator -->
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(148,163,184,0.6);">
+                    <div id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#334155;transition:background 0.3s;"></div>
+                    <span id="syncText">Sincronizando...</span>
                 </div>
-            </div>
-            <div class="glass p-6">
-                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-                    <span style="color:#34d399;">📈</span> Análisis de Desempeño
-                </h3>
-                <canvas id="historyChart" height="140"></canvas>
+                <button onclick="manualSync()"
+                    style="font-size:11px;background:rgba(30,41,59,0.8);border:1px solid rgba(82,183,136,0.2);color:rgba(148,163,184,0.8);padding:6px 14px;border-radius:20px;cursor:pointer;">
+                    🔄 Sincronizar
+                </button>
             </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:20px;">
-            <div class="glass-green p-5" style="border-top:2px solid var(--green-accent);">
-                <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:#fff;">Áreas Operativas</h3>
-                <div id="areaGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+            <div class="glass p-5 text-center" style="box-shadow:0 0 18px rgba(82,183,136,0.2);">
+                <div style="font-size:32px;font-weight:800;color:#52b788;font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Éxito Diario</div>
             </div>
-            <div style="background:rgba(49,46,129,0.2);border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:20px;">
-                <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#a5b4fc;">🤖 Comando AI</h3>
-                <div id="aiResponse" style="font-size:13px;color:#cbd5e1;margin-bottom:14px;height:88px;overflow-y:auto;font-style:italic;line-height:1.6;">
-                    "Listo para optimizar tu rutina. ¿En qué área nos enfocamos hoy?"
+            <div class="glass p-5 text-center">
+                <div style="font-size:32px;font-weight:800;color:#818cf8;font-family:'DM Serif Display',serif;" id="avgScore">0%</div>
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Promedio 30D</div>
+            </div>
+            <div class="glass p-5 text-center" style="border-left:3px solid #f97316;">
+                <div style="font-size:32px;font-weight:800;color:#f97316;font-family:'DM Serif Display',serif;" id="streakCount">0</div>
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Racha (Días)</div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+            <div style="display:flex;flex-direction:column;gap:20px;">
+                <div class="glass p-6">
+                    <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+                        <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
+                    </h3>
+                    <div id="missionList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                    <div id="emptyMissions" style="display:none;text-align:center;color:#475569;font-size:13px;padding:32px 0;">
+                        No hay misiones para hoy.<br>
+                        <span style="font-size:11px;">Agrega misiones desde las Áreas Operativas →</span>
+                    </div>
                 </div>
-                <div style="display:flex;gap:8px;">
-                    <input type="text" id="aiInput" placeholder="Pide un consejo..."
-                        style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;font-size:13px;width:100%;outline:none;color:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;"
-                        onkeydown="if(event.key==='Enter')askAI()">
-                    <button onclick="askAI()" style="background:#4f46e5;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#fff;flex-shrink:0;">➤</button>
+                <div class="glass p-6">
+                    <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                        <span style="color:#34d399;">📈</span> Análisis de Desempeño
+                    </h3>
+                    <canvas id="historyChart" height="140"></canvas>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:20px;">
+                <div class="glass-green p-5" style="border-top:2px solid var(--green-accent);">
+                    <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:#fff;">Áreas Operativas</h3>
+                    <div id="areaGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+                </div>
+                <div style="background:rgba(49,46,129,0.2);border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:20px;">
+                    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#a5b4fc;">🤖 Comando AI</h3>
+                    <div id="aiResponse" style="font-size:13px;color:#cbd5e1;margin-bottom:14px;height:88px;overflow-y:auto;font-style:italic;line-height:1.6;">
+                        "Listo para optimizar tu rutina. ¿En qué área nos enfocamos hoy?"
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="aiInput" placeholder="Pide un consejo..."
+                            style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;font-size:13px;width:100%;outline:none;color:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;"
+                            onkeydown="if(event.key==='Enter')askAI()">
+                        <button onclick="askAI()" style="background:#4f46e5;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#fff;flex-shrink:0;">➤</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <section id="helpView" style="display:none;">
+        <div class="glass p-6" style="margin-bottom:20px;">
+            <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="color:var(--green-accent);">🧭</span> Ayuda y plantillas reutilizables
+            </h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+                Aquí puedes guardar modelos HTML simples que otras personas puedan adaptar para crear sus propias rutinas, actividades o configuraciones.
+            </p>
+        </div>
+        <div class="help-grid">
+            <div class="template-card">
+                <h4>Plantilla de rutina diaria</h4>
+                <p>Ideal para organizar bloques de trabajo, descanso y seguimiento de hábitos.</p>
+                <pre>&lt;section class="rutina"&gt;
+  &lt;h2&gt;Rutina diaria&lt;/h2&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Desayuno y planificación&lt;/li&gt;
+    &lt;li&gt;Trabajo principal&lt;/li&gt;
+    &lt;li&gt;Ejercicio o movimiento&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/section&gt;</pre>
+                <button class="template-btn" onclick="copyTemplate('daily')">📋 Copiar modelo</button>
+            </div>
+            <div class="template-card">
+                <h4>Plantilla de checklist semanal</h4>
+                <p>Perfecta para registrar objetivos semanales y revisar progreso por día.</p>
+                <pre>&lt;div class="checklist"&gt;
+  &lt;h3&gt;Checklist semanal&lt;/h3&gt;
+  &lt;label&gt;&lt;input type="checkbox"&gt; Meta 1&lt;/label&gt;
+  &lt;label&gt;&lt;input type="checkbox"&gt; Meta 2&lt;/label&gt;
+&lt;/div&gt;</pre>
+                <button class="template-btn" onclick="copyTemplate('weekly')">📋 Copiar modelo</button>
+            </div>
+            <div class="template-card">
+                <h4>Plantilla de objetivos por área</h4>
+                <p>Útil para separar tareas por áreas como salud, estudio, negocio o creatividad.</p>
+                <pre>&lt;div class="area-card"&gt;
+  &lt;h3&gt;Área de enfoque&lt;/h3&gt;
+  &lt;p&gt;Objetivo principal&lt;/p&gt;
+  &lt;button&gt;Agregar actividad&lt;/button&gt;
+&lt;/div&gt;</pre>
+                <button class="template-btn" onclick="copyTemplate('areas')">📋 Copiar modelo</button>
+            </div>
+        </div>
+    </section>
 </main>
 
 <div id="modal" onclick="if(event.target===this)closeModal()"
@@ -242,6 +298,48 @@ let currentArea  = null;
 let saveTimer    = null;
 let chartInst    = null;
 let isSaving     = false;
+let currentView  = 'dashboard';
+
+const HELP_TEMPLATES = {
+    daily: `<section class="rutina">\n  <h2>Rutina diaria</h2>\n  <ul>\n    <li>Desayuno y planificación</li>\n    <li>Trabajo principal</li>\n    <li>Ejercicio o movimiento</li>\n  </ul>\n</section>`,
+    weekly: `<div class="checklist">\n  <h3>Checklist semanal</h3>\n  <label><input type="checkbox"> Meta 1</label>\n  <label><input type="checkbox"> Meta 2</label>\n</div>`,
+    areas: `<div class="area-card">\n  <h3>Área de enfoque</h3>\n  <p>Objetivo principal</p>\n  <button>Agregar actividad</button>\n</div>`
+};
+
+function setActiveNav(view) {
+    document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-view') === view);
+    });
+}
+
+function showView(view) {
+    currentView = view;
+    const dashboardView = document.getElementById('dashboardView');
+    const helpView = document.getElementById('helpView');
+    if (dashboardView) dashboardView.style.display = view === 'dashboard' ? 'block' : 'none';
+    if (helpView) helpView.style.display = view === 'help' ? 'block' : 'none';
+    setActiveNav(view);
+}
+
+async function copyTemplate(key) {
+    const value = HELP_TEMPLATES[key];
+    if (!value) return;
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(value);
+        } else {
+            const area = document.createElement('textarea');
+            area.value = value;
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand('copy');
+            area.remove();
+        }
+        showToast('Modelo copiado al portapapeles ✓', 'success');
+    } catch (err) {
+        showToast('No se pudo copiar el modelo', 'error');
+    }
+}
 
 // ══════════════════════════════════════════════════
 // 3. API — returns null on any failure, never redirects
@@ -455,6 +553,7 @@ async function init() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) { overlay.style.opacity='0'; setTimeout(()=>overlay.remove(), 400); }
 
+    showView('dashboard');
     render();
     showToast(`Bienvenido, ${userName} 👋`, 'success');
 }
