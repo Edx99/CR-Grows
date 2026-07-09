@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Afirmaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-dim: #7a6030;
+    --cream: #f5efe6;
+    --dark: #0a0806;
+    --ember: #8b3a0f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'Cormorant Garamond', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated ember background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 100%, #3a1a0a 0%, transparent 70%),
+      radial-gradient(ellipse 80% 60% at 50% 110%, #1a0800 0%, transparent 60%);
+    z-index: 0;
+    animation: breathe 8s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  /* Particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    bottom: -10px;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0;
+    animation: rise linear infinite;
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-100vh) translateX(var(--drift)); opacity: 0; }
+  }
+
+  /* UI */
+  .container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 820px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  /* Settings panel */
+  .settings {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 2px;
+    padding: 1rem 2rem;
+    width: 100%;
+  }
+
+  .settings label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+
+  .settings input[type=number] {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--gold-dim);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    width: 60px;
+    text-align: center;
+    outline: none;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 1px;
+  }
+  .btn:hover { background: rgba(201,168,76,0.1); }
+  .btn.active { background: var(--gold); color: var(--dark); }
+  .btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* Stage */
+  .stage {
+    width: 100%;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 3rem 2rem;
+  }
+
+  .round-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    transition: opacity 1s;
+  }
+  .round-badge.visible { opacity: 1; }
+
+  .phrase-text {
+    font-size: clamp(1.3rem, 3.5vw, 2rem);
+    font-weight: 300;
+    line-height: 1.6;
+    text-align: center;
+    color: var(--cream);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 1.2s ease, transform 1.2s ease;
+    max-width: 700px;
+  }
+  .phrase-text.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .imagine-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    color: var(--gold);
+    margin-top: 1.5rem;
+    opacity: 0;
+    transition: opacity 1.5s ease 2s;
+    letter-spacing: 0.05em;
+  }
+  .imagine-text.visible { opacity: 1; }
+
+  /* Progress arc */
+  .progress-ring {
+    position: relative;
+    width: 90px;
+    height: 90px;
+  }
+  .progress-ring svg { transform: rotate(-90deg); }
+  .progress-ring circle {
+    fill: none;
+    stroke: rgba(201,168,76,0.15);
+    stroke-width: 2;
+  }
+  .progress-ring .arc {
+    stroke: var(--gold);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .progress-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+  }
+  .progress-center .time-num {
+    font-size: 1.4rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .progress-center .time-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+
+  /* Counter row */
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-content: center;
+  }
+  .phrase-counter {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+  }
+  .phrase-counter span {
+    color: var(--gold);
+    font-size: 1rem;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Sound toggle */
+  .sound-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gold-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 1rem;
+  }
+  .sound-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .sound-btn.on { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+
+  /* Divider */
+  .divider {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+  }
+
+  /* Progress dots */
+  .dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 600px;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    transition: background 0.5s, transform 0.3s;
+  }
+  .dot.done { background: var(--gold); }
+  .dot.current { background: var(--gold); transform: scale(1.6); }
+
+  /* TTS status */
+  .tts-status {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    min-height: 1em;
+    transition: opacity 0.5s;
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+  <!-- Settings -->
+  <div class="settings">
+    <label>Segundos por frase</label>
+    <input type="number" id="secInput" value="30" min="5" max="300">
+    <div class="divider" style="width:1px;height:30px;background:rgba(201,168,76,0.2)"></div>
+    <button class="btn" id="startBtn" onclick="startSession()">Iniciar</button>
+    <button class="btn" id="pauseBtn" onclick="togglePause()" disabled>Pausar</button>
+    <button class="btn" id="resetBtn" onclick="resetSession()" disabled>Reiniciar</button>
+    <div class="divider" style="width:1px;height:30px;background:rgba(201,168,76,0.2)"></div>
+    <button class="sound-btn" id="soundBtn" onclick="toggleSound()" title="Voz">🔊</button>
+  </div>
+
+  <!-- Stage -->
+  <div class="stage">
+    <div class="round-badge" id="roundBadge">Ronda I · Solo la frase</div>
+    <div class="phrase-text" id="phraseText">Toca Iniciar para comenzar tu práctica</div>
+    <div class="imagine-text" id="imagineText">Ahora imagina vividamente quien eres</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Meta row -->
+  <div class="meta-row">
+    <div class="phrase-counter">Frase <span id="phraseNum">—</span> / <span id="phraseTotal">—</span></div>
+    <div class="progress-ring" id="progressRing">
+      <svg width="90" height="90" viewBox="0 0 90 90">
+        <circle cx="45" cy="45" r="40"/>
+        <circle class="arc" id="arcEl" cx="45" cy="45" r="40" stroke-dasharray="251" stroke-dashoffset="251"/>
+      </svg>
+      <div class="progress-center">
+        <div class="time-num" id="timerNum">—</div>
+        <div class="time-label">seg</div>
+      </div>
+    </div>
+    <div class="phrase-counter">Ronda <span id="roundNum">—</span></div>
+  </div>
+
+  <div class="tts-status" id="ttsStatus"></div>
+
+  <!-- Dots -->
+  <div class="dots" id="dots"></div>
+
+</div>
+
+<script>
+const phrases = [
+  "Mi amor propio es infinito y por ello me amo, me cuido, me protejo y crezco cada día",
+  "Actúo con propósito, estrategia y decisión",
+  "La disciplina es mi estandarte: Hago lo que tengo que hacer aún cuando no quiero hacerlo",
+  "La ética es mi emblema: Siempre actúo de forma correcta aún cuando no obtenga beneficios",
+  "Soy un líder nato, decidido e imparable",
+  "Mi entrenamiento es duro y constante para cuidar y proteger a mis seres queridos",
+  "Amo a mi familia y por ello los cuido, los protejo y guio para que sean mejores cada día",
+  "Cada centavo cuenta, invierto para ganar y gasto sólo en lo que aporta valor a mi vida",
+  "Soy sociable y disfruto de una buena conversación junto a una buena compañía",
+  "Soy el mejor en todo lo que hago porque me entreno, me capacito y practico",
+  "Mi misión es crear un mundo mejor para la sociedad en base a mis habilidades y conocimientos",
+  "Logro mis metas con acciones claras y decididas",
+ // "Soy un solucionador de problemas",
+  "Cuidar de mi mismo es muestra de mi respeto y compromiso personal",
+  "Cada desafío me lleva a nuevas alturas de excelencia",
+  "Cada día soy mejor que ayer",
+  //"Soy la persona que quiero ser y ya tengo lo que deseo tener"
+  "Un dosdemaino siempre primero"
+];
+
+const CIRC = 2 * Math.PI * 40; // 251.3
+
+let baseSec = 30;
+let round = 1; // 1 or 2
+let currentIdx = 0;
+let timeLeft = 0;
+let ticker = null;
+let paused = false;
+let soundOn = true;
+let speaking = false;
+let utterance = null;
+
+// --- Particles ---
+function spawnParticles() {
+  const cont = document.getElementById('particles');
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const left = Math.random() * 100;
+    const dur = 6 + Math.random() * 12;
+    const delay = Math.random() * 10;
+    const drift = (Math.random() - 0.5) * 120;
+    const size = 1 + Math.random() * 2.5;
+    p.style.cssText = `left:${left}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;--drift:${drift}px`;
+    cont.appendChild(p);
+  }
+}
+spawnParticles();
+
+// --- Dots ---
+function buildDots() {
+  const cont = document.getElementById('dots');
+  cont.innerHTML = '';
+  phrases.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.id = `dot${i}`;
+    cont.appendChild(d);
+  });
+  document.getElementById('phraseTotal').textContent = phrases.length;
+}
+buildDots();
+
+function updateDots(idx) {
+  phrases.forEach((_, i) => {
+    const d = document.getElementById(`dot${i}`);
+    d.className = 'dot' + (i < idx ? ' done' : i === idx ? ' current' : '');
+  });
+}
+
+// --- Timer arc ---
+function setArc(fraction) {
+  const offset = CIRC * (1 - fraction);
+  document.getElementById('arcEl').style.strokeDashoffset = offset;
+}
+
+// --- Speech ---
+function speak(text) {
+  if (!soundOn || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-ES';
+  utterance.rate = 0.88;
+  utterance.pitch = 1;
+
+  // Try to pick a Spanish voice
+  const voices = window.speechSynthesis.getVoices();
+  const esVoice = voices.find(v => v.lang.startsWith('es') && v.localService) ||
+                  voices.find(v => v.lang.startsWith('es'));
+  if (esVoice) utterance.voice = esVoice;
+
+  utterance.onstart = () => {
+    document.getElementById('ttsStatus').textContent = '🎙 reproduciendo voz...';
+  };
+  utterance.onend = () => {
+    document.getElementById('ttsStatus').textContent = '';
+    speaking = false;
+  };
+  utterance.onerror = () => {
+    document.getElementById('ttsStatus').textContent = '';
+    speaking = false;
+  };
+
+  speaking = true;
+  window.speechSynthesis.speak(utterance);
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  const btn = document.getElementById('soundBtn');
+  btn.className = 'sound-btn' + (soundOn ? ' on' : '');
+  btn.textContent = soundOn ? '🔊' : '🔇';
+  if (!soundOn) { window.speechSynthesis.cancel(); document.getElementById('ttsStatus').textContent = ''; }
+}
+
+// --- Show phrase ---
+function showPhrase(idx) {
+  const phraseEl = document.getElementById('phraseText');
+  const imagineEl = document.getElementById('imagineText');
+  const badgeEl = document.getElementById('roundBadge');
+  const roundNumEl = document.getElementById('roundNum');
+  const phraseNumEl = document.getElementById('phraseNum');
+
+  // Fade out
+  phraseEl.classList.remove('visible');
+  imagineEl.classList.remove('visible');
+  badgeEl.classList.remove('visible');
+
+  setTimeout(() => {
+    phraseEl.textContent = phrases[idx];
+    badgeEl.textContent = round === 1 ? 'Ronda I · Siente la afirmación' : 'Ronda II · Visualiza profundamente';
+    phraseNumEl.textContent = idx + 1;
+    roundNumEl.textContent = round;
+    updateDots(idx);
+
+    // Fade in
+    phraseEl.classList.add('visible');
+    badgeEl.classList.add('visible');
+
+    if (round === 2) {
+      setTimeout(() => imagineEl.classList.add('visible'), 2200);
+    }
+
+    // Speak
+    const fullText = round === 2
+      ? phrases[idx] + '. Ahora imagina vividamente quien eres.'
+      : phrases[idx];
+    speak(fullText);
+
+  }, 800);
+}
+
+// --- Ticker ---
+function startTicker() {
+  const totalSec = round === 1 ? baseSec : baseSec + 60;
+  timeLeft = totalSec;
+  document.getElementById('timerNum').textContent = timeLeft;
+  setArc(1);
+
+  clearInterval(ticker);
+  ticker = setInterval(() => {
+    if (paused) return;
+    timeLeft--;
+    document.getElementById('timerNum').textContent = timeLeft;
+    setArc(timeLeft / totalSec);
+
+    if (timeLeft <= 0) {
+      clearInterval(ticker);
+      window.speechSynthesis.cancel();
+      nextPhrase();
+    }
+  }, 1000);
+}
+
+function nextPhrase() {
+  currentIdx++;
+  if (currentIdx >= phrases.length) {
+    if (round === 1) {
+      round = 2;
+      currentIdx = 0;
+      showPhrase(currentIdx);
+      startTicker();
+    } else {
+      endSession();
+    }
+  } else {
+    showPhrase(currentIdx);
+    startTicker();
+  }
+}
+
+function startSession() {
+  baseSec = parseInt(document.getElementById('secInput').value) || 30;
+  round = 1;
+  currentIdx = 0;
+  paused = false;
+
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+  document.getElementById('secInput').disabled = true;
+
+  showPhrase(currentIdx);
+  startTicker();
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? 'Continuar' : 'Pausar';
+  if (paused) {
+    window.speechSynthesis.pause();
+    document.getElementById('ttsStatus').textContent = '⏸ pausado';
+  } else {
+    window.speechSynthesis.resume();
+    document.getElementById('ttsStatus').textContent = '';
+  }
+}
+
+function resetSession() {
+  clearInterval(ticker);
+  window.speechSynthesis.cancel();
+  paused = false;
+
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('pauseBtn').disabled = true;
+  document.getElementById('resetBtn').disabled = true;
+  document.getElementById('pauseBtn').textContent = 'Pausar';
+  document.getElementById('secInput').disabled = false;
+
+  document.getElementById('phraseText').classList.remove('visible');
+  document.getElementById('imagineText').classList.remove('visible');
+  document.getElementById('roundBadge').classList.remove('visible');
+  document.getElementById('timerNum').textContent = '—';
+  document.getElementById('phraseNum').textContent = '—';
+  document.getElementById('roundNum').textContent = '—';
+  document.getElementById('ttsStatus').textContent = '';
+  setArc(0);
+
+  setTimeout(() => {
+    document.getElementById('phraseText').textContent = 'Toca Iniciar para comenzar tu práctica';
+    document.getElementById('phraseText').classList.add('visible');
+  }, 400);
+
+  phrases.forEach((_, i) => {
+    document.getElementById(`dot${i}`).className = 'dot';
+  });
+}
+
+function endSession() {
+  clearInterval(ticker);
+  document.getElementById('phraseText').classList.remove('visible');
+  document.getElementById('imagineText').classList.remove('visible');
+
+  setTimeout(() => {
+    document.getElementById('phraseText').textContent = 'Práctica completada. Bien hecho.';
+    document.getElementById('phraseText').classList.add('visible');
+    document.getElementById('roundBadge').textContent = '✦ Fin de la sesión ✦';
+    document.getElementById('timerNum').textContent = '✓';
+    setArc(1);
+    speak('Práctica completada. Bien hecho.');
+  }, 800);
+
+  document.getElementById('pauseBtn').disabled = true;
+  document.getElementById('resetBtn').disabled = false;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('secInput').disabled = false;
+}
+
+// Preload voices
+window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+</script>
+</body>
+</html>
