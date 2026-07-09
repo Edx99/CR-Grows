@@ -100,7 +100,7 @@
         <a class="nav-item active" href="#" data-view="dashboard" onclick="event.preventDefault(); showView('dashboard')"><span>🎯</span> Dashboard</a>
         <a class="nav-item" href="#" data-view="help" onclick="event.preventDefault(); showView('help')"><span>🧭</span> Ayuda</a>
         <a class="nav-item" href="#" data-view="templates" onclick="event.preventDefault(); showView('templates')"><span>📦</span> Templates</a>
-        <a class="nav-item" onclick="showToast('Próximamente...')"><span>📊</span> Estadísticas</a>
+        <a class="nav-item" href="#" data-view="stats" onclick="event.preventDefault(); showView('stats')"><span>📊</span> Estadísticas</a>
         <a class="nav-item" href="#" data-view="achievements" onclick="event.preventDefault(); showView('achievements')"><span>🏆</span> Logros</a>
         <span class="nav-label">Personal</span>
         <a class="nav-item" href="#" data-view="profile" onclick="event.preventDefault(); showView('profile')"><span>👤</span> Perfil</a>
@@ -260,13 +260,64 @@
         </div>
     </section>
 
+    <section id="statsView" style="display:none;">
+        <div class="glass p-6" style="margin-bottom:20px;">
+            <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="color:#818cf8;">📊</span> Estadísticas e insights personalizados
+            </h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+                Aquí tu progreso se vuelve una guía. Revisa patrones, detecta tu mejor área y recibe un impulso claro para hoy.
+            </p>
+        </div>
+
+        <div class="metric-grid" style="margin-bottom:20px;">
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #52b788;">
+                <div class="metric-value" id="statsDaily">0%</div>
+                <div class="metric-label">Cumplimiento hoy</div>
+            </div>
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #818cf8;">
+                <div class="metric-value" style="color:#818cf8;" id="statsAvg">0%</div>
+                <div class="metric-label">Promedio de la semana</div>
+            </div>
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #f97316;">
+                <div class="metric-value" style="color:#f97316;" id="statsStreak">0</div>
+                <div class="metric-label">Racha activa</div>
+            </div>
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #f59e0b;">
+                <div class="metric-value" style="color:#f59e0b;" id="statsBestArea">—</div>
+                <div class="metric-label">Área con más impulso</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="glass p-6" style="margin-top:8px;">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                    <span style="color:#34d399;">✨</span> Insight del día
+                </h3>
+                <div id="statsInsight" style="font-size:13px;color:#cbd5e1;line-height:1.8;"></div>
+                <div id="statsFocus" style="margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(82,183,136,0.08);border:1px solid rgba(82,183,136,0.16);font-size:12px;color:#bbf7d0;"></div>
+            </div>
+            <div class="glass p-6" style="margin-top:8px;">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span style="color:#38bdf8;">🧠</span> Asistente de hábitos
+                </h3>
+                <p style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:10px;">
+                    Escribe qué quieres mejorar y recibe una recomendación de actividad o hábito para acercarte a tu meta.
+                </p>
+                <input id="aiInput" type="text" placeholder="Ej: quiero mejorar mi disciplina o mi salud" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;margin-bottom:10px;" />
+                <button onclick="askAI()" class="template-btn" style="margin-bottom:10px;">💡 Pedir recomendación</button>
+                <div id="aiResponse" style="padding:12px 14px;border-radius:12px;background:rgba(15,23,42,0.65);border:1px solid rgba(82,183,136,0.16);font-size:12px;color:#cbd5e1;line-height:1.7;min-height:70px;"></div>
+            </div>
+        </div>
+    </section>
+
     <section id="helpView" style="display:none;">
         <div class="glass p-6" style="margin-bottom:20px;">
             <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span style="color:var(--green-accent);">🧭</span> Ayuda y plantillas reutilizables
             </h3>
             <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
-                Aquí tienes dos modelos listos para adaptar. Puedes abrirlos directamente o crear una versión personalizada con tus propias actividades y descargarla como un archivo HTML nuevo.
+                Aquí tienes cuatro modelos listos para adaptar. Puedes abrirlos directamente o crear una versión personalizada con tus propias actividades y descargarla como un archivo HTML nuevo.
             </p>
         </div>
         <div class="help-grid">
@@ -293,6 +344,20 @@
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="template-btn" onclick="openTemplate('ayuda_frases_reproducibles.html')">▶ Abrir plantilla</button>
                     <button class="template-btn" onclick="focusCustomRoutine('frases')">⚡ Crear mi versión</button>
+                </div>
+            </div>
+            <div class="template-card">
+                <h4>Plantilla de control financiero</h4>
+                <p>Ideal para registrar metas financieras, hábitos de ahorro y seguimiento semanal de gastos o ingresos.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="template-btn" onclick="openTemplate('ayuda_financial.html')">▶ Abrir plantilla</button>
+                </div>
+            </div>
+            <div class="template-card">
+                <h4>Plantilla de frases audible</h4>
+                <p>Perfecta para repetir afirmaciones o mensajes de impulso con un enfoque más sonoro y emocional.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="template-btn" onclick="openTemplate('ayuda_frases_audible.html')">▶ Abrir plantilla</button>
                 </div>
             </div>
             <div class="template-card" style="grid-column:1 / -1;">
@@ -413,13 +478,16 @@ function showView(view) {
     const templatesView = document.getElementById('templatesView');
     const achievementsView = document.getElementById('achievementsView');
     const profileView = document.getElementById('profileView');
+    const statsView = document.getElementById('statsView');
     if (dashboardView) dashboardView.style.display = view === 'dashboard' ? 'block' : 'none';
     if (helpView) helpView.style.display = view === 'help' ? 'block' : 'none';
     if (templatesView) templatesView.style.display = view === 'templates' ? 'block' : 'none';
     if (achievementsView) achievementsView.style.display = view === 'achievements' ? 'block' : 'none';
     if (profileView) profileView.style.display = view === 'profile' ? 'block' : 'none';
+    if (statsView) statsView.style.display = view === 'stats' ? 'block' : 'none';
     if (view === 'achievements') renderAchievements();
     if (view === 'profile') renderProfileView();
+    if (view === 'stats') renderStatsView();
     if (view === 'dashboard') render();
     setActiveNav(view);
 }
@@ -992,6 +1060,64 @@ function render() {
 
     updateChart();
     renderAchievements();
+    renderStatsView();
+}
+
+function renderStatsView() {
+    if (!state) return;
+    if (!state.days[today]) state.days[today] = { done: [], percent: 0 };
+
+    const dailyPct = state.days[today]?.percent || 0;
+    const allDays = Object.values(state.days || {});
+    const avg = allDays.length
+        ? Math.round(allDays.reduce((sum, entry) => sum + (entry.percent || 0), 0) / allDays.length)
+        : 0;
+    const streak = state.streak || 0;
+
+    const completedToday = new Set(state.days[today]?.done || []);
+    const areaProgress = AREAS
+        .map((area) => {
+            const missions = (state.weekly || []).filter((mission) => mission.area === area);
+            const completed = missions.filter((mission) => completedToday.has(mission.id)).length;
+            const pct = missions.length ? Math.round((completed / missions.length) * 100) : 0;
+            return { area, missions: missions.length, completed, pct };
+        })
+        .filter((entry) => entry.missions > 0);
+
+    const bestArea = [...areaProgress].sort((a, b) => b.pct - a.pct)[0];
+    const focusArea = [...areaProgress].sort((a, b) => a.pct - b.pct)[0];
+
+    const percentEl = document.getElementById('statsDaily');
+    const avgEl = document.getElementById('statsAvg');
+    const streakEl = document.getElementById('statsStreak');
+    const bestAreaEl = document.getElementById('statsBestArea');
+    const insightEl = document.getElementById('statsInsight');
+    const focusEl = document.getElementById('statsFocus');
+
+    if (percentEl) percentEl.textContent = `${dailyPct}%`;
+    if (avgEl) avgEl.textContent = `${avg}%`;
+    if (streakEl) streakEl.textContent = streak;
+    if (bestAreaEl) bestAreaEl.textContent = bestArea ? bestArea.area : '—';
+
+    let insight = '';
+    if (dailyPct >= 80) {
+        insight = `Tu disciplina está brillando. Hoy ya tienes un ${dailyPct}% de avance y tu mejor zona es ${bestArea?.area || 'tu plan'}; mantén el impulso con una misión corta y visible.`;
+    } else if (streak >= 3) {
+        insight = `Tu racha ya tiene fuerza. El mejor movimiento ahora es cerrar una tarea simple en ${focusArea?.area || 'tu prioridad'} para que el hábito no se rompa.`;
+    } else {
+        insight = `Hoy no necesitas perfección. Comienza con una mini-misión en ${focusArea?.area || 'tu lista'} y deja que la constancia te gane el día.`;
+    }
+
+    if (insightEl) {
+        insightEl.innerHTML = `<div style="margin-bottom:10px;">${insight}</div><div style="font-size:12px;color:#64748b;">Tu promedio de cumplimiento ${avg}% y tu racha de ${streak} días te dicen que ya tienes una base sólida.</div>`;
+    }
+
+    if (focusEl) {
+        const focusText = bestArea && bestArea.pct > 0
+            ? `Próximo paso: dedica 10 minutos a ${bestArea.area} para reforzar lo que ya está funcionando.`
+            : 'Próximo paso: elige una sola misión sencilla y complétala antes de seguir con otra tarea.';
+        focusEl.textContent = focusText;
+    }
 }
 
 async function apiRequest(method, path, body) {
@@ -1237,18 +1363,35 @@ function updateChart() {
 // 14. AI
 // ══════════════════════════════════════════════════
 function askAI() {
-    const input=document.getElementById('aiInput').value.toLowerCase().trim();
-    const box=document.getElementById('aiResponse');
-    if (!input) return;
-    let r="Analiza tu semana: ¿qué misión completas siempre y cuál nunca? Empieza por la que evitas.";
-    if (input.includes('motivaci'))  r=`${userName}, la motivación arranca. El hábito mantiene. Haz la misión más pequeña ahora mismo.`;
-    if (input.includes('fitness'))   r="Regla de 2 minutos: si tarda menos de 2 minutos, hazla ya. Para fitness, empieza con 5 repeticiones.";
-    if (input.includes('finanza'))   r="Registra cada gasto esta semana. La consciencia es el primer paso al control.";
-    if (input.includes('social'))    r="Una conversación real vale más que 10 mensajes. Agenda una llamada hoy.";
-    if (input.includes('cansado')||input.includes('agotado')) r="El descanso es parte del entrenamiento. Hoy es día de recuperación activa.";
-    if (input.includes('racha'))     r=`Tu racha: ${state.streak||0} días. Para mantenerla, completa al menos el 60% hoy.`;
-    box.textContent=`"${r}"`;
-    document.getElementById('aiInput').value='';
+    const inputEl = document.getElementById('aiInput');
+    const box = document.getElementById('aiResponse');
+    if (!inputEl || !box) return;
+
+    const input = inputEl.value.toLowerCase().trim();
+    if (!input) {
+        box.textContent = 'Escribe algo concreto para recibir una recomendación útil.';
+        return;
+    }
+
+    let r = `Tu mejor movimiento hoy es elegir una tarea pequeña y concreta. Si quieres avanzar, empieza por algo que puedas terminar en menos de 10 minutos.`;
+    if (input.includes('motivaci')) {
+        r = `${userName}, la motivación entra y sale; el hábito es lo que te sostiene. Haz una acción mínima de 2 minutos y deja que el impulso te acompañe.`;
+    } else if (input.includes('fitness') || input.includes('ejercicio') || input.includes('salud')) {
+        r = 'Para tu salud, mezcla movimiento breve y recuperación. Hoy una caminata de 15 minutos y 5 minutos de movilidad pueden ser suficientes.';
+    } else if (input.includes('finanza') || input.includes('ahorro') || input.includes('gasto')) {
+        r = 'Para tus finanzas, separa una cantidad pequeña hoy y registra un gasto antes de dormir. La disciplina se construye con trazabilidad.';
+    } else if (input.includes('social') || input.includes('relaci')) {
+        r = 'Para tus relaciones, agenda una conexión real hoy: una llamada, un mensaje con intención o un plan concreto para ver a alguien.';
+    } else if (input.includes('cansado') || input.includes('agotado') || input.includes('estres')) {
+        r = 'Si estás cargado, el mejor hábito no es forzarte: es recuperar energía con una pausa activa, agua y una tarea sencilla.';
+    } else if (input.includes('racha')) {
+        r = `Tu racha actual es de ${state.streak || 0} días. Para mantenerla, completa una misión corta y deja el día con una victoria pequeña.`;
+    } else if (input.includes('meta') || input.includes('objetivo')) {
+        r = 'Para acercarte a una meta, divide el objetivo en una acción de hoy. Si parece grande, haz la versión más pequeña posible.';
+    }
+
+    box.textContent = `“${r}”`;
+    inputEl.value = '';
 }
 
 // ══════════════════════════════════════════════════
