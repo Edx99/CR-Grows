@@ -15,7 +15,7 @@
             font-family:'Plus Jakarta Sans',sans-serif;
             background-image: radial-gradient(circle at top right,#1a3a2a55,transparent 60%),
                               radial-gradient(circle at bottom left,#0f172a,transparent);
-            min-height:100vh; display:flex;
+            min-height:100vh; display:flex; overflow-x:hidden;
         }
         .sidebar {
             width:220px; min-height:100vh;
@@ -50,7 +50,16 @@
         .main { margin-left:220px; flex:1; padding:32px 36px; min-height:100vh; }
         .glass { background:rgba(30,41,59,0.6); backdrop-filter:blur(12px); border:1px solid rgba(82,183,136,0.12); border-radius:16px; }
         .glass-green { background:rgba(26,58,42,0.5); backdrop-filter:blur(12px); border:1px solid rgba(82,183,136,0.2); border-radius:16px; }
-        .gradient-text { background:linear-gradient(90deg,var(--green-accent),#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .gradient-text { background:linear-gradient(90deg,var(--green-accent),#818cf8); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .dashboard-header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:24px; }
+        .metric-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:24px; }
+        .metric-card { min-height:116px; display:flex; flex-direction:column; justify-content:center; }
+        .metric-value { font-size:32px; font-weight:800; color:#52b788; font-family:'DM Serif Display',serif; }
+        .metric-label { font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+        .dashboard-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; }
+        .analysis-card, .operations-card { max-width:860px; margin:0 auto; width:100%; }
+        .analysis-card h3, .operations-card h3 { justify-content:center; text-align:center; }
+        .mission-item { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-radius:12px; }
         #loadingOverlay { position:fixed; inset:0; background:#020617; display:flex; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.4s; }
         .spinner { width:40px; height:40px; border:3px solid #1e293b; border-top-color:var(--green-accent); border-radius:50%; animation:spin 0.8s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
@@ -60,7 +69,8 @@
         #toast.error   { border-color:#ef4444; color:#fca5a5; }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:rgba(82,183,136,0.2); border-radius:2px; }
-        @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:20px 16px; } }
+        @media (max-width:1024px) { .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:20px 12px; } .dashboard-header { flex-direction:column; align-items:flex-start; gap:12px; } .metric-grid { grid-template-columns:1fr 1fr; gap:12px; } .metric-card { min-height:104px; padding:16px 12px; } .metric-value { font-size:24px; } .analysis-card, .operations-card { max-width:none; padding:16px; } .mission-item { flex-direction:column; align-items:flex-start; gap:10px; } .mission-item button { width:100%; padding:10px 12px; } .analysis-card h3, .operations-card h3 { justify-content:flex-start; text-align:left; } }
     </style>
 </head>
 <body>
@@ -110,14 +120,14 @@
 
 <main class="main">
     <section id="dashboardView">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+        <div class="dashboard-header">
             <div>
                 <h1 style="font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-bottom:4px;">
                     <span class="gradient-text">COMANDO ÉLITE</span>
                 </h1>
                 <p style="font-size:13px;color:rgba(148,163,184,0.7);" id="dateDisplay"></p>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                 <!-- Sync indicator -->
                 <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(148,163,184,0.6);">
                     <div id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#334155;transition:background 0.3s;"></div>
@@ -130,57 +140,40 @@
             </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
-            <div class="glass p-5 text-center" style="box-shadow:0 0 18px rgba(82,183,136,0.2);">
-                <div style="font-size:32px;font-weight:800;color:#52b788;font-family:'DM Serif Display',serif;" id="dailyScore">0%</div>
-                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Éxito Diario</div>
+        <div class="metric-grid">
+            <div class="glass p-5 text-center metric-card" style="box-shadow:0 0 18px rgba(82,183,136,0.2);border-left:3px solid #818cf8;">
+                <div class="metric-value" id="rankValue">—</div>
+                <div class="metric-label">Rango Actual</div>
             </div>
-            <div class="glass p-5 text-center">
-                <div style="font-size:32px;font-weight:800;color:#818cf8;font-family:'DM Serif Display',serif;" id="avgScore">0%</div>
-                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Promedio 30D</div>
+            <div class="glass p-5 text-center metric-card">
+                <div class="metric-value" style="color:#818cf8;" id="avgScore">0%</div>
+                <div class="metric-label">Promedio 30D</div>
             </div>
-            <div class="glass p-5 text-center" style="border-left:3px solid #f97316;">
-                <div style="font-size:32px;font-weight:800;color:#f97316;font-family:'DM Serif Display',serif;" id="streakCount">0</div>
-                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Racha (Días)</div>
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #52b788;">
+                <div class="metric-value" style="color:#52b788;" id="dailyScore">0%</div>
+                <div class="metric-label">Éxito Diario</div>
+            </div>
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #f97316;">
+                <div class="metric-value" style="color:#f97316;" id="streakCount">0</div>
+                <div class="metric-label">Racha</div>
             </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
-            <div style="display:flex;flex-direction:column;gap:20px;">
-                <div class="glass p-6">
-                    <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:18px;">
-                        <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
-                    </h3>
-                    <div id="missionList" style="display:flex;flex-direction:column;gap:10px;"></div>
-                    <div id="emptyMissions" style="display:none;text-align:center;color:#475569;font-size:13px;padding:32px 0;">
-                        No hay misiones para hoy.<br>
-                        <span style="font-size:11px;">Agrega misiones desde las Áreas Operativas →</span>
-                    </div>
-                </div>
-                <div class="glass p-6">
-                    <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-                        <span style="color:#34d399;">📈</span> Análisis de Desempeño
-                    </h3>
-                    <canvas id="historyChart" height="140"></canvas>
-                </div>
+        <div class="dashboard-grid">
+            <div class="glass p-6 analysis-card">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                    <span style="color:#34d399;">📈</span> Análisis de Desempeño
+                </h3>
+                <canvas id="historyChart" height="140"></canvas>
             </div>
-
-            <div style="display:flex;flex-direction:column;gap:20px;">
-                <div class="glass-green p-5" style="border-top:2px solid var(--green-accent);">
-                    <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:#fff;">Áreas Operativas</h3>
-                    <div id="areaGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
-                </div>
-                <div style="background:rgba(49,46,129,0.2);border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:20px;">
-                    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#a5b4fc;">🤖 Comando AI</h3>
-                    <div id="aiResponse" style="font-size:13px;color:#cbd5e1;margin-bottom:14px;height:88px;overflow-y:auto;font-style:italic;line-height:1.6;">
-                        "Listo para optimizar tu rutina. ¿En qué área nos enfocamos hoy?"
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <input type="text" id="aiInput" placeholder="Pide un consejo..."
-                            style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;font-size:13px;width:100%;outline:none;color:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;"
-                            onkeydown="if(event.key==='Enter')askAI()">
-                        <button onclick="askAI()" style="background:#4f46e5;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#fff;flex-shrink:0;">➤</button>
-                    </div>
+            <div class="glass p-6 operations-card" style="margin-top:8px;">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+                    <span style="color:var(--green-accent);">🎯</span> Operaciones del Día
+                </h3>
+                <div id="missionList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <div id="emptyMissions" style="display:none;text-align:center;color:#475569;font-size:13px;padding:32px 0;">
+                    No hay misiones para hoy.<br>
+                    <span style="font-size:11px;">Agrega misiones desde las Áreas Operativas →</span>
                 </div>
             </div>
         </div>
@@ -830,7 +823,10 @@ function render() {
     document.getElementById('dailyScore').textContent  = `${dailyPct}%`;
     document.getElementById('avgScore').textContent    = `${avg}%`;
     document.getElementById('streakCount').textContent = state.streak || 0;
-    document.getElementById('sidebarRank').textContent = getRank(avg);
+    const currentRank = getRank(avg);
+    const rankValueEl = document.getElementById('rankValue');
+    if (rankValueEl) rankValueEl.textContent = currentRank;
+    document.getElementById('sidebarRank').textContent = currentRank;
 
     // Missions
     if (missionsToday.length === 0) {
@@ -840,7 +836,8 @@ function render() {
         missionsToday.forEach(m => {
             const isDone = donelist.includes(m.id);
             const div = document.createElement('div');
-            div.style.cssText=`display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:12px;background:${isDone?'rgba(82,183,136,0.08)':'rgba(30,41,59,0.5)'};border:1px solid ${isDone?'rgba(82,183,136,0.25)':'rgba(255,255,255,0.06)'};opacity:${isDone?'0.65':'1'};`;
+            div.className = 'mission-item';
+            div.style.cssText=`background:${isDone?'rgba(82,183,136,0.08)':'rgba(30,41,59,0.5)'};border:1px solid ${isDone?'rgba(82,183,136,0.25)':'rgba(255,255,255,0.06)'};opacity:${isDone?'0.65':'1'};`;
             div.innerHTML=`
                 <div>
                     <div style="font-weight:600;font-size:14px;${isDone?'text-decoration:line-through;color:#64748b;':'color:#f8fafc;'}">${m.text}</div>
