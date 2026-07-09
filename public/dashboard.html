@@ -351,6 +351,7 @@
                 <p>Ideal para registrar metas financieras, hábitos de ahorro y seguimiento semanal de gastos o ingresos.</p>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="template-btn" onclick="openTemplate('ayuda_financial.html')">▶ Abrir plantilla</button>
+                    <button class="template-btn" onclick="focusCustomRoutine('financial')">⚡ Crear mi versión</button>
                 </div>
             </div>
             <div class="template-card">
@@ -358,6 +359,7 @@
                 <p>Perfecta para repetir afirmaciones o mensajes de impulso con un enfoque más sonoro y emocional.</p>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="template-btn" onclick="openTemplate('ayuda_frases_audible.html')">▶ Abrir plantilla</button>
+                    <button class="template-btn" onclick="focusCustomRoutine('audible')">⚡ Crear mi versión</button>
                 </div>
             </div>
             <div class="template-card" style="grid-column:1 / -1;">
@@ -369,6 +371,8 @@
                         <select id="customRoutineType" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;">
                             <option value="hiit">HIIT</option>
                             <option value="frases">Frases reproducibles</option>
+                            <option value="financial">Control financiero</option>
+                            <option value="audible">Frases audible</option>
                         </select>
                         <textarea id="customRoutineItems" rows="6" placeholder="Escribe una actividad o frase por línea. Ejemplo:&#10;Burpee&#10;Saltos&#10;Plancha" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;resize:vertical;"></textarea>
                         <button id="customRoutineSubmit" class="template-btn" type="submit" style="align-self:flex-start;">📦 Generar archivo HTML</button>
@@ -502,9 +506,13 @@ function focusCustomRoutine(type) {
     if (typeSelect) typeSelect.value = type;
     if (itemsTextarea) {
         itemsTextarea.focus();
-        itemsTextarea.placeholder = type === 'hiit'
-            ? 'Ejemplo:\nBurpee\nSaltos\nPlancha'
-            : 'Ejemplo:\nSoy disciplinado\nSoy constante\nSoy capaz';
+        const examples = {
+            hiit: 'Ejemplo:\nBurpee\nSaltos\nPlancha',
+            frases: 'Ejemplo:\nSoy disciplinado\nSoy constante\nSoy capaz',
+            financial: 'Ejemplo:\nAhorro mensual\nMeta de gastos\nControl de suscripciones',
+            audible: 'Ejemplo:\nSoy fuerte\nSoy valiente\nSoy capaz'
+        };
+        itemsTextarea.placeholder = examples[type] || 'Ejemplo:\nUna idea por línea';
     }
 }
 
@@ -527,11 +535,21 @@ function buildTemplateContent(templateText, type, items, title) {
         templateText = templateText.replace(/const exerciseList = \[(?:.|\n)*?\];/, replacement);
         templateText = templateText.replace(/<title>Rutina de Agilidad<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
         templateText = templateText.replace(/<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad<\/h1>/i, `<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">${title || 'Rutina personalizada'}</h1>`);
-    } else {
+    } else if (type === 'frases') {
         const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
         templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/, replacement);
         templateText = templateText.replace(/<title>Mi Rutina de Práctica \(Secuencial\)<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
         templateText = templateText.replace(/<h1>Mi Rutina de Práctica<\/h1>/i, `<h1>${title || 'Rutina personalizada'}</h1>`);
+    } else if (type === 'audible') {
+        const replacement = `const phrases = [\n${cleanItems.map(item => `  "${escapeForJsString(item)}"`).join(',\n')}\n];`;
+        templateText = templateText.replace(/const phrases = \[(?:.|\n)*?\];/, replacement);
+        templateText = templateText.replace(/<title>Afirmaciones<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
+    } else if (type === 'financial') {
+        templateText = templateText.replace(/<title>Moneta — Personal Finance Diary<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
+        templateText = templateText.replace(/<div class="page-title">Dashboard<\/div>/i, `<div class="page-title">${escapeForJsString(title || 'Rutina personalizada')}</div>`);
+        const focusItems = cleanItems.slice(0, 4).map(item => `<div style="margin-top:8px;color:var(--gold);font-size:.82rem;">• ${escapeForJsString(item)}</div>`).join('');
+        const replacementBlock = `<div class="insight-card"><div class="insight-label">✦ Personal Focus</div><div class="insight-text"><strong>${escapeForJsString(title || 'Rutina personalizada')}</strong>${focusItems ? `<br>${focusItems}` : ''}</div></div>\n\n      <div class="insight-card">`;
+        templateText = templateText.replace(/<div class="insight-card">\s*<div class="insight-label">✦ Daily Financial Insight<\/div>/i, replacementBlock);
     }
 
     return templateText;
@@ -981,6 +999,16 @@ async function init() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) { overlay.style.opacity='0'; setTimeout(()=>overlay.remove(), 400); }
 
+    const aiInput = document.getElementById('aiInput');
+    if (aiInput) {
+        aiInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                askAI();
+            }
+        });
+    }
+
     showView('dashboard');
     render();
     showToast(`Bienvenido, ${userName} 👋`, 'success');
@@ -1373,21 +1401,30 @@ function askAI() {
         return;
     }
 
-    let r = `Tu mejor movimiento hoy es elegir una tarea pequeña y concreta. Si quieres avanzar, empieza por algo que puedas terminar en menos de 10 minutos.`;
-    if (input.includes('motivaci')) {
-        r = `${userName}, la motivación entra y sale; el hábito es lo que te sostiene. Haz una acción mínima de 2 minutos y deja que el impulso te acompañe.`;
-    } else if (input.includes('fitness') || input.includes('ejercicio') || input.includes('salud')) {
-        r = 'Para tu salud, mezcla movimiento breve y recuperación. Hoy una caminata de 15 minutos y 5 minutos de movilidad pueden ser suficientes.';
-    } else if (input.includes('finanza') || input.includes('ahorro') || input.includes('gasto')) {
-        r = 'Para tus finanzas, separa una cantidad pequeña hoy y registra un gasto antes de dormir. La disciplina se construye con trazabilidad.';
-    } else if (input.includes('social') || input.includes('relaci')) {
+    const streak = state.streak || 0;
+    const dailyPct = state.days[today]?.percent || 0;
+    const areaHint = (state.weekly || []).length ? 'una misión pequeña de tu lista' : 'una acción breve y concreta';
+
+    let r = `Tu mejor movimiento hoy es elegir ${areaHint}. Si lo haces en menos de 10 minutos, tendrás más probabilidades de sostenerlo.`;
+
+    if (/motiv|discipl|constan|procras|auto|foco/.test(input)) {
+        r = `${userName}, la disciplina se construye con acciones pequeñas. Hoy haz una tarea de 2 minutos y deja que la constancia haga el resto.`;
+    } else if (/fitness|ejerc|salud|cuerpo|movim|aliment|agua/.test(input)) {
+        r = 'Para tu salud, combina movimiento corto con cuidado del cuerpo. Una caminata de 15 minutos y 5 minutos de movilidad pueden ser perfectos hoy.';
+    } else if (/finanz|ahorro|gasto|dinero|presup/.test(input)) {
+        r = 'Para tus finanzas, anota un gasto o separa una cantidad pequeña hoy. La claridad diaria suele ser más poderosa que un cambio enorme.';
+    } else if (/social|relac|amig|famil|conex/.test(input)) {
         r = 'Para tus relaciones, agenda una conexión real hoy: una llamada, un mensaje con intención o un plan concreto para ver a alguien.';
-    } else if (input.includes('cansado') || input.includes('agotado') || input.includes('estres')) {
-        r = 'Si estás cargado, el mejor hábito no es forzarte: es recuperar energía con una pausa activa, agua y una tarea sencilla.';
-    } else if (input.includes('racha')) {
-        r = `Tu racha actual es de ${state.streak || 0} días. Para mantenerla, completa una misión corta y deja el día con una victoria pequeña.`;
-    } else if (input.includes('meta') || input.includes('objetivo')) {
+    } else if (/cansad|agot|estres|ansied|fatig|descans/.test(input)) {
+        r = 'Si te sientes cargado, el mejor hábito no es forzarte: es recuperar energía con una pausa activa, agua y una tarea sencilla.';
+    } else if (/racha|hábito|rutina|diario|costumb/.test(input)) {
+        r = `Tu racha actual es de ${streak} días. Para mantenerla, completa una misión corta y deja el día con una victoria pequeña.`;
+    } else if (/meta|objetiv|priori|enfoq/.test(input)) {
         r = 'Para acercarte a una meta, divide el objetivo en una acción de hoy. Si parece grande, haz la versión más pequeña posible.';
+    } else if (dailyPct >= 70) {
+        r = 'Ya llevas buen ritmo. Mantén el impulso con una misión simple y deja el día cerrando con una pequeña victoria.';
+    } else if (streak >= 3) {
+        r = 'Tu racha ya tiene fuerza. Hoy no necesitas hacer todo; basta con sostener el hábito con una sola acción concreta.';
     }
 
     box.textContent = `“${r}”`;
