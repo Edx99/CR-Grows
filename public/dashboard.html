@@ -57,9 +57,12 @@
         .metric-value { font-size:32px; font-weight:800; color:#52b788; font-family:'DM Serif Display',serif; }
         .metric-label { font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
         .dashboard-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; }
-        .analysis-card, .operations-card { max-width:860px; margin:0 auto; width:100%; }
-        .analysis-card h3, .operations-card h3 { justify-content:center; text-align:center; }
+        .analysis-card, .operations-card, .profile-card, .achievements-card { max-width:860px; margin:0 auto; width:100%; }
+        .analysis-card h3, .operations-card h3, .profile-card h3, .achievements-card h3 { justify-content:center; text-align:center; }
         .mission-item { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-radius:12px; }
+        .leaderboard-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:10px; background:rgba(15,23,42,0.45); border:1px solid rgba(82,183,136,0.12); margin-bottom:8px; gap:8px; }
+        .leaderboard-item strong { color:#fff; }
+        .leaderboard-item span { color:#94a3b8; font-size:11px; }
         #loadingOverlay { position:fixed; inset:0; background:#020617; display:flex; align-items:center; justify-content:center; z-index:9999; transition:opacity 0.4s; }
         .spinner { width:40px; height:40px; border:3px solid #1e293b; border-top-color:var(--green-accent); border-radius:50%; animation:spin 0.8s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
@@ -70,7 +73,7 @@
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:rgba(82,183,136,0.2); border-radius:2px; }
         @media (max-width:1024px) { .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-        @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:20px 12px; } .dashboard-header { flex-direction:column; align-items:flex-start; gap:12px; } .metric-grid { grid-template-columns:1fr 1fr; gap:12px; } .metric-card { min-height:104px; padding:16px 12px; } .metric-value { font-size:24px; } .analysis-card, .operations-card { max-width:none; padding:16px; } .mission-item { flex-direction:column; align-items:flex-start; gap:10px; } .mission-item button { width:100%; padding:10px 12px; } .analysis-card h3, .operations-card h3 { justify-content:flex-start; text-align:left; } }
+        @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:16px 12px; } .dashboard-header { flex-direction:column; align-items:flex-start; gap:12px; } .dashboard-header h1 { font-size:24px; } .metric-grid { grid-template-columns:1fr 1fr; gap:12px; } .metric-card { min-height:92px; padding:14px 12px; } .metric-value { font-size:22px; } .glass, .glass-green { border-radius:14px; } .analysis-card, .operations-card, .profile-card, .achievements-card { max-width:none; padding:16px; } .analysis-card h3, .operations-card h3, .profile-card h3, .achievements-card h3 { justify-content:flex-start; text-align:left; } .mission-item { flex-direction:column; align-items:flex-start; gap:10px; } .mission-item button { width:100%; padding:10px 12px; } .leaderboard-item { flex-direction:column; align-items:flex-start; } }
     </style>
 </head>
 <body>
@@ -98,9 +101,9 @@
         <a class="nav-item" href="#" data-view="help" onclick="event.preventDefault(); showView('help')"><span>🧭</span> Ayuda</a>
         <a class="nav-item" href="#" data-view="templates" onclick="event.preventDefault(); showView('templates')"><span>📦</span> Templates</a>
         <a class="nav-item" onclick="showToast('Próximamente...')"><span>📊</span> Estadísticas</a>
-        <a class="nav-item" onclick="showToast('Próximamente...')"><span>🏆</span> Logros</a>
+        <a class="nav-item" href="#" data-view="achievements" onclick="event.preventDefault(); showView('achievements')"><span>🏆</span> Logros</a>
         <span class="nav-label">Personal</span>
-        <a class="nav-item" onclick="showToast('Próximamente...')"><span>👤</span> Perfil</a>
+        <a class="nav-item" href="#" data-view="profile" onclick="event.preventDefault(); showView('profile')"><span>👤</span> Perfil</a>
         <a class="nav-item" onclick="showToast('Próximamente...')"><span>⚙️</span> Ajustes</a>
     </nav>
     <div class="sidebar-footer">
@@ -180,6 +183,79 @@
                 <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:#fff;">Áreas Operativas</h3>
                 <div id="areaGrid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;"></div>
                 <p style="font-size:11px;color:#94a3b8;margin-top:10px;">Toca un área para agregar o gestionar misiones.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="achievementsView" style="display:none;">
+        <div class="glass p-6 achievements-card" style="margin-bottom:20px;">
+            <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="color:#f59e0b;">🏆</span> Logros y Rankings
+            </h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+                Tu desempeño, tu racha más larga y cómo te comparas con todos o con tus amigos.
+            </p>
+        </div>
+
+        <div class="metric-grid" style="margin-bottom:20px;">
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #818cf8;">
+                <div class="metric-value" id="achievementsRank">—</div>
+                <div class="metric-label">Rango Actual</div>
+            </div>
+            <div class="glass p-5 text-center metric-card">
+                <div class="metric-value" style="color:#818cf8;" id="achievementsAvg">0%</div>
+                <div class="metric-label">Promedio 30D</div>
+            </div>
+            <div class="glass p-5 text-center metric-card" style="border-left:3px solid #f97316;">
+                <div class="metric-value" style="color:#f97316;" id="achievementsStreak">0</div>
+                <div class="metric-label">Racha Máxima</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="glass p-6 achievements-card">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                    <span style="color:#34d399;">🌍</span> Ranking Global
+                </h3>
+                <div id="globalLeaderboardList"></div>
+            </div>
+            <div class="glass p-6 achievements-card" style="margin-top:8px;">
+                <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                    <span style="color:#a78bfa;">👥</span> Ranking de Amigos
+                </h3>
+                <div id="friendsLeaderboardList"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="profileView" style="display:none;">
+        <div class="glass p-6 profile-card">
+            <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="color:#38bdf8;">👤</span> Perfil y Amigos
+            </h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:16px;">
+                Crea un apodo único y agrega amigos por su nombre de usuario para comparar tu progreso.
+            </p>
+
+            <form id="nicknameForm" onsubmit="saveNickname(event)">
+                <label for="profileNickname" style="display:block;font-size:12px;font-weight:700;color:#cbd5e1;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Apodo único</label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <input id="profileNickname" type="text" placeholder="Tu apodo" style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;min-width:220px;" />
+                    <button type="submit" class="template-btn">Guardar</button>
+                </div>
+                <div id="nicknameMessage" style="margin-top:10px;font-size:12px;color:#86efac;min-height:18px;"></div>
+            </form>
+
+            <div class="glass-green p-5" style="margin-top:18px;border-top:2px solid var(--green-accent);">
+                <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#fff;">Agregar amigo</h3>
+                <form id="friendForm" onsubmit="addFriend(event)">
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <input id="friendNickname" type="text" placeholder="Nickname de tu amigo" style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;min-width:220px;" />
+                        <button type="submit" class="template-btn">Agregar</button>
+                    </div>
+                    <div id="friendMessage" style="margin-top:10px;font-size:12px;color:#86efac;min-height:18px;"></div>
+                </form>
+                <div id="friendsList" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;"></div>
             </div>
         </div>
     </section>
@@ -320,6 +396,8 @@ let isSaving     = false;
 let currentView  = 'dashboard';
 let editingTemplateId = null;
 let savedTemplates = [];
+let profile = { nickname: '', friends: [] };
+let leaderboard = [];
 const TEMPLATES_STORAGE_KEY = 'cr_grows_saved_templates';
 
 function setActiveNav(view) {
@@ -333,9 +411,16 @@ function showView(view) {
     const dashboardView = document.getElementById('dashboardView');
     const helpView = document.getElementById('helpView');
     const templatesView = document.getElementById('templatesView');
+    const achievementsView = document.getElementById('achievementsView');
+    const profileView = document.getElementById('profileView');
     if (dashboardView) dashboardView.style.display = view === 'dashboard' ? 'block' : 'none';
     if (helpView) helpView.style.display = view === 'help' ? 'block' : 'none';
     if (templatesView) templatesView.style.display = view === 'templates' ? 'block' : 'none';
+    if (achievementsView) achievementsView.style.display = view === 'achievements' ? 'block' : 'none';
+    if (profileView) profileView.style.display = view === 'profile' ? 'block' : 'none';
+    if (view === 'achievements') renderAchievements();
+    if (view === 'profile') renderProfileView();
+    if (view === 'dashboard') render();
     setActiveNav(view);
 }
 
@@ -382,6 +467,39 @@ function buildTemplateContent(templateText, type, items, title) {
     }
 
     return templateText;
+}
+
+function calculateAveragePercent(appState) {
+    const days = appState?.days || {};
+    const values = Object.values(days);
+    if (!values.length) return 0;
+    return Math.round(values.reduce((sum, item) => sum + (item?.percent || 0), 0) / values.length);
+}
+
+function calculateLongestStreak(appState) {
+    if (typeof appState?.longestStreak === 'number' && appState.longestStreak > 0) {
+        return appState.longestStreak;
+    }
+    const days = appState?.days || {};
+    const dates = Object.keys(days).sort();
+    let streak = 0;
+    let best = 0;
+    dates.forEach((date) => {
+        const percent = days[date]?.percent || 0;
+        if (percent >= 60) {
+            streak += 1;
+            best = Math.max(best, streak);
+        } else {
+            streak = 0;
+        }
+    });
+    return best || (appState?.streak || 0);
+}
+
+function syncDerivedState() {
+    const longest = calculateLongestStreak(state);
+    state.longestStreak = longest;
+    if (typeof state.streak !== 'number') state.streak = 0;
 }
 
 function loadSavedTemplates() {
@@ -787,6 +905,7 @@ async function init() {
     // ⚠️ WAIT for server state before rendering — this is the key fix
     await loadStateFromServer();
     loadSavedTemplates();
+    await loadProfileAndLeaderboard();
 
     if (!state.days[today]) state.days[today] = { done:[], percent:0 };
 
@@ -803,6 +922,7 @@ async function init() {
 // 10. RENDER
 // ══════════════════════════════════════════════════
 function render() {
+    syncDerivedState();
     const dow           = new Date().getDay();
     const missionsToday = (state.weekly || []).filter(m => m.days && m.days.includes(dow));
     const missionList   = document.getElementById('missionList');
@@ -871,6 +991,161 @@ function render() {
     }
 
     updateChart();
+    renderAchievements();
+}
+
+async function apiRequest(method, path, body) {
+    try {
+        const opts = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${_token}`
+            }
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(path, opts);
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (err) { data = text; }
+        return { ok: res.ok, status: res.status, data };
+    } catch (err) {
+        return { ok: false, status: 0, data: null, error: err.message };
+    }
+}
+
+async function loadProfileAndLeaderboard() {
+    const profileRes = await apiRequest('GET', '/api/profile');
+    if (profileRes.ok && profileRes.data?.profile) {
+        profile = profileRes.data.profile;
+    }
+
+    const leaderboardRes = await apiRequest('GET', '/api/leaderboard');
+    if (leaderboardRes.ok && leaderboardRes.data?.leaderboard) {
+        leaderboard = leaderboardRes.data.leaderboard;
+    }
+
+    renderProfileView();
+    renderAchievements();
+}
+
+function renderProfileView() {
+    const nicknameInput = document.getElementById('profileNickname');
+    const nicknameMessage = document.getElementById('nicknameMessage');
+    const friendMessage = document.getElementById('friendMessage');
+    const friendsList = document.getElementById('friendsList');
+    if (nicknameInput) nicknameInput.value = profile.nickname || '';
+    if (nicknameMessage) nicknameMessage.textContent = profile.nickname ? `Apodo actual: ${profile.nickname}` : 'Aún no tienes apodo.';
+    if (friendMessage) friendMessage.textContent = '';
+    if (!friendsList) return;
+
+    if (!profile.friends || !profile.friends.length) {
+        friendsList.innerHTML = '<div style="font-size:12px;color:#94a3b8;">No tienes amigos agregados aún.</div>';
+        return;
+    }
+
+    friendsList.innerHTML = profile.friends.map((friend) => `
+        <div class="leaderboard-item">
+            <div>
+                <strong>${friend.nickname || 'Amigo'}</strong>
+                <div style="font-size:11px;color:#94a3b8;">Agregado recientemente</div>
+            </div>
+            <span>Amigo</span>
+        </div>
+    `).join('');
+}
+
+async function saveNickname(event) {
+    event.preventDefault();
+    const input = document.getElementById('profileNickname');
+    const message = document.getElementById('nicknameMessage');
+    if (!input || !message) return;
+
+    const nickname = input.value.trim();
+    const res = await apiRequest('POST', '/api/profile/nickname', { nickname });
+    if (res.ok && res.data?.profile) {
+        profile = res.data.profile;
+        renderProfileView();
+        renderAchievements();
+        showToast('Apodo actualizado ✓', 'success');
+        message.textContent = `Apodo guardado: ${profile.nickname}`;
+    } else {
+        message.textContent = res.data?.error || 'No se pudo guardar el apodo.';
+        message.style.color = '#fca5a5';
+    }
+}
+
+async function addFriend(event) {
+    event.preventDefault();
+    const input = document.getElementById('friendNickname');
+    const message = document.getElementById('friendMessage');
+    if (!input || !message) return;
+
+    const nickname = input.value.trim();
+    const res = await apiRequest('POST', '/api/friends', { nickname });
+    if (res.ok && res.data?.profile) {
+        profile = res.data.profile;
+        renderProfileView();
+        renderAchievements();
+        showToast('Amigo agregado ✓', 'success');
+        input.value = '';
+        message.textContent = `Amigo agregado: ${nickname}`;
+    } else {
+        message.textContent = res.data?.error || 'No se pudo agregar el amigo.';
+        message.style.color = '#fca5a5';
+    }
+}
+
+function renderAchievements() {
+    const currentAvg = calculateAveragePercent(state);
+    const currentRank = getRank(currentAvg);
+    const rankEl = document.getElementById('achievementsRank');
+    const avgEl = document.getElementById('achievementsAvg');
+    const streakEl = document.getElementById('achievementsStreak');
+    if (rankEl) rankEl.textContent = currentRank;
+    if (avgEl) avgEl.textContent = `${currentAvg}%`;
+    if (streakEl) streakEl.textContent = state.longestStreak || 0;
+
+    const globalList = document.getElementById('globalLeaderboardList');
+    const friendsList = document.getElementById('friendsLeaderboardList');
+
+    if (globalList) {
+        const globalEntries = [...leaderboard]
+            .sort((a, b) => b.avgScore - a.avgScore || b.longestStreak - a.longestStreak || b.streak - a.streak)
+            .slice(0, 8);
+        if (!globalEntries.length) {
+            globalList.innerHTML = '<div style="font-size:12px;color:#94a3b8;">No hay datos de ranking aún.</div>';
+        } else {
+            globalList.innerHTML = globalEntries.map((entry, index) => `
+                <div class="leaderboard-item">
+                    <div>
+                        <strong>#${index + 1} ${entry.nickname || entry.email || 'Usuario'}</strong>
+                        <div style="font-size:11px;color:#94a3b8;">${entry.email === userEmail ? 'Tú' : 'Usuario'}</div>
+                    </div>
+                    <span>${entry.avgScore}% • ${entry.longestStreak || 0} días</span>
+                </div>
+            `).join('');
+        }
+    }
+
+    if (friendsList) {
+        const friendIds = new Set((profile.friends || []).map((friend) => friend.id));
+        const friendEntries = leaderboard.filter((entry) => friendIds.has(entry.id) || entry.email === userEmail);
+        if (!friendEntries.length) {
+            friendsList.innerHTML = '<div style="font-size:12px;color:#94a3b8;">Agrega amigos para ver su ranking.</div>';
+        } else {
+            const ordered = [...friendEntries].sort((a, b) => b.avgScore - a.avgScore || b.longestStreak - a.longestStreak || b.streak - a.streak);
+            friendsList.innerHTML = ordered.map((entry, index) => `
+                <div class="leaderboard-item">
+                    <div>
+                        <strong>#${index + 1} ${entry.nickname || entry.email || 'Usuario'}</strong>
+                        <div style="font-size:11px;color:#94a3b8;">${entry.email === userEmail ? 'Tú' : 'Amigo'}</div>
+                    </div>
+                    <span>${entry.avgScore}% • ${entry.longestStreak || 0} días</span>
+                </div>
+            `).join('');
+        }
+    }
 }
 
 // ══════════════════════════════════════════════════
