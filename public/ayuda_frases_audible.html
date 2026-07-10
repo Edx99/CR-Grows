@@ -306,7 +306,7 @@
     transition: opacity 0.5s;
   }
 </style>
-</head>
+    <script src="js/app-state-sync.js"></script>
 <body>
 
 <div class="particles" id="particles"></div>
@@ -391,6 +391,35 @@ let soundOn = true;
 let speaking = false;
 let utterance = null;
 
+let appState = null;
+let helpSettings = { baseSec: 30, soundOn: true };
+
+async function initAppState() {
+    appState = await syncAppState({ helpSettings: { audible: { baseSec: 30, soundOn: true } } });
+    helpSettings = appState.helpSettings.audible || { baseSec: 30, soundOn: true };
+    baseSec = helpSettings.baseSec;
+    soundOn = helpSettings.soundOn;
+    const secInput = document.getElementById('secInput');
+    const soundBtn = document.getElementById('soundBtn');
+    if (secInput) secInput.value = baseSec;
+    if (soundBtn) {
+        soundBtn.className = 'sound-btn' + (soundOn ? ' on' : '');
+        soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    }
+}
+
+function saveAudibleSettings() {
+    if (!appState) appState = loadStateFromLocal();
+    const secInput = document.getElementById('secInput');
+    const baseValue = secInput ? parseInt(secInput.value, 10) : baseSec;
+    appState.helpSettings.audible = {
+        baseSec: Number.isInteger(baseValue) && baseValue >= 5 ? baseValue : 30,
+        soundOn
+    };
+    saveStateToLocal(appState);
+    pushStateToServer(appState);
+}
+
 // --- Particles ---
 function spawnParticles() {
   const cont = document.getElementById('particles');
@@ -471,6 +500,7 @@ function toggleSound() {
   const btn = document.getElementById('soundBtn');
   btn.className = 'sound-btn' + (soundOn ? ' on' : '');
   btn.textContent = soundOn ? '🔊' : '🔇';
+  saveAudibleSettings();
   if (!soundOn) { window.speechSynthesis.cancel(); document.getElementById('ttsStatus').textContent = ''; }
 }
 
@@ -629,6 +659,15 @@ function endSession() {
 
 // Preload voices
 window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+
+(function() {
+  const secInput = document.getElementById('secInput');
+  if (secInput) secInput.addEventListener('input', () => {
+    baseSec = parseInt(secInput.value, 10) || 30;
+    saveAudibleSettings();
+  });
+  initAppState();
+})();
 </script>
 </body>
 </html>
