@@ -97,12 +97,37 @@ function saveStateToLocal(state) {
     }
 }
 
+function mergeArraysForUpload(localArray, serverArray) {
+    if (!Array.isArray(localArray) || localArray.length === 0) {
+        return Array.isArray(serverArray) ? serverArray : [];
+    }
+    if (!Array.isArray(serverArray) || serverArray.length === 0) {
+        return localArray;
+    }
+    return mergeUniqueById(localArray, serverArray);
+}
+
+function mergeStateForUpload(state, serverState = {}) {
+    const merged = {
+        days: (state.days === undefined || Object.keys(state.days || {}).length === 0) ? serverState.days : state.days,
+        weekly: (Array.isArray(state.weekly) && state.weekly.length > 0) ? state.weekly : serverState.weekly,
+        streak: (typeof state.streak === 'number' && state.streak > 0) ? state.streak : serverState.streak,
+        helpSettings: mergeHelpSettings(state.helpSettings || {}, serverState.helpSettings || {}),
+        templates: mergeArraysForUpload(state.templates, serverState.templates),
+        financeEntries: mergeArraysForUpload(state.financeEntries, serverState.financeEntries),
+    };
+    return ensureAppState(merged);
+}
+
 async function pushStateToServer(state) {
     const token = getAuthToken();
     if (!token) return false;
-    const res = await apiFetch('POST', APP_STATE_API_PATH, { state: ensureAppState(state) });
+    const serverState = await loadStateFromServer();
+    const mergedState = mergeStateForUpload(state || {}, serverState || {});
+    console.log('pushStateToServer uploading state templates:', mergedState.templates.length, 'financeEntries:', mergedState.financeEntries.length);
+    const res = await apiFetch('POST', APP_STATE_API_PATH, { state: mergedState });
     if (res.ok) {
-        saveStateToLocal(state);
+        saveStateToLocal(mergedState);
         return true;
     }
     return false;

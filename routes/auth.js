@@ -52,6 +52,50 @@ function calculateLongestStreak(appState) {
   return best;
 }
 
+function mergeUniqueById(primary = [], secondary = []) {
+  const merged = [];
+  const seen = new Set();
+  (secondary || []).forEach(item => {
+    if (item && item.id) {
+      merged.push(item);
+      seen.add(item.id);
+    }
+  });
+  (primary || []).forEach(item => {
+    if (!item) return;
+    if (item.id) {
+      if (!seen.has(item.id)) {
+        merged.push(item);
+        seen.add(item.id);
+      }
+    } else {
+      merged.push(item);
+    }
+  });
+  return merged;
+}
+
+function mergeHelpSettings(server = {}, local = {}) {
+  const merged = { ...local, ...server };
+  Object.keys(merged).forEach(key => {
+    if (server[key] && local[key] && typeof server[key] === 'object' && typeof local[key] === 'object') {
+      merged[key] = { ...local[key], ...server[key] };
+    }
+  });
+  return merged;
+}
+
+function mergeAppState(current = {}, incoming = {}) {
+  return {
+    days: Object.keys(incoming.days || {}).length ? incoming.days : (current.days || {}),
+    weekly: Array.isArray(incoming.weekly) && incoming.weekly.length ? incoming.weekly : (Array.isArray(current.weekly) ? current.weekly : []),
+    streak: typeof incoming.streak === 'number' && incoming.streak > 0 ? incoming.streak : (typeof current.streak === 'number' ? current.streak : 0),
+    helpSettings: mergeHelpSettings(incoming.helpSettings || {}, current.helpSettings || {}),
+    templates: Array.isArray(incoming.templates) && incoming.templates.length ? mergeUniqueById(incoming.templates, current.templates) : (Array.isArray(current.templates) ? current.templates : []),
+    financeEntries: Array.isArray(incoming.financeEntries) && incoming.financeEntries.length ? mergeUniqueById(incoming.financeEntries, current.financeEntries) : (Array.isArray(current.financeEntries) ? current.financeEntries : []),
+  };
+}
+
 // ── HELPER: find user by email ────────────────────────────
 async function findUser(email) {
   const usersContainer = getContainer();
@@ -355,6 +399,62 @@ router.get("/state", async (req, res) => {
 });
 
 // ── POST STATE ────────────────────────────────────────────
+function ensureAppState(state) {
+  const base = state && typeof state === 'object' ? { ...state } : {};
+  base.days = base.days && typeof base.days === 'object' ? base.days : {};
+  base.weekly = Array.isArray(base.weekly) ? base.weekly : [];
+  base.streak = typeof base.streak === 'number' ? base.streak : 0;
+  base.helpSettings = base.helpSettings && typeof base.helpSettings === 'object' ? { ...base.helpSettings } : {};
+  base.templates = Array.isArray(base.templates) ? base.templates : [];
+  base.financeEntries = Array.isArray(base.financeEntries) ? base.financeEntries : [];
+  return base;
+}
+
+function mergeArrayById(preferred = [], fallback = []) {
+  if (!Array.isArray(preferred) || preferred.length === 0) return Array.isArray(fallback) ? fallback : [];
+  if (!Array.isArray(fallback) || fallback.length === 0) return preferred;
+  const merged = [];
+  const seen = new Set();
+  preferred.forEach(item => {
+    if (item && item.id) {
+      merged.push(item);
+      seen.add(item.id);
+    }
+  });
+  fallback.forEach(item => {
+    if (!item) return;
+    const id = item.id;
+    if (!id || !seen.has(id)) {
+      merged.push(item);
+      if (id) seen.add(id);
+    }
+  });
+  return merged;
+}
+
+function mergeHelpSettings(current = {}, incoming = {}) {
+  const merged = { ...current, ...incoming };
+  Object.keys(merged).forEach(key => {
+    if (current[key] && incoming[key] && typeof current[key] === 'object' && typeof incoming[key] === 'object') {
+      merged[key] = { ...current[key], ...incoming[key] };
+    }
+  });
+  return merged;
+}
+
+function mergeAppState(current = {}, incoming = {}) {
+  const safeCurrent = ensureAppState(current);
+  const safeIncoming = ensureAppState(incoming);
+  return {
+    days: Object.keys(safeIncoming.days).length ? safeIncoming.days : safeCurrent.days,
+    weekly: safeIncoming.weekly.length ? safeIncoming.weekly : safeCurrent.weekly,
+    streak: safeIncoming.streak > 0 ? safeIncoming.streak : safeCurrent.streak,
+    helpSettings: mergeHelpSettings(safeCurrent.helpSettings, safeIncoming.helpSettings),
+    templates: mergeArrayById(safeIncoming.templates, safeCurrent.templates),
+    financeEntries: mergeArrayById(safeIncoming.financeEntries, safeCurrent.financeEntries),
+  };
+}
+
 router.post("/state", async (req, res) => {
   try {
     const payload = verifyToken(req);
@@ -364,9 +464,14 @@ router.post("/state", async (req, res) => {
     if (!user)
       return res.status(404).json({ error: "User not found." });
 
-    user.appState = req.body.state;
+    if (!req.body || typeof req.body.state !== 'object') {
+      return res.status(400).json({ error: 'Invalid state payload.' });
+    }
+
+    const mergedAppState = mergeAppState(user.appState || {}, req.body.state || {});
+    user.appState = mergedAppState;
     try {
-      console.log(`Upserting user item (/state): id=${user.id}`);
+      console.log(`Upserting user item (/state): id=${user.id} templates:${mergedAppState.templates.length} financeEntries:${mergedAppState.financeEntries.length}`);
       await usersContainer.items.upsert(user);
       console.log(`POST /state for ${payload.email} → saved OK`);
       res.json({ message: "State saved." });
