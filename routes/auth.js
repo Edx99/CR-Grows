@@ -342,9 +342,12 @@ router.get("/state", async (req, res) => {
     if (!user)
       return res.status(404).json({ error: "User not found." });
 
-    console.log(`GET /state for ${payload.email} → appState exists: ${!!user.appState}`);
-    console.log('GET /state returning appState:', user.appState);
-    res.json({ state: user.appState || null });
+    const appState = user.appState || null;
+    const templatesCount = Array.isArray(appState?.templates) ? appState.templates.length : 0;
+    const financeCount = Array.isArray(appState?.financeEntries) ? appState.financeEntries.length : 0;
+    console.log(`GET /state for ${payload.email} → appState exists: ${!!appState}, templates: ${templatesCount}, financeEntries: ${financeCount}`);
+    console.log('GET /state returning appState keys:', appState ? Object.keys(appState) : 'null');
+    res.json({ state: appState });
   } catch (err) {
     console.error("Get state error:", err);
     res.status(401).json({ error: "Invalid or expired token." });
