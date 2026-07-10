@@ -595,6 +595,18 @@ function loadSavedTemplates() {
     } catch (err) {
         savedTemplates = [];
     }
+
+    if (state?.templates?.length) {
+        savedTemplates = state.templates;
+        try {
+            localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
+        } catch (err) {
+            console.warn('No se pudieron actualizar los templates locales:', err);
+        }
+    } else if (!savedTemplates.length && state?.templates) {
+        savedTemplates = state.templates;
+    }
+
     renderSavedTemplates();
 }
 
@@ -604,6 +616,11 @@ function saveSavedTemplates() {
     } catch (err) {
         console.warn('No se pudieron guardar los templates:', err);
     }
+
+    if (!state) state = loadFromLocal() || EMPTY_STATE();
+    state.templates = savedTemplates;
+    saveToLocal();
+    pushToServer();
 }
 
 function resetRoutineForm() {
@@ -819,9 +836,10 @@ async function apiFetch(method, path, body) {
 function hasUsableState(value) {
     if (!value || typeof value !== 'object') return false;
     const hasDays = !!(value.days && Object.keys(value.days).length > 0);
-    const hasWeekly = Array.isArray(value.weekly);
+    const hasWeekly = Array.isArray(value.weekly) && value.weekly.length > 0;
     const hasStreak = typeof value.streak === 'number' && value.streak > 0;
-    return hasDays || hasWeekly || hasStreak;
+    const hasTemplates = Array.isArray(value.templates) && value.templates.length > 0;
+    return hasDays || hasWeekly || hasStreak || hasTemplates;
 }
 
 async function loadStateFromServer() {

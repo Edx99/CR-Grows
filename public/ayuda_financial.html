@@ -460,6 +460,14 @@ function loadData() {
 function saveData() {
   localStorage.setItem(DB_KEY, JSON.stringify(entries));
 }
+
+function saveFinanceEntriesToState() {
+  if (!appState) appState = loadStateFromLocal() || { helpSettings: {} };
+  appState.financeEntries = entries;
+  saveStateToLocal(appState);
+  pushStateToServer(appState);
+}
+
 function fmt(n) {
   return '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
 }
@@ -476,6 +484,16 @@ async function initAppState() {
   const filterInput = document.getElementById('filter-type');
   if (filterInput) {
     filterInput.value = financialSettings.filterType || 'all';
+  }
+
+  if (Array.isArray(appState.financeEntries) && appState.financeEntries.length) {
+    entries = appState.financeEntries;
+    saveData();
+  } else {
+    loadData();
+    if (entries.length) {
+      saveFinanceEntriesToState();
+    }
   }
 }
 
@@ -559,6 +577,7 @@ function saveEntry() {
   }
   entries.unshift({ id: Date.now(), date, type, amount, category: cat, desc, mood, notes, createdAt: new Date().toISOString() });
   saveData();
+  saveFinanceEntriesToState();
   initForm();
   showToast('✦ Entry saved successfully.');
 }
@@ -704,6 +723,7 @@ function renderTransactions() {
 function deleteEntry(id) {
   entries = entries.filter(e => e.id !== id);
   saveData();
+  saveFinanceEntriesToState();
   renderTransactions();
   showToast('Entry removed.');
 }
@@ -957,6 +977,7 @@ function handleImport(e) {
       const seen = new Set(entries.map(x=>x.id));
       data.forEach(x=>{ if(!seen.has(x.id)){entries.push(x);seen.add(x.id);} });
       saveData();
+      saveFinanceEntriesToState();
       showToast('✦ Imported '+data.length+' entries.');
       document.getElementById('total-entries').textContent = entries.length;
     } catch { showToast('⚠ Invalid JSON file.'); }
@@ -1007,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   document.getElementById('btn-clear-all').addEventListener('click', function() {
     if (!confirm('Delete ALL financial data? This cannot be undone.')) return;
     entries = []; saveData();
+    saveFinanceEntriesToState();
     document.getElementById('total-entries').textContent = '0';
     showToast('All data cleared.');
   });
