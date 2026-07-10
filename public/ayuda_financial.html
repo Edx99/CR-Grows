@@ -486,11 +486,13 @@ async function initAppState() {
     filterInput.value = financialSettings.filterType || 'all';
   }
 
+  console.log('finance init appState.financeEntries:', Array.isArray(appState.financeEntries) ? appState.financeEntries.length : 'none');
   if (Array.isArray(appState.financeEntries) && appState.financeEntries.length) {
     entries = appState.financeEntries;
     saveData();
   } else {
     loadData();
+    console.log('finance local entries:', entries.length);
     if (entries.length) {
       saveFinanceEntriesToState();
     }
