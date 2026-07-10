@@ -73,11 +73,21 @@ function mergeHelpSettings(server = {}, local = {}) {
 
 async function loadStateFromServer() {
     const token = getAuthToken();
-    if (!token) return null;
+    if (!token) {
+        console.warn('loadStateFromServer: no auth token available, skipping server sync');
+        return null;
+    }
     const res = await apiFetch('GET', APP_STATE_API_PATH);
-    if (!res.ok) return null;
+    if (!res.ok) {
+        console.warn('loadStateFromServer: server responded with status', res.status, res.error || res.data);
+        return null;
+    }
     const remote = res.data?.state;
-    if (remote === null || remote === undefined) return null;
+    if (remote === null || remote === undefined) {
+        console.log('loadStateFromServer: server returned no state');
+        return null;
+    }
+    console.log('loadStateFromServer: loaded state from server templates:', Array.isArray(remote.templates) ? remote.templates.length : 'none', 'financeEntries:', Array.isArray(remote.financeEntries) ? remote.financeEntries.length : 'none');
     return ensureAppState(remote);
 }
 
@@ -121,15 +131,19 @@ function mergeStateForUpload(state, serverState = {}) {
 
 async function pushStateToServer(state) {
     const token = getAuthToken();
-    if (!token) return false;
+    if (!token) {
+        console.warn('pushStateToServer: no auth token available, cannot sync state');
+        return false;
+    }
     const serverState = await loadStateFromServer();
     const mergedState = mergeStateForUpload(state || {}, serverState || {});
-    console.log('pushStateToServer uploading state templates:', mergedState.templates.length, 'financeEntries:', mergedState.financeEntries.length);
+    console.log('pushStateToServer uploading state templates:', Array.isArray(mergedState.templates) ? mergedState.templates.length : 'none', 'financeEntries:', Array.isArray(mergedState.financeEntries) ? mergedState.financeEntries.length : 'none');
     const res = await apiFetch('POST', APP_STATE_API_PATH, { state: mergedState });
     if (res.ok) {
         saveStateToLocal(mergedState);
         return true;
     }
+    console.warn('pushStateToServer failed with status', res.status, res.error || res.data);
     return false;
 }
 
