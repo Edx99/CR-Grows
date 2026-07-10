@@ -852,7 +852,8 @@ function hasUsableState(value) {
     const hasWeekly = Array.isArray(value.weekly) && value.weekly.length > 0;
     const hasStreak = typeof value.streak === 'number' && value.streak > 0;
     const hasTemplates = Array.isArray(value.templates) && value.templates.length > 0;
-    return hasDays || hasWeekly || hasStreak || hasTemplates;
+    const hasFinance = Array.isArray(value.financeEntries) && value.financeEntries.length > 0;
+    return hasDays || hasWeekly || hasStreak || hasTemplates || hasFinance;
 }
 
 async function loadStateFromServer() {

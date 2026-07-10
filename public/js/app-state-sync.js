@@ -38,6 +38,39 @@ function ensureAppState(state) {
     return base;
 }
 
+function mergeUniqueById(primary = [], secondary = []) {
+    const merged = [];
+    const seen = new Set();
+    (secondary || []).forEach(item => {
+        if (item && item.id) {
+            merged.push(item);
+            seen.add(item.id);
+        }
+    });
+    (primary || []).forEach(item => {
+        if (!item) return;
+        if (item.id) {
+            if (!seen.has(item.id)) {
+                merged.push(item);
+                seen.add(item.id);
+            }
+        } else {
+            merged.push(item);
+        }
+    });
+    return merged;
+}
+
+function mergeHelpSettings(server = {}, local = {}) {
+    const merged = { ...local, ...server };
+    Object.keys(merged).forEach(key => {
+        if (server[key] && local[key] && typeof server[key] === 'object' && typeof local[key] === 'object') {
+            merged[key] = { ...local[key], ...server[key] };
+        }
+    });
+    return merged;
+}
+
 async function loadStateFromServer() {
     const token = getAuthToken();
     if (!token) return null;
@@ -74,17 +107,31 @@ async function pushStateToServer(state) {
 }
 
 async function syncAppState(defaultState = null) {
-    let state = await loadStateFromServer();
-    if (state) {
-        saveStateToLocal(state);
-        return state;
+    const serverState = await loadStateFromServer();
+    const localState = loadStateFromLocal();
+
+    if (serverState) {
+        const mergedState = ensureAppState(serverState);
+        if (localState) {
+            mergedState.templates = mergeUniqueById(serverState.templates, localState.templates);
+            mergedState.financeEntries = mergeUniqueById(serverState.financeEntries, localState.financeEntries);
+            mergedState.helpSettings = mergeHelpSettings(serverState.helpSettings, localState.helpSettings);
+            saveStateToLocal(mergedState);
+            if (mergedState.templates.length !== serverState.templates.length || mergedState.financeEntries.length !== serverState.financeEntries.length) {
+                await pushStateToServer(mergedState);
+            }
+            return mergedState;
+        }
+        saveStateToLocal(mergedState);
+        return mergedState;
     }
-    state = loadStateFromLocal();
-    if (state) {
-        await pushStateToServer(state);
-        return state;
+
+    if (localState) {
+        await pushStateToServer(localState);
+        return localState;
     }
-    state = ensureAppState(defaultState);
+
+    const state = ensureAppState(defaultState);
     saveStateToLocal(state);
     await pushStateToServer(state);
     return state;
