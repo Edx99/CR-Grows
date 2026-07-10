@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/app-state-sync.js"></script>
 <style>
 :root {
   --bg:#0c0c0f; --surface:#13131a; --surface2:#1a1a24; --surface3:#20202e;
@@ -448,6 +449,9 @@ const DB_KEY = 'moneta_v3';
 let entries = [];
 let viewMonth = new Date();
 viewMonth.setDate(1);
+let appState = null;
+let currentFinancialPage = 'dashboard';
+let financialSettings = { selectedPage: 'dashboard', filterType: 'all', viewMonth: new Date().toISOString() };
 
 function loadData() {
   try { entries = JSON.parse(localStorage.getItem(DB_KEY)) || []; }
@@ -458,6 +462,33 @@ function saveData() {
 }
 function fmt(n) {
   return '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+async function initAppState() {
+  appState = await syncAppState({ helpSettings: { financial: { selectedPage: 'dashboard', filterType: 'all', viewMonth: new Date().toISOString() } } });
+  financialSettings = appState.helpSettings.financial || financialSettings;
+  currentFinancialPage = financialSettings.selectedPage || 'dashboard';
+  const savedViewMonth = new Date(financialSettings.viewMonth || new Date().toISOString());
+  if (!isNaN(savedViewMonth)) {
+    viewMonth = savedViewMonth;
+    viewMonth.setDate(1);
+  }
+  const filterInput = document.getElementById('filter-type');
+  if (filterInput) {
+    filterInput.value = financialSettings.filterType || 'all';
+  }
+}
+
+function saveFinancialSettings() {
+  if (!appState) appState = loadStateFromLocal();
+  if (!appState) appState = { helpSettings: {} };
+  appState.helpSettings.financial = {
+    selectedPage: currentFinancialPage,
+    filterType: document.getElementById('filter-type')?.value || 'all',
+    viewMonth: viewMonth.toISOString()
+  };
+  saveStateToLocal(appState);
+  pushStateToServer(appState);
 }
 
 // ============================================================
@@ -473,19 +504,33 @@ function showToast(msg) {
 // ============================================================
 // NAVIGATION
 // ============================================================
+function setActivePage(page) {
+  currentFinancialPage = page;
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+
+  if (page === 'dashboard') {
+    renderDashboard();
+  } else if (page === 'transactions') {
+    renderTransactions();
+  } else if (page === 'insights') {
+    generateInsights();
+  } else if (page === 'habits') {
+    renderHabits();
+  } else if (page === 'export') {
+    document.getElementById('total-entries').textContent = entries.length;
+  }
+
+  saveFinancialSettings();
+}
+
 function initNav() {
   document.getElementById('sidebar-nav').addEventListener('click', function(e) {
     const item = e.target.closest('.nav-item');
     if (!item) return;
-    const page = item.dataset.page;
-    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-    item.classList.add('active');
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    if (page === 'dashboard')    renderDashboard();
-    if (page === 'transactions') renderTransactions();
-    if (page === 'habits')       renderHabits();
-    if (page === 'export')       document.getElementById('total-entries').textContent = entries.length;
+    setActivePage(item.dataset.page);
   });
 }
 
@@ -923,17 +968,19 @@ function handleImport(e) {
 // ============================================================
 // INIT — runs after DOM is ready
 // ============================================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+  await initAppState();
   loadData();
   initNav();
   initForm();
+  setActivePage(currentFinancialPage);
 
   // Month nav buttons
   document.getElementById('btn-prev-month').addEventListener('click', function() {
-    viewMonth.setMonth(viewMonth.getMonth()-1); renderDashboard();
+    viewMonth.setMonth(viewMonth.getMonth()-1); renderDashboard(); saveFinancialSettings();
   });
   document.getElementById('btn-next-month').addEventListener('click', function() {
-    viewMonth.setMonth(viewMonth.getMonth()+1); renderDashboard();
+    viewMonth.setMonth(viewMonth.getMonth()+1); renderDashboard(); saveFinancialSettings();
   });
 
   // Form buttons
@@ -941,7 +988,10 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-clear-form').addEventListener('click', initForm);
 
   // Filter
-  document.getElementById('filter-type').addEventListener('change', renderTransactions);
+  document.getElementById('filter-type').addEventListener('change', function() {
+    renderTransactions();
+    saveFinancialSettings();
+  });
 
   // Insights
   document.getElementById('btn-refresh-insights').addEventListener('click', generateInsights);
