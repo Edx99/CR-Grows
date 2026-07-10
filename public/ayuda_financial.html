@@ -503,7 +503,9 @@ function fmt(n) {
 }
 
 async function initAppState() {
+  console.log('finance initAppState starting — token present:', !!localStorage.getItem('token'));
   appState = await syncAppState({ helpSettings: { financial: { selectedPage: 'dashboard', filterType: 'all', viewMonth: new Date().toISOString() } } });
+  console.log('finance initAppState completed appState keys:', appState ? Object.keys(appState) : 'null');
   financialSettings = appState.helpSettings.financial || financialSettings;
   currentFinancialPage = financialSettings.selectedPage || 'dashboard';
   const savedViewMonth = new Date(financialSettings.viewMonth || new Date().toISOString());
@@ -1021,11 +1023,14 @@ function handleImport(e) {
 // INIT — runs after DOM is ready
 // ============================================================
 document.addEventListener('DOMContentLoaded', async function() {
+  console.log('finance DOMContentLoaded — starting page init');
   await initAppState();
+  console.log('finance DOMContentLoaded — initAppState finished');
   if (!entries.length) {
     const stored = localStorage.getItem(DB_KEY);
     if (stored) {
       loadData();
+      console.log('finance loaded local DB_KEY entries after init:', entries.length);
     }
   }
   initNav();
