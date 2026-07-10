@@ -905,6 +905,20 @@ function loadFromLocal() {
     try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || null; } catch { return null; }
 }
 
+function mergeStateForUpload(localState, serverState = {}) {
+    const merged = {
+        days: localState.days || serverState.days || {},
+        weekly: Array.isArray(localState.weekly) && localState.weekly.length > 0 ? localState.weekly : (Array.isArray(serverState.weekly) ? serverState.weekly : []),
+        streak: typeof localState.streak === 'number' && localState.streak > 0 ? localState.streak : serverState.streak || 0,
+        helpSettings: { ...(serverState.helpSettings || {}), ...(localState.helpSettings || {}) },
+        templates: Array.isArray(localState.templates) && localState.templates.length > 0 ? localState.templates : (Array.isArray(serverState.templates) ? serverState.templates : []),
+        financeEntries: Array.isArray(localState.financeEntries) && localState.financeEntries.length > 0 ? localState.financeEntries : (Array.isArray(serverState.financeEntries) ? serverState.financeEntries : []),
+    };
+    if (!Array.isArray(merged.templates)) merged.templates = [];
+    if (!Array.isArray(merged.financeEntries)) merged.financeEntries = [];
+    return merged;
+}
+
 // ══════════════════════════════════════════════════
 // 5. SAVE STATE TO SERVER — debounced 2 seconds
 // ══════════════════════════════════════════════════
@@ -922,7 +936,14 @@ async function pushToServer() {
         return;
     }
     isSaving = true;
-    console.log('pushToServer() sending state to /api/state with templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
+
+    const remoteResponse = await apiFetch('GET', '/api/state');
+    const remoteState = remoteResponse?.state || {};
+    const uploadState = mergeStateForUpload(state, remoteState);
+    state = uploadState;
+    saveToLocal();
+
+    console.log('pushToServer() sending merged state to /api/state with templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
     const result = await apiFetch('POST', '/api/state', { state });
     isSaving = false;
     if (result) {

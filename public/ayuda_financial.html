@@ -491,7 +491,11 @@ async function saveFinanceEntriesToState() {
   if (!appState) appState = loadStateFromLocal() || { helpSettings: {} };
   appState.financeEntries = entries;
   saveStateToLocal(appState);
-  await pushStateToServer(appState);
+  console.log('saveFinanceEntriesToState saving financeEntries:', Array.isArray(appState.financeEntries) ? appState.financeEntries.length : 'none');
+  const success = await pushStateToServer(appState);
+  if (!success) {
+    console.warn('saveFinanceEntriesToState failed to sync to server');
+  }
 }
 
 function fmt(n) {
@@ -589,7 +593,7 @@ function initForm() {
   document.getElementById('entry-notes').value = '';
 }
 
-function saveEntry() {
+async function saveEntry() {
   const date   = document.getElementById('entry-date').value;
   const type   = document.getElementById('entry-type').value;
   const amount = parseFloat(document.getElementById('entry-amount').value);
@@ -604,7 +608,7 @@ function saveEntry() {
   }
   entries.unshift({ id: Date.now(), date, type, amount, category: cat, desc, mood, notes, createdAt: new Date().toISOString() });
   saveData();
-  saveFinanceEntriesToState();
+  await saveFinanceEntriesToState();
   initForm();
   showToast('✦ Entry saved successfully.');
 }
