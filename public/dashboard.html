@@ -597,6 +597,7 @@ function loadSavedTemplates() {
     }
 
     const serverTemplates = Array.isArray(state?.templates) ? state.templates : [];
+    console.log('loadSavedTemplates local:', savedTemplates.length, 'server:', serverTemplates.length, 'serverTemplates sample:', serverTemplates.slice(0,2));
     if (serverTemplates.length) {
         const merged = [...serverTemplates];
         const ids = new Set(serverTemplates.map(t => t.id));
@@ -615,11 +616,13 @@ function loadSavedTemplates() {
             console.warn('No se pudieron actualizar los templates locales:', err);
         }
     } else if (savedTemplates.length) {
+        console.log('No server templates, pushing local templates to server.');
         state.templates = savedTemplates;
         saveToLocal();
         pushToServer();
     }
 
+    console.log('loadSavedTemplates final savedTemplates:', savedTemplates.length, savedTemplates.slice(0,2));
     renderSavedTemplates();
 }
 
@@ -632,6 +635,7 @@ function saveSavedTemplates() {
 
     if (!state) state = loadFromLocal() || EMPTY_STATE();
     state.templates = savedTemplates;
+    console.log('saveSavedTemplates saving state.templates:', savedTemplates.length, 'state.templates sample:', state.templates.slice(0,2));
     saveToLocal();
     pushToServer();
 }
@@ -863,9 +867,10 @@ async function loadStateFromServer() {
     if (data && hasUsableState(data.state)) {
         // ✅ Got real data from server — use it and overwrite localStorage
         state = data.state;
+        console.log('loadStateFromServer state keys:', Object.keys(state));
+        console.log('loadStateFromServer templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
         saveToLocal();
         setSyncStatus('synced', `Sincronizado ✓`);
-        console.log('✅ State loaded from SERVER:', state.weekly?.length || 0, 'missions');
         return true;
     }
 
@@ -917,7 +922,7 @@ async function pushToServer() {
         return;
     }
     isSaving = true;
-    console.log('pushToServer() sending state to /api/state');
+    console.log('pushToServer() sending state to /api/state with templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
     const result = await apiFetch('POST', '/api/state', { state });
     isSaving = false;
     if (result) {
@@ -939,6 +944,8 @@ async function manualSync() {
 
     if (data && hasUsableState(data.state)) {
         state = data.state;
+        console.log('manualSync state keys:', Object.keys(state));
+        console.log('manualSync state.templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'state.financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
         saveToLocal();
         setSyncStatus('synced', 'Sincronizado ✓');
         loadSavedTemplates();
