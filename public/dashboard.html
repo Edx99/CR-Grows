@@ -941,6 +941,7 @@ async function manualSync() {
         state = data.state;
         saveToLocal();
         setSyncStatus('synced', 'Sincronizado ✓');
+        loadSavedTemplates();
         render();
         showToast('Datos actualizados del servidor ✓', 'success');
         return;
@@ -952,6 +953,7 @@ async function manualSync() {
         if (pushed) {
             state = local;
             saveToLocal();
+            loadSavedTemplates();
             setSyncStatus('synced', 'Sincronizado ✓');
             render();
             showToast('Configuración enviada a tu cuenta ✓', 'success');
