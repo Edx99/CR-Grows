@@ -596,15 +596,28 @@ function loadSavedTemplates() {
         savedTemplates = [];
     }
 
-    if (state?.templates?.length) {
-        savedTemplates = state.templates;
+    const serverTemplates = Array.isArray(state?.templates) ? state.templates : [];
+    if (serverTemplates.length) {
+        const merged = [...serverTemplates];
+        const ids = new Set(serverTemplates.map(t => t.id));
+        savedTemplates.forEach(t => {
+            if (t && t.id && !ids.has(t.id)) {
+                merged.push(t);
+            }
+        });
+        savedTemplates = merged;
+        state.templates = savedTemplates;
+        saveToLocal();
+        pushToServer();
         try {
             localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
         } catch (err) {
             console.warn('No se pudieron actualizar los templates locales:', err);
         }
-    } else if (!savedTemplates.length && state?.templates) {
-        savedTemplates = state.templates;
+    } else if (savedTemplates.length) {
+        state.templates = savedTemplates;
+        saveToLocal();
+        pushToServer();
     }
 
     renderSavedTemplates();

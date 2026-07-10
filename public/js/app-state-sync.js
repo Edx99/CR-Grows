@@ -33,6 +33,8 @@ function ensureAppState(state) {
     base.weekly = Array.isArray(base.weekly) ? base.weekly : [];
     base.streak = typeof base.streak === 'number' ? base.streak : 0;
     base.helpSettings = base.helpSettings && typeof base.helpSettings === 'object' ? { ...base.helpSettings } : {};
+    base.financeEntries = Array.isArray(base.financeEntries) ? base.financeEntries : [];
+    base.templates = Array.isArray(base.templates) ? base.templates : [];
     return base;
 }
 

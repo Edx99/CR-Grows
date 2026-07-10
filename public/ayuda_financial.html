@@ -991,7 +991,9 @@ function handleImport(e) {
 // ============================================================
 document.addEventListener('DOMContentLoaded', async function() {
   await initAppState();
-  loadData();
+  if (!entries.length) {
+    loadData();
+  }
   initNav();
   initForm();
   setActivePage(currentFinancialPage);
