@@ -461,11 +461,37 @@ function saveData() {
   localStorage.setItem(DB_KEY, JSON.stringify(entries));
 }
 
-function saveFinanceEntriesToState() {
+function mergeEntriesById(primary = [], secondary = []) {
+  const merged = [];
+  const seen = new Set();
+  (secondary || []).forEach(item => {
+    if (!item) return;
+    const id = item.id?.toString();
+    if (id && !seen.has(id)) {
+      merged.push(item);
+      seen.add(id);
+    }
+  });
+  (primary || []).forEach(item => {
+    if (!item) return;
+    const id = item.id?.toString();
+    if (id) {
+      if (!seen.has(id)) {
+        merged.push(item);
+        seen.add(id);
+      }
+    } else {
+      merged.push(item);
+    }
+  });
+  return merged;
+}
+
+async function saveFinanceEntriesToState() {
   if (!appState) appState = loadStateFromLocal() || { helpSettings: {} };
   appState.financeEntries = entries;
   saveStateToLocal(appState);
-  pushStateToServer(appState);
+  await pushStateToServer(appState);
 }
 
 function fmt(n) {
@@ -487,15 +513,14 @@ async function initAppState() {
   }
 
   console.log('finance init appState.financeEntries:', Array.isArray(appState.financeEntries) ? appState.financeEntries.length : 'none');
+  loadData();
+  console.log('finance local entries:', entries.length);
   if (Array.isArray(appState.financeEntries) && appState.financeEntries.length) {
-    entries = appState.financeEntries;
+    entries = mergeEntriesById(appState.financeEntries, entries);
     saveData();
-  } else {
-    loadData();
-    console.log('finance local entries:', entries.length);
-    if (entries.length) {
-      saveFinanceEntriesToState();
-    }
+    await saveFinanceEntriesToState();
+  } else if (entries.length) {
+    await saveFinanceEntriesToState();
   }
 }
 
