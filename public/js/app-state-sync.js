@@ -76,7 +76,9 @@ async function loadStateFromServer() {
     if (!token) return null;
     const res = await apiFetch('GET', APP_STATE_API_PATH);
     if (!res.ok) return null;
-    return ensureAppState(res.data?.state || null);
+    const remote = res.data?.state;
+    if (remote === null || remote === undefined) return null;
+    return ensureAppState(remote);
 }
 
 function loadStateFromLocal() {
