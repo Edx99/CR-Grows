@@ -326,8 +326,8 @@
                 <p>Ideal para rutinas rápidas con ejercicios que cambian automáticamente. Perfecta para entrenamientos de agilidad o fuerza.</p>
                 <pre>const exerciseList = [
   "Burpee",
-  "Saltos",
-  "Plancha"
+  "Sentadilla con saltos",
+  "Planchas"
 ];</pre>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="template-btn" onclick="openTemplate('ayuda_hiit.html')">▶ Abrir plantilla</button>
@@ -339,6 +339,7 @@
                 <p>Útil para rutinas de afirmaciones, práctica verbal o sesiones de repetición secuencial.</p>
                 <pre>const exercisePool = [
   "Soy fuerte",
+  "Soy el mejor",
   "Soy disciplinado"
 ];</pre>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -348,7 +349,7 @@
             </div>
             <div class="template-card">
                 <h4>Plantilla de control financiero</h4>
-                <p>Ideal para registrar metas financieras, hábitos de ahorro y seguimiento semanal de gastos o ingresos.</p>
+                <p>Ideal para registrar metas financieras, hábitos de ahorro y seguimiento semanal de gastos o ingresos. Sólo ábrelo y haces los registros</p>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="template-btn" onclick="openTemplate('ayuda_financial.html')">▶ Abrir plantilla</button>
                     <button class="template-btn" onclick="focusCustomRoutine('financial')">⚡ Crear mi versión</button>
@@ -357,6 +358,11 @@
             <div class="template-card">
                 <h4>Plantilla de frases audible</h4>
                 <p>Perfecta para repetir afirmaciones o mensajes de impulso con un enfoque más sonoro y emocional.</p>
+                <pre>const exercisePool = [
+  "Soy fuerte",
+  "Soy el mejor",
+  "Soy disciplinado"
+];</pre>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="template-btn" onclick="openTemplate('ayuda_frases_audible.html')">▶ Abrir plantilla</button>
                     <button class="template-btn" onclick="focusCustomRoutine('audible')">⚡ Crear mi versión</button>
@@ -370,9 +376,9 @@
                         <input id="customRoutineName" type="text" placeholder="Nombre de tu rutina" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;" />
                         <select id="customRoutineType" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;">
                             <option value="hiit">HIIT</option>
-                            <option value="frases">Frases reproducibles</option>
-                            <option value="financial">Control financiero</option>
-                            <option value="audible">Frases audible</option>
+                            <option value="solo_frases">Frases reproducibles</option>
+                            <option value="control_financial">Control financiero</option>
+                            <option value="frases_con_audio">Frases audibles</option>
                         </select>
                         <textarea id="customRoutineItems" rows="6" placeholder="Escribe una actividad o frase por línea. Ejemplo:&#10;Burpee&#10;Saltos&#10;Plancha" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;resize:vertical;"></textarea>
                         <button id="customRoutineSubmit" class="template-btn" type="submit" style="align-self:flex-start;">📦 Generar archivo HTML</button>
@@ -535,16 +541,16 @@ function buildTemplateContent(templateText, type, items, title) {
         templateText = templateText.replace(/const exerciseList = \[(?:.|\n)*?\];/, replacement);
         templateText = templateText.replace(/<title>Rutina de Agilidad<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
         templateText = templateText.replace(/<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad<\/h1>/i, `<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">${title || 'Rutina personalizada'}</h1>`);
-    } else if (type === 'frases') {
+    } else if (type === 'solo_frases') {
         const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
         templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/, replacement);
         templateText = templateText.replace(/<title>Mi Rutina de Práctica \(Secuencial\)<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
         templateText = templateText.replace(/<h1>Mi Rutina de Práctica<\/h1>/i, `<h1>${title || 'Rutina personalizada'}</h1>`);
-    } else if (type === 'audible') {
+    } else if (type === 'frases_con_audioaudible') {
         const replacement = `const phrases = [\n${cleanItems.map(item => `  "${escapeForJsString(item)}"`).join(',\n')}\n];`;
         templateText = templateText.replace(/const phrases = \[(?:.|\n)*?\];/, replacement);
         templateText = templateText.replace(/<title>Afirmaciones<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
-    } else if (type === 'financial') {
+    } else if (type === 'control_financial') {
         templateText = templateText.replace(/<title>Moneta — Personal Finance Diary<\/title>/i, `<title>${escapeForJsString(title || 'Rutina personalizada')}</title>`);
         templateText = templateText.replace(/<div class="page-title">Dashboard<\/div>/i, `<div class="page-title">${escapeForJsString(title || 'Rutina personalizada')}</div>`);
         const focusItems = cleanItems.slice(0, 4).map(item => `<div style="margin-top:8px;color:var(--gold);font-size:.82rem;">• ${escapeForJsString(item)}</div>`).join('');
@@ -738,7 +744,7 @@ async function openSavedTemplate(templateId) {
     if (!template) return;
 
     try {
-        const templateFile = template.type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_reproducibles.html';
+        const templateFile = template.type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_audible.html';
         const response = await fetch(templateFile);
         if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
         const templateText = await response.text();
@@ -770,7 +776,7 @@ async function createCustomRoutine(event) {
     message.textContent = 'Generando tu archivo...';
 
     try {
-        const templateFile = type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_reproducibles.html';
+        const templateFile = type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_audible.html';
         const response = await fetch(templateFile);
         if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
 
