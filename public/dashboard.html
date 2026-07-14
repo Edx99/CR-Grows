@@ -785,9 +785,7 @@ async function createCustomRoutine(event) {
     message.textContent = 'Generando tu archivo...';
 
     try {
-		const templateFile = type === 'hiit' 
-			? 'ayuda_hiit.html' 
-			: (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
+		const templateFile = type === 'hiit' ? 'ayuda_hiit.html' : (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
         const response = await fetch(templateFile);
         if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
 
