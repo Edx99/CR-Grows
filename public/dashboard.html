@@ -545,13 +545,12 @@ function buildTemplateContent(templateText, type, items, title) {
         templateText = templateText.replace(/<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad<\/h1>/i, `<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">${title || 'Rutina personalizada'}</h1>`);
 
     } else if (type === 'solo_frases') {
-        // Frases reproducibles
         const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
         templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/i, replacement);
         templateText = templateText.replace(/<title>.*?<\/title>/i, `<title>${escapedTitle}</title>`);
 
     } else if (type === 'frases_con_audio') {
-        // Frases audibles — THIS WAS THE MAIN PROBLEM
+        // Fixed for Frases Audibles
         const replacement = `const phrases = [\n${cleanItems.map(item => `  "${escapeForJsString(item)}"`).join(',\n')}\n];`;
         templateText = templateText.replace(/const phrases = \[(?:.|\n)*?\];/i, replacement);
         templateText = templateText.replace(/<title>.*?<\/title>/i, `<title>${escapedTitle}</title>`);
@@ -566,6 +565,14 @@ function buildTemplateContent(templateText, type, items, title) {
     }
 
     return templateText;
+}
+
+// === KEEP THESE FUNCTIONS INTACT ===
+function calculateAveragePercent(appState) {
+    const days = appState?.days || {};
+    const values = Object.values(days);
+    if (!values.length) return 0;
+    return Math.round(values.reduce((sum, item) => sum + (item?.percent || 0), 0) / values.length);
 }
 
 function calculateLongestStreak(appState) {
@@ -785,7 +792,7 @@ async function createCustomRoutine(event) {
     message.textContent = 'Generando tu archivo...';
 
     try {
-		const templateFile = type === 'hiit' ? 'ayuda_hiit.html' : (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
+		const templateFile = type === 'hiit' ? 'ayuda_hiit.html' 	: (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
         const response = await fetch(templateFile);
         if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
 
