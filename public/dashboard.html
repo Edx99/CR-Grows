@@ -540,32 +540,32 @@ function buildTemplateContent(templateText, type, items, title) {
 
     if (type === 'hiit') {
         const replacement = `const exerciseList = [\n${cleanItems.map(item => `            "${escapeForJsString(item)}"`).join(',\n')}\n        ];`;
-        templateText = templateText.replace(/const exerciseList = \[(?:.|\n)*?\];/, replacement);
+        templateText = templateText.replace(/const exerciseList = \[(?:.|\n)*?\];/i, replacement);
         templateText = templateText.replace(/<title>Rutina de Agilidad<\/title>/i, `<title>${escapedTitle}</title>`);
         templateText = templateText.replace(/<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad<\/h1>/i, `<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">${title || 'Rutina personalizada'}</h1>`);
 
-    } else if (type === 'solo_frases' || type === 'frases_con_audio') {   // ← Fixed here
-        // Support both frase templates
+    } else if (type === 'solo_frases') {
+        // Frases reproducibles
         const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
-        templateText = templateText.replace(/const (exercisePool|phrases) = \[(?:.|\n)*?\];/, replacement);
-        
+        templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/i, replacement);
         templateText = templateText.replace(/<title>.*?<\/title>/i, `<title>${escapedTitle}</title>`);
-        // Add more title/h1 replacements as needed for each template
+
+    } else if (type === 'frases_con_audio') {
+        // Frases audibles — THIS WAS THE MAIN PROBLEM
+        const replacement = `const phrases = [\n${cleanItems.map(item => `  "${escapeForJsString(item)}"`).join(',\n')}\n];`;
+        templateText = templateText.replace(/const phrases = \[(?:.|\n)*?\];/i, replacement);
+        templateText = templateText.replace(/<title>.*?<\/title>/i, `<title>${escapedTitle}</title>`);
 
     } else if (type === 'control_financial') {
-        // ... keep existing financial logic
         templateText = templateText.replace(/<title>Moneta — Personal Finance Diary<\/title>/i, `<title>${escapedTitle}</title>`);
-        // ... rest of financial block
+        templateText = templateText.replace(/<div class="page-title">Dashboard<\/div>/i, `<div class="page-title">${title || 'Rutina personalizada'}</div>`);
+        
+        const focusItems = cleanItems.slice(0, 4).map(item => `<div style="margin-top:8px;color:var(--gold);font-size:.82rem;">• ${escapeForJsString(item)}</div>`).join('');
+        const replacementBlock = `<div class="insight-card"><div class="insight-label">✦ Personal Focus</div><div class="insight-text"><strong>${title || 'Rutina personalizada'}</strong>${focusItems ? `<br>${focusItems}` : ''}</div></div>\n\n      <div class="insight-card">`;
+        templateText = templateText.replace(/<div class="insight-card">\s*<div class="insight-label">✦ Daily Financial Insight<\/div>/i, replacementBlock);
     }
 
     return templateText;
-}
-
-function calculateAveragePercent(appState) {
-    const days = appState?.days || {};
-    const values = Object.values(days);
-    if (!values.length) return 0;
-    return Math.round(values.reduce((sum, item) => sum + (item?.percent || 0), 0) / values.length);
 }
 
 function calculateLongestStreak(appState) {
@@ -785,7 +785,9 @@ async function createCustomRoutine(event) {
     message.textContent = 'Generando tu archivo...';
 
     try {
-        const templateFile = type === 'hiit' ? 'ayuda_hiit.html' : 'ayuda_frases_audible.html';
+		const templateFile = type === 'hiit' 
+			? 'ayuda_hiit.html' 
+			: (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
         const response = await fetch(templateFile);
         if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
 
