@@ -322,20 +322,7 @@
         </div>
         <div class="help-grid">
             <div class="template-card">
-                <h4>Plantilla HIIT interactiva</h4>
-                <p>Ideal para rutinas rápidas con ejercicios que cambian automáticamente. Perfecta para entrenamientos de agilidad o fuerza.</p>
-                <pre>const exerciseList = [
-  "Burpee",
-  "Sentadilla con saltos",
-  "Planchas"
-];</pre>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="template-btn" onclick="openTemplate('ayuda_hiit.html')">▶ Abrir plantilla</button>
-                    <button class="template-btn" onclick="focusCustomRoutine('hiit')">⚡ Crear mi versión</button>
-                </div>
-            </div>
-            <div class="template-card">
-                <h4>Plantilla de frases reproducibles</h4>
+                <h4>Plantilla de Básica</h4>
                 <p>Útil para rutinas de afirmaciones, práctica verbal o sesiones de repetición secuencial.</p>
                 <pre>const exercisePool = [
   "Soy fuerte",
@@ -343,7 +330,7 @@
   "Soy disciplinado"
 ];</pre>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="template-btn" onclick="openTemplate('ayuda_frases_reproducibles.html')">▶ Abrir plantilla</button>
+                    <button class="template-btn" onclick="openTemplate('template_basic.html')">▶ Abrir plantilla</button>
                     <button class="template-btn" onclick="focusCustomRoutine('frases')">⚡ Crear mi versión</button>
                 </div>
             </div>
@@ -375,7 +362,6 @@
                     <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
                         <input id="customRoutineName" type="text" placeholder="Nombre de tu rutina" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;" />
                         <select id="customRoutineType" style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px 12px;color:#f8fafc;">
-                            <option value="hiit">HIIT</option>
                             <option value="solo_frases">Frases reproducibles</option>
                             <option value="control_financial">Control financiero</option>
                             <option value="frases_con_audio">Frases audibles</option>
@@ -513,7 +499,6 @@ function focusCustomRoutine(type) {
     if (itemsTextarea) {
         itemsTextarea.focus();
         const examples = {
-            hiit: 'Ejemplo:\nBurpee\nSaltos\nPlancha',
             frases: 'Ejemplo:\nSoy disciplinado\nSoy constante\nSoy capaz',
             financial: 'Ejemplo:\nAhorro mensual\nMeta de gastos\nControl de suscripciones',
             audible: 'Ejemplo:\nSoy fuerte\nSoy valiente\nSoy capaz'
@@ -538,13 +523,7 @@ function buildTemplateContent(templateText, type, items, title) {
 
     const escapedTitle = escapeForJsString(title || 'Rutina personalizada');
 
-    if (type === 'hiit') {
-        const replacement = `const exerciseList = [\n${cleanItems.map(item => `            "${escapeForJsString(item)}"`).join(',\n')}\n        ];`;
-        templateText = templateText.replace(/const exerciseList = \[(?:.|\n)*?\];/i, replacement);
-        templateText = templateText.replace(/<title>Rutina de Agilidad<\/title>/i, `<title>${escapedTitle}</title>`);
-        templateText = templateText.replace(/<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Rutina de Agilidad<\/h1>/i, `<h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">${title || 'Rutina personalizada'}</h1>`);
-
-    } else if (type === 'solo_frases') {
+	if (type === 'solo_frases') {
         const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
         templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/i, replacement);
         templateText = templateText.replace(/<title>.*?<\/title>/i, `<title>${escapedTitle}</title>`);
@@ -659,7 +638,7 @@ function resetRoutineForm() {
     const itemsTextarea = document.getElementById('customRoutineItems');
     const submitButton = document.getElementById('customRoutineSubmit');
     if (nameInput) nameInput.value = '';
-    if (typeSelect) typeSelect.value = 'hiit';
+    if (typeSelect) typeSelect.value = 'solo_frases';
     if (itemsTextarea) itemsTextarea.value = '';
     if (submitButton) submitButton.textContent = '📦 Generar archivo HTML';
     editingTemplateId = null;
@@ -673,7 +652,7 @@ function populateRoutineForm(template) {
     const message = document.getElementById('customRoutineMessage');
 
     if (nameInput) nameInput.value = template.title || '';
-    if (typeSelect) typeSelect.value = template.type || 'hiit';
+    if (typeSelect) typeSelect.value = template.type || 'solo_frases';
     if (itemsTextarea) itemsTextarea.value = (template.items || []).join('\n');
     if (submitButton) submitButton.textContent = '📝 Actualizar plantilla';
     editingTemplateId = template.id;
@@ -703,7 +682,7 @@ function renderSavedTemplates() {
         const title = document.createElement('h4');
         title.textContent = template.title;
         const type = document.createElement('p');
-        type.textContent = template.type === 'hiit' ? 'HIIT interactiva' : 'Frases reproducibles';
+        type.textContent = template.type === 'solo_frases' ? 'Template Basic' : 'Frases reproducibles';
         const preview = document.createElement('pre');
         preview.textContent = (template.items || []).slice(0, 6).join('\n') + ((template.items || []).length > 6 ? '\n...' : '');
 
@@ -751,8 +730,8 @@ async function openSavedTemplate(templateId) {
     if (!template) return;
 
     try {
-        let templateFile = 'ayuda_hiit.html';
-        if (template.type === 'solo_frases' || template.type === 'frases_con_audio') {
+        let templateFile = 'template_basic.html';
+        if (template.type === 'frases_con_audio') {
             templateFile = 'ayuda_frases_audible.html';  // or the reproducible one
         } else if (template.type === 'control_financial') {
             templateFile = 'ayuda_financial.html';
@@ -792,7 +771,7 @@ async function createCustomRoutine(event) {
     message.textContent = 'Generando tu archivo...';
 
     try {
-		const templateFile = type === 'hiit' ? 'ayuda_hiit.html' 	: (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
+		const templateFile = type === 'solo_frases' ? 'template_basic.html' 	: (type === 'control_financial' ? 'ayuda_financial.html' : 'ayuda_frases_audible.html');
         const response = await fetch(templateFile);
         if (!response.ok) throw new Error('No se pudo cargar la plantilla.');
 
