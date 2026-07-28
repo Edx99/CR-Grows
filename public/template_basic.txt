@@ -580,66 +580,6 @@
     audioCtx: null,
     nextId: 1
   };
-  
-  const STORAGE_KEY = 'llama_interior_state';
-
-function saveState() {
-  try {
-    const toStore = {
-      phrases: state.phrases,
-      nextId: state.nextId,
-      durationMode: state.durationMode,
-      customSeconds: state.customSeconds,
-      randMin: state.randMin,
-      randMax: state.randMax,
-      totalMode: state.totalMode,
-      totalMinutes: state.totalMinutes,
-      sequenceMode: state.sequenceMode,
-      loopAll: state.loopAll,
-      userLoopPref: state.userLoopPref,
-      voiceOn: state.voiceOn,
-      repeatTwice: state.repeatTwice,
-      cueOn: state.cueOn,
-      warmupOn: state.warmupOn,
-      fullscreenOn: state.fullscreenOn,
-      vibrateOn: state.vibrateOn,
-      rate: state.rate,
-      pitch: state.pitch,
-      volume: state.volume,
-      voiceIdx: els.voiceSelect ? parseInt(els.voiceSelect.value, 10) : 0
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-  } catch (e) { /* ignore */ }
-}
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const saved = JSON.parse(raw);
-    // Aplicar solo propiedades existentes en el estado actual
-    Object.keys(saved).forEach(key => {
-      if (key === 'voiceIdx') {
-        // Se aplica después de cargar las voces
-        return;
-      }
-      if (key === 'phrases') {
-        state.phrases = saved.phrases;
-        return;
-      }
-      if (key === 'nextId') {
-        state.nextId = saved.nextId;
-        return;
-      }
-      if (key in state) {
-        state[key] = saved[key];
-      }
-    });
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
 
   const els = {};
   ['newPhraseInput','addPhraseBtn','phraseList','phraseCount','clearBtn','importBtn','exportBtn','fileInput',
@@ -751,60 +691,6 @@ function loadState() {
     els.phraseCount.textContent = state.phrases.length;
     updateSummary();
   }
-  
-  // Cargar estado guardado
-const loaded = loadState();
-if (loaded) {
-  // Actualizar los elementos de la interfaz con los valores cargados
-  // - Frases: ya se renderizan con renderPhraseList()
-  // - Selectores de duración
-  const durBtns = els.durationMode.querySelectorAll('button');
-  durBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.val === state.durationMode);
-  });
-  els.customDurRow.classList.toggle('hidden', state.durationMode !== 'custom');
-  els.randomDurRow.classList.toggle('hidden', state.durationMode !== 'random');
-  els.customSeconds.value = state.customSeconds;
-  els.randMin.value = state.randMin;
-  els.randMax.value = state.randMax;
-
-  // - Modo total
-  const totalBtns = els.totalMode.querySelectorAll('button');
-  totalBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.val === state.totalMode);
-  });
-  els.totalFixedRow.classList.toggle('hidden', state.totalMode !== 'fixed');
-  els.totalMinutes.value = state.totalMinutes;
-
-  // - Secuencia
-  const seqBtns = els.sequenceMode.querySelectorAll('button');
-  seqBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.val === state.sequenceMode);
-  });
-
-  // - Toggles
-  els.loopAll.checked = state.loopAll;
-  els.voiceOnToggle.checked = state.voiceOn;
-  els.repeatTwice.checked = state.repeatTwice;
-  els.cueToggle.checked = state.cueOn;
-  els.warmupToggle.checked = state.warmupOn;
-  els.fullscreenToggle.checked = state.fullscreenOn;
-  els.vibrateToggle.checked = state.vibrateOn;
-
-  // - Sliders
-  els.rateSlider.value = state.rate;
-  els.rateVal.textContent = state.rate.toFixed(2) + '×';
-  els.pitchSlider.value = state.pitch;
-  els.pitchVal.textContent = state.pitch.toFixed(2);
-  els.volSlider.value = state.volume;
-  els.volVal.textContent = Math.round(state.volume * 100) + '%';
-
-  // - Selección de voz (se aplica cuando las voces estén cargadas)
-  // Se manejará en populateVoices
-}
-renderPhraseList(); // Ya está, pero asegura que se pinte
-updateSummary();
-
   function escapeAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
   function addPhrase(text, focus){
