@@ -588,40 +588,47 @@ function syncDerivedState() {
 }
 
 function loadSavedTemplates() {
+    // Local TEMPLATES_STORAGE_KEY is the source of truth for the templates list
+    // (including an intentional empty array after the user deleted everything).
+    // Only seed from server when the local key has never been written.
+    let hasLocalKey = false;
     try {
         const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
-        savedTemplates = raw ? JSON.parse(raw) : [];
+        if (raw !== null) {
+            hasLocalKey = true;
+            const parsed = JSON.parse(raw);
+            savedTemplates = Array.isArray(parsed) ? parsed : [];
+        } else {
+            savedTemplates = [];
+        }
     } catch (err) {
         savedTemplates = [];
+        hasLocalKey = false;
     }
 
     const serverTemplates = Array.isArray(state?.templates) ? state.templates : [];
-    console.log('loadSavedTemplates local:', savedTemplates.length, 'server:', serverTemplates.length, 'serverTemplates sample:', serverTemplates.slice(0,2));
-    if (serverTemplates.length) {
-        const merged = [...serverTemplates];
-        const ids = new Set(serverTemplates.map(t => t.id));
-        savedTemplates.forEach(t => {
-            if (t && t.id && !ids.has(t.id)) {
-                merged.push(t);
-            }
-        });
-        savedTemplates = merged;
+    console.log('loadSavedTemplates hasLocalKey:', hasLocalKey, 'local:', savedTemplates.length, 'server:', serverTemplates.length);
+
+    if (hasLocalKey) {
+        // User's local list (after create/edit/delete) wins — push it to server so deletes stick.
         state.templates = savedTemplates;
         saveToLocal();
         pushToServer();
+    } else if (serverTemplates.length) {
+        // First visit / cleared storage: seed local from server
+        savedTemplates = serverTemplates.slice();
+        state.templates = savedTemplates;
         try {
             localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
         } catch (err) {
-            console.warn('No se pudieron actualizar los templates locales:', err);
+            console.warn('No se pudieron guardar los templates locales:', err);
         }
-    } else if (savedTemplates.length) {
-        console.log('No server templates, pushing local templates to server.');
-        state.templates = savedTemplates;
         saveToLocal();
-        pushToServer();
+    } else {
+        state.templates = savedTemplates;
     }
 
-    console.log('loadSavedTemplates final savedTemplates:', savedTemplates.length, savedTemplates.slice(0,2));
+    console.log('loadSavedTemplates final savedTemplates:', savedTemplates.length, savedTemplates.slice(0, 2));
     renderSavedTemplates();
 }
 
@@ -726,7 +733,15 @@ function renderSavedTemplates() {
 }
 
 function deleteSavedTemplate(templateId) {
-    savedTemplates = savedTemplates.filter(item => item.id !== templateId);
+    const before = savedTemplates.length;
+    // Compare as strings so number/string id mismatches never leave orphans
+    const idStr = String(templateId);
+    savedTemplates = savedTemplates.filter(item => String(item.id) !== idStr);
+    if (savedTemplates.length === before) {
+        showToast('No se encontró el template a borrar', 'error');
+        return;
+    }
+    // Persist immediately: local key + app state + server (last-write-wins)
     saveSavedTemplates();
     renderSavedTemplates();
     showToast('Template eliminado', 'success');
@@ -914,13 +929,15 @@ function loadFromLocal() {
 }
 
 function mergeStateForUpload(localState, serverState = {}) {
+    // templates / financeEntries: local array wins even when empty (user deleted all).
+    // Previously length>0 check resurrected deleted items from the server.
     const merged = {
         days: localState.days || serverState.days || {},
         weekly: Array.isArray(localState.weekly) && localState.weekly.length > 0 ? localState.weekly : (Array.isArray(serverState.weekly) ? serverState.weekly : []),
         streak: typeof localState.streak === 'number' && localState.streak > 0 ? localState.streak : serverState.streak || 0,
         helpSettings: { ...(serverState.helpSettings || {}), ...(localState.helpSettings || {}) },
-        templates: Array.isArray(localState.templates) && localState.templates.length > 0 ? localState.templates : (Array.isArray(serverState.templates) ? serverState.templates : []),
-        financeEntries: Array.isArray(localState.financeEntries) && localState.financeEntries.length > 0 ? localState.financeEntries : (Array.isArray(serverState.financeEntries) ? serverState.financeEntries : []),
+        templates: Array.isArray(localState.templates) ? localState.templates : (Array.isArray(serverState.templates) ? serverState.templates : []),
+        financeEntries: Array.isArray(localState.financeEntries) ? localState.financeEntries : (Array.isArray(serverState.financeEntries) ? serverState.financeEntries : []),
     };
     if (!Array.isArray(merged.templates)) merged.templates = [];
     if (!Array.isArray(merged.financeEntries)) merged.financeEntries = [];
