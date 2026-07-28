@@ -524,8 +524,15 @@ function buildTemplateContent(templateText, type, items, title) {
     const escapedTitle = escapeForJsString(title || 'Rutina personalizada');
 
 	if (type === 'solo_frases') {
-        const replacement = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
-        templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/i, replacement);
+        // Inject phrases into the BOOTSTRAP marker used by template_basic.html
+        const bootstrap = `const BOOTSTRAP_PHRASES = [\n${cleanItems.map(item => `    "${escapeForJsString(item)}"`).join(',\n')}\n  ];`;
+        templateText = templateText.replace(
+          /const BOOTSTRAP_PHRASES = \[(?:.|\n)*?\];/i,
+          bootstrap
+        );
+        // Fallback for older templates that still used exercisePool
+        const exercisePool = `const exercisePool = [\n${cleanItems.map(item => `        "${escapeForJsString(item)}"`).join(',\n')}\n    ];`;
+        templateText = templateText.replace(/const exercisePool = \[(?:.|\n)*?\];/i, exercisePool);
         templateText = templateText.replace(/<title>.*?<\/title>/i, `<title>${escapedTitle}</title>`);
 
     } else if (type === 'frases_con_audio') {
