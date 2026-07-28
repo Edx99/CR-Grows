@@ -86,13 +86,15 @@ function mergeHelpSettings(server = {}, local = {}) {
 }
 
 function mergeAppState(current = {}, incoming = {}) {
+  // NOTE: templates / financeEntries are last-write-wins (client is source of truth).
+  // Union-by-id prevented deletes from ever sticking.
   return {
     days: Object.keys(incoming.days || {}).length ? incoming.days : (current.days || {}),
     weekly: Array.isArray(incoming.weekly) && incoming.weekly.length ? incoming.weekly : (Array.isArray(current.weekly) ? current.weekly : []),
     streak: typeof incoming.streak === 'number' && incoming.streak > 0 ? incoming.streak : (typeof current.streak === 'number' ? current.streak : 0),
     helpSettings: mergeHelpSettings(incoming.helpSettings || {}, current.helpSettings || {}),
-    templates: Array.isArray(incoming.templates) && incoming.templates.length ? mergeUniqueById(incoming.templates, current.templates) : (Array.isArray(current.templates) ? current.templates : []),
-    financeEntries: Array.isArray(incoming.financeEntries) && incoming.financeEntries.length ? mergeUniqueById(incoming.financeEntries, current.financeEntries) : (Array.isArray(current.financeEntries) ? current.financeEntries : []),
+    templates: Array.isArray(incoming.templates) ? incoming.templates : (Array.isArray(current.templates) ? current.templates : []),
+    financeEntries: Array.isArray(incoming.financeEntries) ? incoming.financeEntries : (Array.isArray(current.financeEntries) ? current.financeEntries : []),
   };
 }
 
@@ -445,13 +447,15 @@ function mergeHelpSettings(current = {}, incoming = {}) {
 function mergeAppState(current = {}, incoming = {}) {
   const safeCurrent = ensureAppState(current);
   const safeIncoming = ensureAppState(incoming);
+  // templates / financeEntries: client is source of truth (supports real deletes).
+  // Do NOT union with server list — that was resurrecting deleted items on every save.
   return {
     days: Object.keys(safeIncoming.days).length ? safeIncoming.days : safeCurrent.days,
     weekly: safeIncoming.weekly.length ? safeIncoming.weekly : safeCurrent.weekly,
     streak: safeIncoming.streak > 0 ? safeIncoming.streak : safeCurrent.streak,
     helpSettings: mergeHelpSettings(safeCurrent.helpSettings, safeIncoming.helpSettings),
-    templates: mergeArrayById(safeIncoming.templates, safeCurrent.templates),
-    financeEntries: mergeArrayById(safeIncoming.financeEntries, safeCurrent.financeEntries),
+    templates: Array.isArray(incoming.templates) ? safeIncoming.templates : safeCurrent.templates,
+    financeEntries: Array.isArray(incoming.financeEntries) ? safeIncoming.financeEntries : safeCurrent.financeEntries,
   };
 }
 
