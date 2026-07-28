@@ -546,33 +546,13 @@
 
   const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---------------- PERSISTENCE ----------------
-     Change STORAGE_KEY per generated page (e.g. per user or theme) so different
-     copies of this template don't overwrite each other's saved phrases. */
-  const STORAGE_KEY = 'llamaInterior_frases_v1';
+  /* === BOOTSTRAP: replaced by dashboard generator when creating a custom HTML === */
+  const BOOTSTRAP_PHRASES = [];
+  /* === END BOOTSTRAP === */
 
-  function savePhrases(){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        phrases: state.phrases,
-        nextId: state.nextId
-      }));
-    } catch(err){
-      console.warn('No se pudieron guardar las frases:', err);
-    }
-  }
-
-  function loadPhrases(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return;
-      const data = JSON.parse(raw);
-      if(Array.isArray(data.phrases)) state.phrases = data.phrases;
-      if(typeof data.nextId === 'number') state.nextId = data.nextId;
-    } catch(err){
-      console.warn('No se pudieron cargar las frases guardadas:', err);
-    }
-  }
+  /* Storage key: unique per file title so different generated HTMLs don't collide.
+     When opened as file:// each file already has isolated localStorage in most browsers. */
+  const STORAGE_KEY = 'llamaInterior_v1_' + (document.title || 'default').slice(0, 48).replace(/[^\w\-]+/g, '_');
 
   /* ---------------- STATE ---------------- */
   const state = {
@@ -643,6 +623,90 @@
 
   if(!('vibrate' in navigator)) els.vibrateRow.classList.add('hidden');
 
+  /* ---------------- PERSISTENCE (localStorage) ---------------- */
+  function saveState(){
+    try {
+      const payload = {
+        phrases: state.phrases.map(p => ({ id: p.id, text: p.text })),
+        nextId: state.nextId,
+        durationMode: state.durationMode,
+        sequenceMode: state.sequenceMode,
+        customSeconds: state.customSeconds,
+        randMin: state.randMin,
+        randMax: state.randMax,
+        totalMode: state.totalMode,
+        totalMinutes: state.totalMinutes,
+        userLoopPref: state.userLoopPref,
+        rate: state.rate,
+        pitch: state.pitch,
+        volume: state.volume,
+        voiceOn: state.voiceOn,
+        repeatTwice: state.repeatTwice,
+        loopAll: state.loopAll,
+        cueOn: state.cueOn,
+        warmupOn: state.warmupOn,
+        fullscreenOn: state.fullscreenOn,
+        vibrateOn: state.vibrateOn
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.warn('Could not save state to localStorage', err);
+    }
+  }
+
+  function loadState(){
+    // 1) Prefer previously saved data for this file
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.phrases) && data.phrases.length) {
+          state.phrases = data.phrases
+            .filter(p => p && typeof p.text === 'string' && p.text.trim())
+            .map(p => ({ id: p.id || state.nextId++, text: String(p.text).trim() }));
+          state.nextId = Math.max(
+            state.nextId,
+            ...(state.phrases.map(p => p.id || 0)),
+            (data.nextId || 1)
+          );
+        }
+        // restore settings if present
+        if (data.durationMode) state.durationMode = data.durationMode;
+        if (data.sequenceMode) state.sequenceMode = data.sequenceMode;
+        if (typeof data.customSeconds === 'number') state.customSeconds = data.customSeconds;
+        if (typeof data.randMin === 'number') state.randMin = data.randMin;
+        if (typeof data.randMax === 'number') state.randMax = data.randMax;
+        if (data.totalMode) state.totalMode = data.totalMode;
+        if (typeof data.totalMinutes === 'number') state.totalMinutes = data.totalMinutes;
+        if (typeof data.userLoopPref === 'boolean') state.userLoopPref = data.userLoopPref;
+        if (typeof data.rate === 'number') state.rate = data.rate;
+        if (typeof data.pitch === 'number') state.pitch = data.pitch;
+        if (typeof data.volume === 'number') state.volume = data.volume;
+        if (typeof data.voiceOn === 'boolean') state.voiceOn = data.voiceOn;
+        if (typeof data.repeatTwice === 'boolean') state.repeatTwice = data.repeatTwice;
+        if (typeof data.loopAll === 'boolean') state.loopAll = data.loopAll;
+        if (typeof data.cueOn === 'boolean') state.cueOn = data.cueOn;
+        if (typeof data.warmupOn === 'boolean') state.warmupOn = data.warmupOn;
+        if (typeof data.fullscreenOn === 'boolean') state.fullscreenOn = data.fullscreenOn;
+        if (typeof data.vibrateOn === 'boolean') state.vibrateOn = data.vibrateOn;
+        return true; // loaded from storage
+      }
+    } catch (err) {
+      console.warn('Could not load state from localStorage', err);
+    }
+
+    // 2) Fallback: seed from BOOTSTRAP_PHRASES (injected by dashboard generator)
+    if (Array.isArray(BOOTSTRAP_PHRASES) && BOOTSTRAP_PHRASES.length) {
+      state.phrases = BOOTSTRAP_PHRASES
+        .filter(t => typeof t === 'string' && t.trim())
+        .map((t, i) => ({ id: i + 1, text: t.trim() }));
+      state.nextId = state.phrases.length + 1;
+      saveState(); // persist the bootstrap so next open works even offline
+      return true;
+    }
+    return false;
+  }
+
   /* ---------------- AMBIENT EMBERS ---------------- */
   function spawnEmber(){
     if(REDUCED_MOTION) return;
@@ -710,7 +774,7 @@
         input.addEventListener('input', () => {
           p.text = input.value;
           updateSummary();
-          savePhrases();
+          saveState();
         });
         row.querySelector('.mv-up').addEventListener('click', () => { moveItem(i, -1); });
         row.querySelector('.mv-down').addEventListener('click', () => { moveItem(i, 1); });
@@ -727,7 +791,7 @@
     if(!t) return;
     state.phrases.push({ id: state.nextId++, text: t });
     renderPhraseList();
-    savePhrases();
+    saveState();
     if(focus){
       const rows = els.phraseList.querySelectorAll('input');
       if(rows.length) rows[rows.length - 1].focus();
@@ -738,12 +802,12 @@
     if(j < 0 || j >= state.phrases.length) return;
     [state.phrases[i], state.phrases[j]] = [state.phrases[j], state.phrases[i]];
     renderPhraseList();
-    savePhrases();
+    saveState();
   }
   function removeItem(id){
     state.phrases = state.phrases.filter(p => p.id !== id);
     renderPhraseList();
-    savePhrases();
+    saveState();
   }
 
   els.addPhraseBtn.addEventListener('click', () => {
@@ -757,7 +821,7 @@
       els.newPhraseInput.value = '';
     }
   });
-  els.clearBtn.addEventListener('click', () => { state.phrases = []; renderPhraseList(); savePhrases(); });
+  els.clearBtn.addEventListener('click', () => { state.phrases = []; renderPhraseList(); saveState(); });
 
   els.bulkToggle.addEventListener('click', () => {
     const open = els.bulkArea.classList.toggle('open');
@@ -767,7 +831,6 @@
     const lines = els.bulkText.value.split('\n').map(s => s.trim()).filter(Boolean);
     lines.forEach(l => addPhrase(l, false));
     els.bulkText.value = '';
-    savePhrases();
   });
 
   document.querySelectorAll('.chip').forEach(chip=>{
@@ -790,13 +853,58 @@
     const reader = new FileReader();
     reader.onload = () => {
       String(reader.result).split('\n').map(s => s.trim()).filter(Boolean).forEach(l => addPhrase(l, false));
-      savePhrases();
     };
     reader.readAsText(file);
     e.target.value = '';
   });
 
-  loadPhrases();
+  /* Load saved phrases/settings (or bootstrap from generator) BEFORE first paint */
+  loadState();
+
+  /* Sync UI controls with loaded state */
+  function applyLoadedSettingsToUI(){
+    // duration mode buttons
+    if (els.durationMode) {
+      [...els.durationMode.children].forEach(b => {
+        b.classList.toggle('active', b.dataset.val === state.durationMode);
+      });
+      if (els.customDurRow) els.customDurRow.classList.toggle('hidden', state.durationMode !== 'custom');
+      if (els.randomDurRow) els.randomDurRow.classList.toggle('hidden', state.durationMode !== 'random');
+    }
+    if (els.customSeconds) els.customSeconds.value = state.customSeconds;
+    if (els.randMin) els.randMin.value = state.randMin;
+    if (els.randMax) els.randMax.value = state.randMax;
+
+    // total mode
+    if (els.totalMode) {
+      [...els.totalMode.children].forEach(b => {
+        b.classList.toggle('active', b.dataset.val === state.totalMode);
+      });
+      if (els.totalFixedRow) els.totalFixedRow.classList.toggle('hidden', state.totalMode !== 'fixed');
+    }
+    if (els.totalMinutes) els.totalMinutes.value = state.totalMinutes;
+
+    // sequence
+    if (els.sequenceMode) {
+      [...els.sequenceMode.children].forEach(b => {
+        b.classList.toggle('active', b.dataset.val === state.sequenceMode);
+      });
+    }
+
+    // toggles / sliders
+    if (els.rateSlider) { els.rateSlider.value = state.rate; if (els.rateVal) els.rateVal.textContent = state.rate.toFixed(1); }
+    if (els.pitchSlider) { els.pitchSlider.value = state.pitch; if (els.pitchVal) els.pitchVal.textContent = state.pitch.toFixed(1); }
+    if (els.volSlider) { els.volSlider.value = state.volume; if (els.volVal) els.volVal.textContent = Math.round(state.volume * 100) + '%'; }
+    if (els.voiceOnToggle) els.voiceOnToggle.checked = state.voiceOn;
+    if (els.repeatTwice) els.repeatTwice.checked = state.repeatTwice;
+    if (els.loopAll) els.loopAll.checked = state.loopAll;
+    if (els.cueToggle) els.cueToggle.checked = state.cueOn;
+    if (els.warmupToggle) els.warmupToggle.checked = state.warmupOn;
+    if (els.fullscreenToggle) els.fullscreenToggle.checked = state.fullscreenOn;
+    if (els.vibrateToggle) els.vibrateToggle.checked = state.vibrateOn;
+  }
+  applyLoadedSettingsToUI();
+
   renderPhraseList();
 
   /* ---------------- DURATION / SEQUENCE / TOGGLES ---------------- */
@@ -809,10 +917,11 @@
     els.customDurRow.classList.toggle('hidden', state.durationMode !== 'custom');
     els.randomDurRow.classList.toggle('hidden', state.durationMode !== 'random');
     updateSummary();
+    saveState();
   });
-  els.customSeconds.addEventListener('input', () => { state.customSeconds = clampNum(els.customSeconds.value, 3, 600, 45); updateSummary(); });
-  els.randMin.addEventListener('input', () => { state.randMin = clampNum(els.randMin.value, 3, 600, 30); updateSummary(); });
-  els.randMax.addEventListener('input', () => { state.randMax = clampNum(els.randMax.value, 3, 600, 60); updateSummary(); });
+  els.customSeconds.addEventListener('input', () => { state.customSeconds = clampNum(els.customSeconds.value, 3, 600, 45); updateSummary(); saveState(); });
+  els.randMin.addEventListener('input', () => { state.randMin = clampNum(els.randMin.value, 3, 600, 30); updateSummary(); saveState(); });
+  els.randMax.addEventListener('input', () => { state.randMax = clampNum(els.randMax.value, 3, 600, 60); updateSummary(); saveState(); });
   function clampNum(v, min, max, fallback){ const n = parseInt(v, 10); if(isNaN(n)) return fallback; return Math.min(max, Math.max(min, n)); }
 
   els.totalMode.addEventListener('click', (e) => {
@@ -836,8 +945,9 @@
       els.loopLabel.textContent = 'Repetir la lista sin fin (loop)';
     }
     updateSummary();
+    saveState();
   });
-  els.totalMinutes.addEventListener('input', () => { state.totalMinutes = clampNum(els.totalMinutes.value, 1, 180, 10); updateSummary(); });
+  els.totalMinutes.addEventListener('input', () => { state.totalMinutes = clampNum(els.totalMinutes.value, 1, 180, 10); updateSummary(); saveState(); });
 
   els.sequenceMode.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
@@ -846,16 +956,18 @@
     btn.classList.add('active');
     state.sequenceMode = btn.dataset.val;
     updateSummary();
+    saveState();
   });
   els.loopAll.addEventListener('change', () => {
     state.loopAll = els.loopAll.checked;
     if(state.totalMode !== 'fixed') state.userLoopPref = state.loopAll;
     updateSummary();
+    saveState();
   });
-  els.cueToggle.addEventListener('change', () => { state.cueOn = els.cueToggle.checked; });
-  els.warmupToggle.addEventListener('change', () => { state.warmupOn = els.warmupToggle.checked; });
-  els.fullscreenToggle.addEventListener('change', () => { state.fullscreenOn = els.fullscreenToggle.checked; });
-  els.vibrateToggle.addEventListener('change', () => { state.vibrateOn = els.vibrateToggle.checked; });
+  els.cueToggle.addEventListener('change', () => { state.cueOn = els.cueToggle.checked; saveState(); });
+  els.warmupToggle.addEventListener('change', () => { state.warmupOn = els.warmupToggle.checked; saveState(); });
+  els.fullscreenToggle.addEventListener('change', () => { state.fullscreenOn = els.fullscreenToggle.checked; saveState(); });
+  els.vibrateToggle.addEventListener('change', () => { state.vibrateOn = els.vibrateToggle.checked; saveState(); });
 
   /* ---------------- VOICE ---------------- */
   const LATAM_PRIORITY = ['es-419','es-mx','es-us','es-ar','es-co','es-cl','es-pe','es-ve','es-ec','es-bo','es-py','es-uy','es-cr','es-pa','es-do','es-gt','es-hn','es-ni','es-sv','es-pr'];
@@ -891,13 +1003,13 @@
     els.voiceSelect.innerHTML = '<option>Voz no disponible en este navegador</option>';
     els.testVoiceBtn.disabled = true;
   }
-  els.voiceSelect.addEventListener('change', () => { state.voice = state.voiceList[parseInt(els.voiceSelect.value,10)] || null; });
+  els.voiceSelect.addEventListener('change', () => { state.voice = state.voiceList[parseInt(els.voiceSelect.value,10)] || null; saveState(); });
 
-  els.rateSlider.addEventListener('input', () => { state.rate = parseFloat(els.rateSlider.value); els.rateVal.textContent = state.rate.toFixed(2) + '×'; });
-  els.pitchSlider.addEventListener('input', () => { state.pitch = parseFloat(els.pitchSlider.value); els.pitchVal.textContent = state.pitch.toFixed(2); });
-  els.volSlider.addEventListener('input', () => { state.volume = parseFloat(els.volSlider.value); els.volVal.textContent = Math.round(state.volume*100) + '%'; });
-  els.voiceOnToggle.addEventListener('change', () => { state.voiceOn = els.voiceOnToggle.checked; });
-  els.repeatTwice.addEventListener('change', () => { state.repeatTwice = els.repeatTwice.checked; });
+  els.rateSlider.addEventListener('input', () => { state.rate = parseFloat(els.rateSlider.value); els.rateVal.textContent = state.rate.toFixed(2) + '×'; saveState(); });
+  els.pitchSlider.addEventListener('input', () => { state.pitch = parseFloat(els.pitchSlider.value); els.pitchVal.textContent = state.pitch.toFixed(2); saveState(); });
+  els.volSlider.addEventListener('input', () => { state.volume = parseFloat(els.volSlider.value); els.volVal.textContent = Math.round(state.volume*100) + '%'; saveState(); });
+  els.voiceOnToggle.addEventListener('change', () => { state.voiceOn = els.voiceOnToggle.checked; saveState(); });
+  els.repeatTwice.addEventListener('change', () => { state.repeatTwice = els.repeatTwice.checked; saveState(); });
   els.testVoiceBtn.addEventListener('click', () => speak("Así vas a escuchar tus frases durante la práctica."));
 
   function speak(text){
