@@ -471,6 +471,21 @@
             <span>Repetir la frase 2 veces al mostrarla</span>
             <label class="switch"><input type="checkbox" id="repeatTwice"><span class="track"></span></label>
           </div>
+          <div class="field-group" style="margin-top:14px;">
+            <span class="field-label">Música / sonido de fondo</span>
+            <div class="music-panel" id="musicPanel">
+              <button class="music-chip active" data-sound="focus">🎯 Enfoque</button>
+              <button class="music-chip" data-sound="relax">🌿 Relajación</button>
+              <button class="music-chip" data-sound="money">💰 Dinero</button>
+              <button class="music-chip" data-sound="love">💖 Amor</button>
+              <button class="music-chip" data-sound="binaural">🎧 Binaural</button>
+            </div>
+            <div class="toggle-row" style="margin-top:10px;">
+              <span>Activar sonido ambiental</span>
+              <label class="switch"><input type="checkbox" id="musicEnabledToggle" checked><span class="track"></span></label>
+            </div>
+            <p class="hint" style="margin-top:8px;">Elige una atmósfera que acompañe tu sesión.</p>
+          </div>
           <button class="btn-ghost" style="margin-top:14px; width:100%;" id="testVoiceBtn">▶ Probar voz</button>
         </div>
       </div>
@@ -598,7 +613,7 @@
   };
 
   const els = {};
-  ['newPhraseInput','addPhraseBtn','phraseList','phraseCount','clearBtn','importBtn','exportBtn','fileInput','musicPanel',
+  ['newPhraseInput','addPhraseBtn','phraseList','phraseCount','clearBtn','importBtn','exportBtn','fileInput','musicPanel','musicEnabledToggle',
    'bulkToggle','bulkArea','bulkText','bulkAddBtn',
    'durationMode','customDurRow','randomDurRow','customSeconds','randMin','randMax',
    'totalMode','totalFixedRow','totalMinutes','loopRow','loopLabel',
@@ -924,6 +939,10 @@
   document.querySelectorAll('.music-chip').forEach(chip => {
     chip.addEventListener('click', () => setMusicMode(chip.dataset.sound));
   });
+
+  if (els.musicEnabledToggle) {
+    els.musicEnabledToggle.addEventListener('change', () => toggleMusicEnabled(els.musicEnabledToggle.checked));
+  }
 
   els.exportBtn.addEventListener('click', () => {
     const text = state.phrases.map(p => p.text).join('\n');
