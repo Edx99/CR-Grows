@@ -1,6 +1,5 @@
 // Shared app state sync helper for CR Grows pages
 const APP_STATE_API_PATH = '/api/state';
-const APP_STATE_LOCAL_KEY = 'cr_grows_app_state';
 
 function parseJwt(token) {
     try { return JSON.parse(atob(token.split('.')[1])); } catch { return null; }
@@ -8,6 +7,29 @@ function parseJwt(token) {
 
 function getAuthToken() {
     return localStorage.getItem('token');
+}
+
+function getUserScopedStorageKey(prefix) {
+    const token = getAuthToken();
+    const payload = parseJwt(token);
+    const email = payload?.email || '';
+    const suffix = String(email).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'anonymous';
+    return `${prefix}_${suffix}`;
+}
+
+function getAppStateLocalKey() {
+    return getUserScopedStorageKey('cr_grows_app_state');
+}
+
+function normalizeTemplates(templates, ownerEmail) {
+    if (!Array.isArray(templates)) return [];
+    return templates.map(item => ({ ...item, ownerEmail: item?.ownerEmail || ownerEmail || '' }));
+}
+
+function filterTemplatesForOwner(templates, ownerEmail) {
+    const normalized = normalizeTemplates(templates, ownerEmail);
+    if (!ownerEmail) return normalized;
+    return normalized.filter(item => !item.ownerEmail || item.ownerEmail === ownerEmail);
 }
 
 async function apiFetch(method, path, body) {
@@ -93,7 +115,14 @@ async function loadStateFromServer() {
 
 function loadStateFromLocal() {
     try {
-        return ensureAppState(JSON.parse(localStorage.getItem(APP_STATE_LOCAL_KEY)) || null);
+        const raw = localStorage.getItem(getAppStateLocalKey());
+        const parsed = raw ? JSON.parse(raw) : null;
+        const state = ensureAppState(parsed || null);
+        const ownerEmail = parseJwt(getAuthToken())?.email || '';
+        return {
+            ...state,
+            templates: filterTemplatesForOwner(state.templates, ownerEmail)
+        };
     } catch {
         return ensureAppState(null);
     }
@@ -101,7 +130,10 @@ function loadStateFromLocal() {
 
 function saveStateToLocal(state) {
     try {
-        localStorage.setItem(APP_STATE_LOCAL_KEY, JSON.stringify(ensureAppState(state)));
+        const ownerEmail = parseJwt(getAuthToken())?.email || '';
+        const payload = ensureAppState(state);
+        payload.templates = normalizeTemplates(payload.templates, ownerEmail);
+        localStorage.setItem(getAppStateLocalKey(), JSON.stringify(payload));
     } catch (err) {
         console.warn('saveStateToLocal error:', err);
     }
@@ -118,12 +150,13 @@ function mergeArraysForUpload(localArray, serverArray) {
 }
 
 function mergeStateForUpload(state, serverState = {}) {
+    const ownerEmail = parseJwt(getAuthToken())?.email || '';
     const merged = {
         days: (state.days === undefined || Object.keys(state.days || {}).length === 0) ? serverState.days : state.days,
         weekly: (Array.isArray(state.weekly) && state.weekly.length > 0) ? state.weekly : serverState.weekly,
         streak: (typeof state.streak === 'number' && state.streak > 0) ? state.streak : serverState.streak,
         helpSettings: mergeHelpSettings(state.helpSettings || {}, serverState.helpSettings || {}),
-        templates: mergeArraysForUpload(state.templates, serverState.templates),
+        templates: normalizeTemplates(mergeArraysForUpload(state.templates, serverState.templates), ownerEmail),
         financeEntries: mergeArraysForUpload(state.financeEntries, serverState.financeEntries),
     };
     return ensureAppState(merged);
