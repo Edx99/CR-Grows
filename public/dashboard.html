@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/state-utils.js"></script>
     <style>
         :root { --green-dark:#1a3a2a; --green-mid:#2d6a4f; --green-accent:#52b788; }
         * { box-sizing:border-box; margin:0; padding:0; }
@@ -443,8 +444,8 @@ function doLogout() {
 // 2. STATE MANAGEMENT
 // ══════════════════════════════════════════════════
 const AREAS     = ['Personal','Familiar','Fitness','Social','Finanzas','Profesional','Negocios'];
-const today     = new Date().toLocaleDateString('en-CA');
-const LOCAL_KEY = `ce_${userEmail}`;
+const today     = window.CR_GROWS_UTILS?.getStableDateKey() || new Date().toLocaleDateString('en-CA');
+const LOCAL_KEY = window.CR_GROWS_UTILS?.getUserScopedStorageKey('ce', userEmail) || `ce_${userEmail}`;
 
 // Default empty state
 const EMPTY_STATE = () => ({ days:{}, weekly:[], streak:0 });
@@ -459,7 +460,7 @@ let editingTemplateId = null;
 let savedTemplates = [];
 let profile = { nickname: '', friends: [] };
 let leaderboard = [];
-const TEMPLATES_STORAGE_KEY = 'cr_grows_saved_templates';
+const TEMPLATES_STORAGE_KEY = window.CR_GROWS_UTILS?.getUserScopedStorageKey('cr_grows_saved_templates', userEmail) || 'cr_grows_saved_templates';
 
 function setActiveNav(view) {
     document.querySelectorAll('.nav-item[data-view]').forEach(item => {
@@ -587,46 +588,34 @@ function syncDerivedState() {
     if (typeof state.streak !== 'number') state.streak = 0;
 }
 
+function normalizeStateForCurrentUser(nextState) {
+    const safeState = nextState && typeof nextState === 'object' ? nextState : {};
+    const normalizedDays = window.CR_GROWS_UTILS?.normalizeStateDays(safeState.days || {}) || {};
+    return {
+        ...safeState,
+        days: normalizedDays,
+        templates: (window.CR_GROWS_UTILS?.filterTemplatesForUser(safeState.templates, userEmail) || []).map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }))
+    };
+}
+
 function loadSavedTemplates() {
-    // Local TEMPLATES_STORAGE_KEY is the source of truth for the templates list
-    // (including an intentional empty array after the user deleted everything).
-    // Only seed from server when the local key has never been written.
-    let hasLocalKey = false;
+    // state.templates was already populated from the SERVER a moment ago in
+    // loadStateFromServer(), which runs before this function on every page load.
+    // That server copy is always the freshest data across all devices — creates,
+    // edits and deletes are pushed to the server as soon as they happen (see
+    // saveSavedTemplates()), so an older local cache on THIS device must never be
+    // allowed to win and overwrite it. TEMPLATES_STORAGE_KEY is kept only as a
+    // fast local render cache, never as a source of truth.
+    const scopedTemplates = window.CR_GROWS_UTILS?.filterTemplatesForUser(state?.templates || [], userEmail) || [];
+    savedTemplates = scopedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
+    state.templates = savedTemplates;
+
     try {
-        const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
-        if (raw !== null) {
-            hasLocalKey = true;
-            const parsed = JSON.parse(raw);
-            savedTemplates = Array.isArray(parsed) ? parsed : [];
-        } else {
-            savedTemplates = [];
-        }
+        localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
     } catch (err) {
-        savedTemplates = [];
-        hasLocalKey = false;
+        console.warn('No se pudieron guardar los templates locales:', err);
     }
-
-    const serverTemplates = Array.isArray(state?.templates) ? state.templates : [];
-    console.log('loadSavedTemplates hasLocalKey:', hasLocalKey, 'local:', savedTemplates.length, 'server:', serverTemplates.length);
-
-    if (hasLocalKey) {
-        // User's local list (after create/edit/delete) wins — push it to server so deletes stick.
-        state.templates = savedTemplates;
-        saveToLocal();
-        pushToServer();
-    } else if (serverTemplates.length) {
-        // First visit / cleared storage: seed local from server
-        savedTemplates = serverTemplates.slice();
-        state.templates = savedTemplates;
-        try {
-            localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
-        } catch (err) {
-            console.warn('No se pudieron guardar los templates locales:', err);
-        }
-        saveToLocal();
-    } else {
-        state.templates = savedTemplates;
-    }
+    saveToLocal();
 
     console.log('loadSavedTemplates final savedTemplates:', savedTemplates.length, savedTemplates.slice(0, 2));
     renderSavedTemplates();
@@ -640,7 +629,7 @@ function saveSavedTemplates() {
     }
 
     if (!state) state = loadFromLocal() || EMPTY_STATE();
-    state.templates = savedTemplates;
+    state.templates = savedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
     console.log('saveSavedTemplates saving state.templates:', savedTemplates.length, 'state.templates sample:', state.templates.slice(0,2));
     saveToLocal();
     pushToServer();
@@ -825,6 +814,7 @@ async function createCustomRoutine(event) {
                 title,
                 type,
                 items: cleanItems,
+                ownerEmail: userEmail,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
@@ -889,7 +879,7 @@ async function loadStateFromServer() {
 
     if (data && hasUsableState(data.state)) {
         // ✅ Got real data from server — use it and overwrite localStorage
-        state = data.state;
+        state = normalizeStateForCurrentUser(data.state);
         console.log('loadStateFromServer state keys:', Object.keys(state));
         console.log('loadStateFromServer templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
         saveToLocal();
@@ -900,7 +890,7 @@ async function loadStateFromServer() {
     // ⚠️ Server returned nothing — try localStorage as fallback
     const local = loadFromLocal();
     if (local && hasUsableState(local)) {
-        state = local;
+        state = normalizeStateForCurrentUser(local);
         saveToLocal();
         const pushed = await apiFetch('POST', '/api/state', { state });
         if (pushed) {
@@ -936,7 +926,7 @@ function mergeStateForUpload(localState, serverState = {}) {
         weekly: Array.isArray(localState.weekly) && localState.weekly.length > 0 ? localState.weekly : (Array.isArray(serverState.weekly) ? serverState.weekly : []),
         streak: typeof localState.streak === 'number' && localState.streak > 0 ? localState.streak : serverState.streak || 0,
         helpSettings: { ...(serverState.helpSettings || {}), ...(localState.helpSettings || {}) },
-        templates: Array.isArray(localState.templates) ? localState.templates : (Array.isArray(serverState.templates) ? serverState.templates : []),
+        templates: Array.isArray(localState.templates) ? localState.templates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail })) : (Array.isArray(serverState.templates) ? window.CR_GROWS_UTILS?.filterTemplatesForUser(serverState.templates, userEmail) || [] : []),
         financeEntries: Array.isArray(localState.financeEntries) ? localState.financeEntries : (Array.isArray(serverState.financeEntries) ? serverState.financeEntries : []),
     };
     if (!Array.isArray(merged.templates)) merged.templates = [];
@@ -989,7 +979,7 @@ async function manualSync() {
     console.log('manualSync() response:', data);
 
     if (data && hasUsableState(data.state)) {
-        state = data.state;
+        state = normalizeStateForCurrentUser(data.state);
         console.log('manualSync state keys:', Object.keys(state));
         console.log('manualSync state.templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'state.financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
         saveToLocal();
@@ -1004,7 +994,7 @@ async function manualSync() {
     if (local && hasUsableState(local)) {
         const pushed = await apiFetch('POST', '/api/state', { state: local });
         if (pushed) {
-            state = local;
+            state = normalizeStateForCurrentUser(local);
             saveToLocal();
             loadSavedTemplates();
             setSyncStatus('synced', 'Sincronizado ✓');
@@ -1462,7 +1452,7 @@ function updateChart() {
     const last7=[], labels=[];
     for (let i=6;i>=0;i--) {
         const d=new Date(); d.setDate(d.getDate()-i);
-        const key=d.toLocaleDateString('en-CA');
+        const key=window.CR_GROWS_UTILS?.getStableDateKey(d) || d.toLocaleDateString('en-CA');
         labels.push(d.toLocaleDateString('es-ES',{weekday:'short'}));
         last7.push(state.days&&state.days[key]?(state.days[key].percent||0):0);
     }
