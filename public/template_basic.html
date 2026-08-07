@@ -295,7 +295,11 @@
   .dot-track-bar{ display:none; width: 240px; height: 5px; background: var(--surface-2); border-radius: 3px; margin-top: 26px; overflow:hidden; }
   .dot-track-bar .fill{ height:100%; background: linear-gradient(90deg, var(--coal), var(--ember)); width:0%; transition: width .2s linear; }
 
-  .controls{ display:flex; align-items:center; gap:16px; margin-top: 26px; }
+  .controls{ display:flex; align-items:center; gap:16px; margin-top: 26px; flex-wrap: wrap; justify-content: center; }
+  .music-panel{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; }
+  .music-chip{ background: var(--surface-2); border:1px solid var(--line); color: var(--text-muted); border-radius:999px; padding:6px 10px; font-size:11px; cursor:pointer; }
+  .music-chip.active{ color: var(--gold); border-color: var(--ember); }
+  .music-chip:hover{ border-color: var(--spark); color: var(--text); }
   .ctrl-btn{
     background: var(--surface-2); border: 1px solid var(--line); color: var(--text); width: 50px; height:50px;
     border-radius:50%; cursor:pointer; font-size:17px; display:flex; align-items:center; justify-content:center;
@@ -467,6 +471,21 @@
             <span>Repetir la frase 2 veces al mostrarla</span>
             <label class="switch"><input type="checkbox" id="repeatTwice"><span class="track"></span></label>
           </div>
+          <div class="field-group" style="margin-top:14px;">
+            <span class="field-label">Música / sonido de fondo</span>
+            <div class="music-panel" id="musicPanel">
+              <button class="music-chip active" data-sound="focus">🎯 Enfoque</button>
+              <button class="music-chip" data-sound="relax">🌿 Relajación</button>
+              <button class="music-chip" data-sound="money">💰 Dinero</button>
+              <button class="music-chip" data-sound="love">💖 Amor</button>
+              <button class="music-chip" data-sound="binaural">🎧 Binaural</button>
+            </div>
+            <div class="toggle-row" style="margin-top:10px;">
+              <span>Activar sonido ambiental</span>
+              <label class="switch"><input type="checkbox" id="musicEnabledToggle" checked><span class="track"></span></label>
+            </div>
+            <p class="hint" style="margin-top:8px;">Elige una atmósfera que acompañe tu sesión.</p>
+          </div>
           <button class="btn-ghost" style="margin-top:14px; width:100%;" id="testVoiceBtn">▶ Probar voz</button>
         </div>
       </div>
@@ -586,11 +605,15 @@
     voiceList: [],
     sessionStart: null,
     audioCtx: null,
-    nextId: 1
+    nextId: 1,
+    musicMode: 'focus',
+    musicEnabled: true,
+    musicGain: null,
+    musicOscillators: []
   };
 
   const els = {};
-  ['newPhraseInput','addPhraseBtn','phraseList','phraseCount','clearBtn','importBtn','exportBtn','fileInput',
+  ['newPhraseInput','addPhraseBtn','phraseList','phraseCount','clearBtn','importBtn','exportBtn','fileInput','musicPanel','musicEnabledToggle',
    'bulkToggle','bulkArea','bulkText','bulkAddBtn',
    'durationMode','customDurRow','randomDurRow','customSeconds','randMin','randMax',
    'totalMode','totalFixedRow','totalMinutes','loopRow','loopLabel',
@@ -646,7 +669,9 @@
         cueOn: state.cueOn,
         warmupOn: state.warmupOn,
         fullscreenOn: state.fullscreenOn,
-        vibrateOn: state.vibrateOn
+        vibrateOn: state.vibrateOn,
+        musicMode: state.musicMode,
+        musicEnabled: state.musicEnabled
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch (err) {
@@ -689,6 +714,8 @@
         if (typeof data.warmupOn === 'boolean') state.warmupOn = data.warmupOn;
         if (typeof data.fullscreenOn === 'boolean') state.fullscreenOn = data.fullscreenOn;
         if (typeof data.vibrateOn === 'boolean') state.vibrateOn = data.vibrateOn;
+        if (data.musicMode) state.musicMode = data.musicMode;
+        if (typeof data.musicEnabled === 'boolean') state.musicEnabled = data.musicEnabled;
         return true; // loaded from storage
       }
     } catch (err) {
@@ -732,6 +759,78 @@
     }
     return state.audioCtx;
   }
+
+  function stopAmbientAudio(){
+    if (state.musicOscillators.length) {
+      state.musicOscillators.forEach(node => {
+        try { node.stop(); } catch (_) {}
+      });
+      state.musicOscillators = [];
+    }
+    if (state.musicGain) {
+      try { state.musicGain.disconnect(); } catch (_) {}
+      state.musicGain = null;
+    }
+  }
+
+  function startAmbientAudio(mode = state.musicMode){
+    if (!state.musicEnabled) return;
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+    stopAmbientAudio();
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = 0.03;
+    gainNode.connect(ctx.destination);
+    state.musicGain = gainNode;
+
+    const baseFrequencies = {
+      focus: [174.61, 261.63, 329.63],
+      relax: [196.0, 246.94, 293.66],
+      money: [220.0, 293.66, 440.0],
+      love: [261.63, 329.63, 392.0],
+      binaural: [220.0, 440.0]
+    };
+
+    const freqs = baseFrequencies[mode] || baseFrequencies.focus;
+    freqs.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = index % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.value = 0.012;
+      osc.connect(gain);
+      gain.connect(gainNode);
+      osc.start();
+      if (mode === 'binaural') {
+        const left = ctx.createOscillator();
+        const right = ctx.createOscillator();
+        const leftGain = ctx.createGain();
+        const rightGain = ctx.createGain();
+        left.type = 'sine'; right.type = 'sine';
+        left.frequency.value = 220; right.frequency.value = 223;
+        leftGain.gain.value = 0.01; rightGain.gain.value = 0.01;
+        left.connect(leftGain); right.connect(rightGain);
+        leftGain.connect(gainNode); rightGain.connect(gainNode);
+        left.start(); right.start();
+        state.musicOscillators.push(left, right);
+      }
+      state.musicOscillators.push(osc);
+    });
+  }
+
+  function setMusicMode(mode){
+    state.musicMode = mode;
+    if (state.musicEnabled) startAmbientAudio(mode);
+    document.querySelectorAll('.music-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.sound === mode));
+  }
+
+  function toggleMusicEnabled(force){
+    state.musicEnabled = typeof force === 'boolean' ? force : !state.musicEnabled;
+    if (!state.musicEnabled) stopAmbientAudio();
+    else startAmbientAudio(state.musicMode);
+    document.querySelectorAll('.music-chip').forEach(btn => btn.classList.toggle('active', state.musicEnabled && btn.dataset.sound === state.musicMode));
+  }
+
   function beep(freq, duration, vol){
     const ctx = ensureAudioCtx();
     if(!ctx) return;
@@ -836,6 +935,14 @@
   document.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click', () => { PRESETS[chip.dataset.preset].forEach(t => addPhrase(t, false)); });
   });
+
+  document.querySelectorAll('.music-chip').forEach(chip => {
+    chip.addEventListener('click', () => setMusicMode(chip.dataset.sound));
+  });
+
+  if (els.musicEnabledToggle) {
+    els.musicEnabledToggle.addEventListener('change', () => toggleMusicEnabled(els.musicEnabledToggle.checked));
+  }
 
   els.exportBtn.addEventListener('click', () => {
     const text = state.phrases.map(p => p.text).join('\n');

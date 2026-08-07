@@ -351,6 +351,13 @@
   </div>
 
   <div class="tts-status" id="ttsStatus"></div>
+  <div class="music-row">
+    <button class="music-chip active" data-mode="focus">🎯 Enfoque</button>
+    <button class="music-chip" data-mode="relax">🌿 Relajación</button>
+    <button class="music-chip" data-mode="money">💰 Dinero</button>
+    <button class="music-chip" data-mode="love">💖 Amor</button>
+    <button class="music-chip" data-mode="binaural">🎧 Binaural</button>
+  </div>
 
   <!-- Dots -->
   <div class="dots" id="dots"></div>
@@ -390,6 +397,11 @@ let paused = false;
 let soundOn = true;
 let speaking = false;
 let utterance = null;
+let musicMode = 'focus';
+let musicEnabled = true;
+let musicCtx = null;
+let musicGain = null;
+let ambientOscillators = [];
 
 let appState = null;
 let helpSettings = { baseSec: 30, soundOn: true };
@@ -406,6 +418,55 @@ async function initAppState() {
         soundBtn.className = 'sound-btn' + (soundOn ? ' on' : '');
         soundBtn.textContent = soundOn ? '🔊' : '🔇';
     }
+}
+
+function stopAmbientAudio() {
+  ambientOscillators.forEach(node => { try { node.stop(); } catch (_) {} });
+  ambientOscillators = [];
+  if (musicGain) { try { musicGain.disconnect(); } catch (_) {} }
+  musicGain = null;
+  musicCtx = null;
+}
+
+function startAmbientAudio(mode = musicMode) {
+  if (!musicEnabled || !soundOn) return;
+  if (!musicCtx) {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return;
+    musicCtx = new AudioContextCtor();
+  }
+  stopAmbientAudio();
+  const ctx = musicCtx;
+  const gainNode = ctx.createGain();
+  gainNode.gain.value = 0.025;
+  gainNode.connect(ctx.destination);
+  musicGain = gainNode;
+
+  const presets = {
+    focus: [174.61, 261.63, 329.63],
+    relax: [196.0, 246.94, 293.66],
+    money: [220.0, 293.66, 440.0],
+    love: [261.63, 329.63, 392.0],
+    binaural: [220.0, 223.0]
+  };
+  const freqs = presets[mode] || presets.focus;
+  freqs.forEach((freq, index) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = index % 2 === 0 ? 'sine' : 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.value = 0.01;
+    osc.connect(gain);
+    gain.connect(gainNode);
+    osc.start();
+    ambientOscillators.push(osc);
+  });
+}
+
+function setMusicMode(mode) {
+  musicMode = mode;
+  document.querySelectorAll('.music-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.mode === mode));
+  if (musicEnabled && soundOn) startAmbientAudio(mode);
 }
 
 function saveAudibleSettings() {
@@ -501,7 +562,13 @@ function toggleSound() {
   btn.className = 'sound-btn' + (soundOn ? ' on' : '');
   btn.textContent = soundOn ? '🔊' : '🔇';
   saveAudibleSettings();
-  if (!soundOn) { window.speechSynthesis.cancel(); document.getElementById('ttsStatus').textContent = ''; }
+  if (!soundOn) {
+    window.speechSynthesis.cancel();
+    document.getElementById('ttsStatus').textContent = '';
+    stopAmbientAudio();
+  } else {
+    startAmbientAudio(musicMode);
+  }
 }
 
 // --- Show phrase ---
@@ -666,7 +733,9 @@ window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoice
     baseSec = parseInt(secInput.value, 10) || 30;
     saveAudibleSettings();
   });
+  document.querySelectorAll('.music-chip').forEach(chip => chip.addEventListener('click', () => setMusicMode(chip.dataset.mode)));
   initAppState();
+  startAmbientAudio(musicMode);
 })();
 </script>
 </body>
