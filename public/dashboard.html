@@ -599,46 +599,23 @@ function normalizeStateForCurrentUser(nextState) {
 }
 
 function loadSavedTemplates() {
+    // state.templates was already populated from the SERVER a moment ago in
+    // loadStateFromServer(), which runs before this function on every page load.
+    // That server copy is always the freshest data across all devices — creates,
+    // edits and deletes are pushed to the server as soon as they happen (see
+    // saveSavedTemplates()), so an older local cache on THIS device must never be
+    // allowed to win and overwrite it. TEMPLATES_STORAGE_KEY is kept only as a
+    // fast local render cache, never as a source of truth.
     const scopedTemplates = window.CR_GROWS_UTILS?.filterTemplatesForUser(state?.templates || [], userEmail) || [];
-    // Local TEMPLATES_STORAGE_KEY is the source of truth for the templates list
-    // (including an intentional empty array after the user deleted everything).
-    // Only seed from server when the local key has never been written.
-    let hasLocalKey = false;
+    savedTemplates = scopedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
+    state.templates = savedTemplates;
+
     try {
-        const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
-        if (raw !== null) {
-            hasLocalKey = true;
-            const parsed = JSON.parse(raw);
-            savedTemplates = Array.isArray(parsed) ? parsed : [];
-        } else {
-            savedTemplates = [];
-        }
+        localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
     } catch (err) {
-        savedTemplates = [];
-        hasLocalKey = false;
+        console.warn('No se pudieron guardar los templates locales:', err);
     }
-
-    const serverTemplates = scopedTemplates;
-    console.log('loadSavedTemplates hasLocalKey:', hasLocalKey, 'local:', savedTemplates.length, 'server:', serverTemplates.length);
-
-    if (hasLocalKey) {
-        // User's local list (after create/edit/delete) wins — push it to server so deletes stick.
-        state.templates = savedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
-        saveToLocal();
-        pushToServer();
-    } else if (serverTemplates.length) {
-        // First visit / cleared storage: seed local from server
-        savedTemplates = serverTemplates.slice().map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
-        state.templates = savedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
-        try {
-            localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(savedTemplates));
-        } catch (err) {
-            console.warn('No se pudieron guardar los templates locales:', err);
-        }
-        saveToLocal();
-    } else {
-        state.templates = savedTemplates;
-    }
+    saveToLocal();
 
     console.log('loadSavedTemplates final savedTemplates:', savedTemplates.length, savedTemplates.slice(0, 2));
     renderSavedTemplates();
