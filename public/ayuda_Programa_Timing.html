@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Planificador de Entrenamiento</title>
+<style>
+  :root{
+    --bg:#0e1216;
+    --panel:#161c23;
+    --panel-2:#1c242d;
+    --border:#28323d;
+    --text:#e9eef4;
+    --muted:#8b98a6;
+    --accent:#ff5a2b;
+    --accent-soft:rgba(255,90,43,.14);
+    --green:#22c55e;
+    --danger:#ef4444;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1100px 550px at 15% -10%, #1a2431 0%, #0e1216 55%) fixed;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .app{max-width:1280px;margin:0 auto;padding:18px;display:flex;flex-direction:column;gap:16px}
+
+  /* ---------- Topbar ---------- */
+  .topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .topbar h1{font-size:1.1rem;margin:0;letter-spacing:.3px}
+  .topbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ---------- Botones ---------- */
+  .btn{
+    background:var(--panel-2);color:var(--text);border:1px solid var(--border);
+    padding:8px 12px;border-radius:9px;font-size:.84rem;cursor:pointer;
+    font-family:inherit;transition:.15s;white-space:nowrap;
+  }
+  .btn:hover:not(:disabled){background:#243040;border-color:#3a4a5e}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+  .btn-primary:hover:not(:disabled){background:#ff7048;border-color:#ff7048}
+  .btn-danger{color:#ff9494}
+  .btn-danger:hover:not(:disabled){background:#3a1f22;border-color:#5a2a2e}
+  .btn-block{width:100%;padding:11px;font-size:.92rem}
+  .btn-icon{
+    background:transparent;border:1px solid transparent;color:var(--muted);
+    width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:.9rem;
+    display:grid;place-items:center;transition:.15s;flex:none;font-family:inherit;
+  }
+  .btn-icon:hover{background:var(--panel-2);color:var(--text);border-color:var(--border)}
+  .btn-small{padding:6px 10px;font-size:.78rem}
+
+  /* ---------- Layout ---------- */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+  @media (max-width:920px){ .layout{grid-template-columns:1fr} }
+
+  /* ---------- Secciones ---------- */
+  .section{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px;margin-bottom:12px;
+  }
+  .section-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .section-name{
+    flex:1;min-width:0;background:transparent;border:1px solid transparent;
+    color:var(--text);font-size:1rem;font-weight:700;padding:6px 8px;
+    border-radius:8px;font-family:inherit;
+  }
+  .section-name:hover{border-color:var(--border)}
+  .section-name:focus{outline:none;border-color:var(--accent);background:var(--panel-2)}
+  .section-total{
+    font-variant-numeric:tabular-nums;color:var(--muted);font-size:.78rem;
+    padding:0 6px;white-space:nowrap;
+  }
+  .steps{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+
+  /* ---------- Pasos ---------- */
+  .step{
+    display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:9px;
+    border:1px solid transparent;border-left:3px solid transparent;transition:.15s;
+  }
+  .step:hover{background:var(--panel-2)}
+  .step.done{border-left-color:var(--green);background:rgba(34,197,94,.07)}
+  .step.done .step-name{color:var(--muted);text-decoration:line-through}
+  .step.current{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
+
+  .step input[type=checkbox]{
+    appearance:none;-webkit-appearance:none;width:20px;height:20px;border-radius:6px;
+    border:2px solid var(--border);background:var(--panel-2);cursor:pointer;
+    flex:none;position:relative;transition:.15s;margin:0;
+  }
+  .step input[type=checkbox]:checked{background:var(--green);border-color:var(--green)}
+  .step input[type=checkbox]:checked::after{
+    content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);
+  }
+  .step-name{
+    flex:1;min-width:0;background:transparent;border:1px solid transparent;
+    color:inherit;font-size:.9rem;padding:6px;border-radius:7px;font-family:inherit;
+  }
+  .step-name:hover{border-color:var(--border)}
+  .step-name:focus{outline:none;border-color:var(--accent);background:var(--panel-2)}
+
+  .dur{display:flex;align-items:center;gap:2px;color:var(--muted);font-size:.75rem;flex:none}
+  .dur input{
+    width:42px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:7px;padding:5px 3px;text-align:center;font-size:.82rem;
+    font-family:inherit;font-variant-numeric:tabular-nums;
+  }
+  .dur input:focus{outline:none;border-color:var(--accent)}
+  .dur input::-webkit-outer-spin-button,
+  .dur input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .dur input[type=number]{-moz-appearance:textfield}
+
+  /* ---------- Panel temporizador ---------- */
+  .timer-card{
+    background:linear-gradient(180deg,#1a222b,#131920);
+    border:1px solid var(--border);border-radius:var(--radius);padding:16px;
+    position:sticky;top:16px;
+  }
+  @media (max-width:920px){ .timer-card{position:static} }
+
+  .t-status{
+    font-size:.68rem;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted);font-weight:700;
+  }
+  .t-status[data-status="running"]{color:var(--green)}
+  .t-status[data-status="paused"]{color:#f5a623}
+  .t-section{
+    font-size:.72rem;color:var(--accent);font-weight:700;letter-spacing:1.4px;
+    text-transform:uppercase;margin-top:10px;min-height:14px;
+  }
+  .t-step{font-size:1.25rem;font-weight:800;margin:2px 0 6px;line-height:1.25;min-height:28px}
+  .t-time{
+    font-size:3.5rem;font-weight:800;font-variant-numeric:tabular-nums;
+    letter-spacing:-2px;line-height:1;text-align:center;margin:10px 0 4px;
+  }
+  .progress{height:8px;background:#0a0e12;border-radius:99px;overflow:hidden;margin:12px 0 10px}
+  .progress-bar{
+    height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),#ffa63d);
+    transition:width .12s linear;
+  }
+  .t-next{font-size:.78rem;color:var(--muted);min-height:16px;text-align:center}
+  .t-total{
+    font-size:.72rem;color:var(--muted);min-height:14px;text-align:center;
+    margin-top:2px;font-variant-numeric:tabular-nums;
+  }
+  .timer-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .timer-controls .btn{padding:11px;font-size:.84rem}
+  .span2{grid-column:1 / -1}
+  .kbd-hint{
+    margin-top:10px;text-align:center;font-size:.68rem;color:#5d6b7a;letter-spacing:.3px;
+  }
+
+  /* ---------- Ajustes / historial ---------- */
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px;margin-top:14px;
+  }
+  .card-title{
+    font-size:.68rem;letter-spacing:1.6px;text-transform:uppercase;
+    color:var(--muted);font-weight:700;margin-bottom:8px;
+  }
+  .switch-row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:7px 0;font-size:.84rem;color:var(--muted);cursor:pointer;
+  }
+  .switch-row input{
+    appearance:none;-webkit-appearance:none;width:38px;height:22px;border-radius:99px;
+    background:var(--panel-2);border:1px solid var(--border);position:relative;
+    cursor:pointer;transition:.18s;flex:none;margin:0;
+  }
+  .switch-row input::after{
+    content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;
+    border-radius:50%;background:#6b7a89;transition:.18s;
+  }
+  .switch-row input:checked{background:rgba(34,197,94,.25);border-color:var(--green)}
+  .switch-row input:checked::after{transform:translateX(16px);background:var(--green)}
+
+  .history-item{
+    display:flex;justify-content:space-between;gap:8px;font-size:.78rem;
+    color:var(--muted);padding:5px 0;border-bottom:1px dashed var(--border);
+  }
+  .history-item:last-child{border-bottom:none}
+  .history-item span:last-child{color:var(--green);font-weight:600;white-space:nowrap}
+
+  /* ---------- Varios ---------- */
+  .summary{
+    margin-top:12px;font-size:.78rem;color:var(--muted);text-align:center;
+    padding:10px;border:1px dashed var(--border);border-radius:10px;line-height:1.5;
+  }
+  .empty{
+    text-align:center;color:var(--muted);font-size:.9rem;padding:34px 12px;
+    border:1px dashed var(--border);border-radius:var(--radius);
+  }
+  .hint{font-size:.78rem;color:#5d6b7a}
+  #btnResetChecks{margin-top:10px}
+  .plan-controls{display:flex;flex-direction:column;gap:8px}
+  .plan-controls input,.plan-controls select{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);
+    color:var(--text);border-radius:8px;padding:8px;font:inherit;
+  }
+  .plan-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .plan-status{min-height:1em;font-size:.75rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1>🥊 Mi Entrenamiento</h1>
+    <div class="topbar-actions">
+      <button class="btn" id="btnExport">⬇ Exportar</button>
+      <button class="btn" id="btnImport">⬆ Importar</button>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden />
+      <button class="btn btn-danger" id="btnClear">Limpiar todo</button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- ================= EDITOR ================= -->
+    <main>
+      <div id="sections"></div>
+      <button class="btn btn-primary btn-block" id="btnAddSection">+ Añadir sección</button>
+      <div class="summary" id="summary"></div>
+      <button class="btn btn-block" id="btnResetChecks">↺ Reiniciar marcas de completado</button>
+    </main>
+
+    <!-- ================= TEMPORIZADOR ================= -->
+    <aside>
+      <div class="timer-card">
+        <div class="t-status" id="tStatus" data-status="idle">Listo</div>
+        <div class="t-section" id="tSection"></div>
+        <div class="t-step" id="tStep">Sin entrenamiento activo</div>
+        <div class="t-time" id="tTime">00:00</div>
+        <div class="progress"><div class="progress-bar" id="tBar"></div></div>
+        <div class="t-next" id="tNext"></div>
+        <div class="t-total" id="tTotal"></div>
+
+        <div class="timer-controls">
+          <button class="btn btn-primary span2" id="btnStart">▶ Iniciar</button>
+          <button class="btn" id="btnPrev">⏮ Anterior</button>
+          <button class="btn" id="btnNext">Siguiente ⏭</button>
+          <button class="btn" id="btnPause">⏸ Pausa</button>
+          <button class="btn btn-danger" id="btnStop">⏹ Detener</button>
+        </div>
+        <div class="kbd-hint">Espacio = pausar · ← → = navegar</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Ajustes</div>
+        <label class="switch-row"><span>🔊 Sonidos</span><input type="checkbox" id="setSound" /></label>
+        <label class="switch-row"><span>🗣️ Anunciar por voz</span><input type="checkbox" id="setVoice" /></label>
+        <label class="switch-row"><span>✅ Marcar al terminar</span><input type="checkbox" id="setAuto" /></label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Plantillas de entrenamiento</div>
+        <div class="plan-controls">
+          <input id="templateName" type="text" maxlength="80" placeholder="Nombre de la plantilla" aria-label="Nombre de la plantilla" />
+          <button class="btn btn-primary" id="btnSavePlan">Guardar configuración actual</button>
+          <select id="savedPlans" aria-label="Plantillas guardadas">
+            <option value="">Selecciona una plantilla guardada</option>
+          </select>
+          <div class="plan-actions">
+            <button class="btn btn-small" id="btnLoadPlan" disabled>Cargar</button>
+            <button class="btn btn-small btn-danger" id="btnDeletePlan" disabled>Eliminar</button>
+          </div>
+          <div class="plan-status" id="planSaveStatus" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Historial</div>
+        <div id="history"></div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script src="js/app-state-sync.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const APP_STATE_SYNC_KEY = 'programTiming';
+
+  /* ==================================================================
+     UTILIDADES
+     ================================================================== */
+  const $  = (sel, root) => (root || document).querySelector(sel);
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+  function fmt(ms) {
+    const t = Math.max(0, Math.round(ms / 1000));
+    const m = Math.floor(t / 60), s = t % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  /* ==================================================================
+     ESTADO + PERSISTENCIA
+     ================================================================== */
+  const STORAGE_KEY = 'plan-entrenamiento-v2';
+  const HISTORY_KEY = 'historial-entrenamiento';
+  let appState = null;
+  let savedPlans = [];
+  let saveSyncTimer = null;
+  let saveSyncQueue = Promise.resolve();
+  let hasLocalEdits = false;
+
+  function defaultState() {
+    return {
+      sections: [
+        { id: uid(), name: 'Calentamiento', steps: [
+          { id: uid(), name: 'Polichinelas',           seconds: 120, done: false },
+          { id: uid(), name: 'Calentamiento articular', seconds: 120, done: false },
+          { id: uid(), name: 'Salto de tijeras',        seconds: 120, done: false }
+        ]},
+        { id: uid(), name: 'Trabajo técnico', steps: [
+          { id: uid(), name: 'Jabs técnicos',  seconds: 180, done: false },
+          { id: uid(), name: 'Cross técnico',  seconds: 180, done: false }
+        ]}
+      ],
+      settings: { sound: true, voice: false, autoCheck: true }
+    };
+  }
+
+  function normalizePlan(plan) {
+    if (!plan || !Array.isArray(plan.sections)) return null;
+    const settings = plan.settings && typeof plan.settings === 'object' ? plan.settings : {};
+    return {
+      sections: plan.sections
+        .filter(sec => sec && typeof sec === 'object')
+        .map(sec => ({
+          id: typeof sec.id === 'string' && sec.id ? sec.id : uid(),
+          name: typeof sec.name === 'string' ? sec.name : '',
+          steps: (Array.isArray(sec.steps) ? sec.steps : [])
+            .filter(step => step && typeof step === 'object')
+            .map(step => {
+              const seconds = Number(step.seconds);
+              return {
+                id: typeof step.id === 'string' && step.id ? step.id : uid(),
+                name: typeof step.name === 'string' ? step.name : '',
+                seconds: Number.isFinite(seconds) ? Math.max(0, seconds) : 0,
+                done: !!step.done
+              };
+            })
+        })),
+      settings: {
+        sound: settings.sound !== false,
+        voice: !!settings.voice,
+        autoCheck: settings.autoCheck !== false
+      }
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return normalizePlan(JSON.parse(raw));
+    } catch (err) {
+      console.warn('No se pudo cargar el plan local:', err);
+      return null;
+    }
+  }
+
+  let state = loadState() || defaultState();
+
+  function save() {
+    hasLocalEdits = true;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn('No se pudo guardar el plan local:', err);
+      setPlanStatus('No se pudo guardar en este dispositivo.');
+    }
+    if (!appState && typeof loadStateFromLocal === 'function') appState = loadStateFromLocal();
+    if (!appState) appState = { helpSettings: {} };
+    appState.helpSettings = appState.helpSettings && typeof appState.helpSettings === 'object'
+      ? appState.helpSettings : {};
+    const currentSettings = appState.helpSettings[APP_STATE_SYNC_KEY] || {};
+    appState.helpSettings[APP_STATE_SYNC_KEY] = {
+      ...currentSettings,
+      currentPlan: JSON.parse(JSON.stringify(state)),
+      presets: savedPlans
+    };
+    saveStateToLocal(appState);
+    clearTimeout(saveSyncTimer);
+    setPlanStatus('Guardando en tu cuenta…');
+    saveSyncTimer = setTimeout(async () => {
+      if (!getAuthToken()) {
+        setPlanStatus('Guardado en este dispositivo. Inicia sesión para sincronizar entre dispositivos.');
+        return;
+      }
+      const stateSnapshot = JSON.parse(JSON.stringify(appState));
+      saveSyncQueue = saveSyncQueue.then(async () => {
+        const result = await apiFetch('POST', '/api/state', { state: stateSnapshot });
+        if (result.ok) {
+          setPlanStatus('Guardado y sincronizado con tu cuenta.');
+          return;
+        }
+        console.warn('No se pudo sincronizar el plan:', result.status, result.error || result.data);
+        setPlanStatus('Guardado localmente; no se pudo sincronizar con el servidor.');
+      });
+    }, 500);
+  }
+
+  function setPlanStatus(message) {
+    const status = $('#planSaveStatus');
+    if (status) status.textContent = message;
+  }
+
+  function renderSavedPlans() {
+    const select = $('#savedPlans');
+    const selected = select.value;
+    select.replaceChildren(new Option('Selecciona una plantilla guardada', ''));
+    savedPlans.forEach(plan => select.add(new Option(plan.name, plan.id)));
+    if (savedPlans.some(plan => plan.id === selected)) select.value = selected;
+    $('#btnLoadPlan').disabled = !select.value;
+    $('#btnDeletePlan').disabled = !select.value;
+  }
+
+  function normalizeSavedPlans(plans) {
+    return (Array.isArray(plans) ? plans : [])
+      .filter(preset => preset && typeof preset.name === 'string' && normalizePlan(preset.plan))
+      .map(preset => ({
+        id: typeof preset.id === 'string' && preset.id ? preset.id : uid(),
+        name: preset.name,
+        updatedAt: preset.updatedAt || '',
+        plan: normalizePlan(preset.plan)
+      }));
+  }
+
+  function savePlanPreset() {
+    const nameInput = $('#templateName');
+    const name = nameInput.value.trim();
+    if (!name) {
+      setPlanStatus('Escribe un nombre para la plantilla.');
+      nameInput.focus();
+      return;
+    }
+    if (!state.sections.length) {
+      setPlanStatus('Añade al menos una sección antes de guardar una plantilla.');
+      return;
+    }
+    const plan = JSON.parse(JSON.stringify(state));
+    plan.sections.forEach(section => section.steps.forEach(step => { step.done = false; }));
+    savedPlans.push({ id: uid(), name, updatedAt: new Date().toISOString(), plan });
+    nameInput.value = '';
+    renderSavedPlans();
+    save();
+    setPlanStatus('Plantilla guardada. Sincronizando…');
+  }
+
+  function loadPlanPreset() {
+    const preset = savedPlans.find(plan => plan.id === $('#savedPlans').value);
+    if (!preset) return;
+    const loaded = normalizePlan(preset.plan);
+    if (!loaded) {
+      setPlanStatus('La plantilla seleccionada no contiene un plan válido.');
+      return;
+    }
+    stopAll();
+    state = loaded;
+    syncSettingsUI();
+    render();
+    save();
+    setPlanStatus('Plantilla cargada.');
+  }
+
+  function deletePlanPreset() {
+    const select = $('#savedPlans');
+    const preset = savedPlans.find(plan => plan.id === select.value);
+    if (!preset || !confirm(`¿Eliminar la plantilla "${preset.name}"?`)) return;
+    savedPlans = savedPlans.filter(plan => plan.id !== preset.id);
+    renderSavedPlans();
+    save();
+    setPlanStatus('Plantilla eliminada.');
+  }
+
+  async function initAppState() {
+    setPlanStatus('Cargando tus plantillas…');
+    try {
+      appState = await syncAppState({ helpSettings: { [APP_STATE_SYNC_KEY]: { presets: [] } } });
+      appState.helpSettings = appState.helpSettings && typeof appState.helpSettings === 'object'
+        ? appState.helpSettings : {};
+      const timingSettings = appState.helpSettings[APP_STATE_SYNC_KEY] || {};
+      const locallyCreatedPlans = savedPlans;
+      if (!hasLocalEdits && timingSettings.currentPlan) {
+        const cloudPlan = normalizePlan(timingSettings.currentPlan);
+        if (cloudPlan) state = cloudPlan;
+      }
+      savedPlans = normalizeSavedPlans(timingSettings.presets);
+      if (hasLocalEdits) {
+        const syncedIds = new Set(savedPlans.map(plan => plan.id));
+        savedPlans.push(...locallyCreatedPlans.filter(plan => !syncedIds.has(plan.id)));
+      }
+      syncSettingsUI();
+      render();
+      renderSavedPlans();
+      renderHistory();
+      renderTimer();
+      save();
+      if (!getAuthToken()) {
+        setPlanStatus('Guardado en este dispositivo. Inicia sesión para sincronizar entre dispositivos.');
+      }
+    } catch (err) {
+      console.error('No se pudo sincronizar el plan de entrenamiento:', err);
+      appState = typeof loadStateFromLocal === 'function' ? loadStateFromLocal() : null;
+      const timingSettings = appState?.helpSettings?.[APP_STATE_SYNC_KEY] || {};
+      if (!hasLocalEdits && timingSettings.currentPlan) {
+        state = normalizePlan(timingSettings.currentPlan) || state;
+      }
+      savedPlans = normalizeSavedPlans(timingSettings.presets);
+      syncSettingsUI();
+      render();
+      renderSavedPlans();
+      renderHistory();
+      renderTimer();
+      save();
+      setPlanStatus('No se pudo cargar la sincronización. Tus cambios locales siguen disponibles.');
+    }
+  }
+
+  const getSection = (id) => state.sections.find(s => s.id === id);
+  const getStep    = (sec, id) => (sec ? sec.steps.find(s => s.id === id) : null);
+  const totalSec   = (sec) => sec.steps.reduce((a, s) => a + (s.seconds || 0), 0);
+
+  /* ==================================================================
+     AUDIO Y VOZ
+     ================================================================== */
+  let audioCtx = null;
+
+  function beep(freq, dur, when) {
+    if (!state.settings.sound) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const t = audioCtx.currentTime + (when || 0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq || 880, t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.35, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.12));
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + (dur || 0.12) + 0.03);
+    } catch (e) {}
+  }
+
+  function speak(text) {
+    if (!state.settings.voice || !('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'es-ES';
+      u.rate = 1.05;
+      u.volume = 0.9;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  /* ==================================================================
+     WAKE LOCK (mantener pantalla encendida)
+     ================================================================== */
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) {}
+  }
+  function releaseWakeLock() {
+    try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {}
+  }
+
+  /* ==================================================================
+     MOTOR DEL TEMPORIZADOR
+     ================================================================== */
+  const T = {
+    queue: [],        // [{ sectionId, stepId }]
+    index: 0,
+    status: 'idle',   // idle | running | paused
+    remaining: 0,
+    total: 0,
+    handle: null,
+    last: 0,
+    warned: false,
+    currentRef: null,
+    message: ''
+  };
+
+  function resolve(ref) {
+    if (!ref) return null;
+    const sec = getSection(ref.sectionId);
+    if (!sec) return null;
+    const st = getStep(sec, ref.stepId);
+    if (!st) return null;
+    return { sec: sec, st: st };
+  }
+
+  function buildQueue() {
+    T.queue = [];
+    state.sections.forEach(sec => {
+      sec.steps.forEach(st => {
+        if (st.seconds > 0) T.queue.push({ sectionId: sec.id, stepId: st.id });
+      });
+    });
+  }
+
+  function loadStep() {
+    const ref = T.queue[T.index];
+    const found = resolve(ref);
+    if (!found) {
+      if (T.index < T.queue.length - 1) { T.index++; return loadStep(); }
+      return finish();
+    }
+    T.currentRef = ref;
+    T.total = found.st.seconds * 1000;
+    T.remaining = T.total;
+    T.warned = false;
+    speak(found.st.name || 'siguiente ejercicio');
+    renderTimer();
+  }
+
+  function startLoop() {
+    stopLoop();
+    T.last = performance.now();
+    T.handle = setInterval(tick, 100);
+    requestWakeLock();
+  }
+  function stopLoop() {
+    if (T.handle) { clearInterval(T.handle); T.handle = null; }
+    releaseWakeLock();
+  }
+
+  function tick() {
+    if (T.status !== 'running') return;
+    const now = performance.now();
+    const dt = now - T.last;
+    T.last = now;
+    T.remaining -= dt;
+
+    if (!T.warned && T.total > 5000 && T.remaining <= 3000 && T.remaining > 0) {
+      T.warned = true;
+      beep(700, 0.07, 0);
+    }
+
+    if (T.remaining <= 0) {
+      T.remaining = 0;
+      renderTimer();
+      stepFinished();
+      return;
+    }
+    renderTimer();
+  }
+
+  function stepFinished() {
+    beep(880, 0.12, 0);
+    beep(1240, 0.18, 0.14);
+
+    if (state.settings.autoCheck) {
+      const found = resolve(T.currentRef);
+      if (found && !found.st.done) {
+        found.st.done = true;
+        save();
+        refreshRow(found.st.id);
+        updateSummary();
+      }
+    }
+
+    if (T.index >= T.queue.length - 1) { finish(); return; }
+    T.index++;
+    loadStep();
+  }
+
+  function finish() {
+    stopLoop();
+    T.status = 'idle';
+    T.currentRef = null;
+    T.message = '🏁 ¡Entrenamiento completado!';
+    beep(660, 0.15, 0);
+    beep(990, 0.15, 0.18);
+    beep(1320, 0.35, 0.36);
+    speak('Entrenamiento completado');
+    logSession();
+    renderTimer();
+    markCurrentRow();
+  }
+
+  function startWorkout() {
+    buildQueue();
+    if (T.queue.length === 0) {
+      alert('Añade al menos un paso con duración mayor a 0 segundos.');
+      return;
+    }
+    T.index = 0;
+    T.message = '';
+    loadStep();
+    T.status = 'running';
+    startLoop();
+    renderTimer();
+  }
+
+  function startFrom(sectionId, stepId) {
+    buildQueue();
+    if (T.queue.length === 0) {
+      alert('Añade al menos un paso con duración mayor a 0 segundos.');
+      return;
+    }
+    let i = T.queue.findIndex(r => r.sectionId === sectionId && r.stepId === stepId);
+    if (i < 0) i = T.queue.findIndex(r => r.sectionId === sectionId);
+    if (i < 0) i = 0;
+    T.index = i;
+    T.message = '';
+    loadStep();
+    T.status = 'running';
+    startLoop();
+    renderTimer();
+  }
+
+  function togglePause() {
+    if (T.status === 'running') {
+      T.status = 'paused';
+      stopLoop();
+    } else if (T.status === 'paused') {
+      T.status = 'running';
+      startLoop();
+    }
+    renderTimer();
+  }
+
+  function jump(dir) {
+    if (T.status === 'idle' || T.queue.length === 0) return;
+    const ni = T.index + dir;
+    if (ni < 0) {
+      T.remaining = T.total;
+      T.warned = false;
+      renderTimer();
+      return;
+    }
+    if (ni >= T.queue.length) { finish(); return; }
+    T.index = ni;
+    loadStep();
+  }
+
+  function stopAll() {
+    stopLoop();
+    T.status = 'idle';
+    T.queue = [];
+    T.index = 0;
+    T.remaining = 0;
+    T.total = 0;
+    T.currentRef = null;
+    T.message = '';
+    renderTimer();
+    markCurrentRow();
+  }
+
+  /* ==================================================================
+     RENDER DEL TEMPORIZADOR
+     ================================================================== */
+  const els = {
+    sections:   $('#sections'),
+    summary:    $('#summary'),
+    tStatus:    $('#tStatus'),
+    tSection:   $('#tSection'),
+    tStep:      $('#tStep'),
+    tTime:      $('#tTime'),
+    tBar:       $('#tBar'),
+    tNext:      $('#tNext'),
+    tTotal:     $('#tTotal'),
+    btnStart:   $('#btnStart'),
+    btnPause:   $('#btnPause'),
+    btnPrev:    $('#btnPrev'),
+    btnNext:    $('#btnNext'),
+    btnStop:    $('#btnStop'),
+    setSound:   $('#setSound'),
+    setVoice:   $('#setVoice'),
+    setAuto:    $('#setAuto'),
+    history:    $('#history'),
+    fileInput:  $('#fileInput')
+  };
+
+  function renderTimer() {
+    const statusMap = { idle: 'Listo', running: 'En curso', paused: 'En pausa' };
+    els.tStatus.textContent = statusMap[T.status] || '';
+    els.tStatus.dataset.status = T.status;
+
+    const found = resolve(T.currentRef);
+
+    if (!found) {
+      els.tSection.textContent = '';
+      els.tStep.textContent = T.message || 'Sin entrenamiento activo';
+      els.tTime.textContent = '00:00';
+      els.tBar.style.width = '0%';
+      els.tNext.textContent = '';
+      els.tTotal.textContent = '';
+      document.title = 'Planificador de Entrenamiento';
+      updateButtons();
+      return;
+    }
+
+    els.tSection.textContent = found.sec.name || 'Sección';
+    els.tStep.textContent = found.st.name || 'Paso sin nombre';
+    els.tTime.textContent = fmt(T.remaining);
+
+    const pct = T.total > 0 ? (1 - T.remaining / T.total) * 100 : 0;
+    els.tBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+
+    const nextFound = resolve(T.queue[T.index + 1]);
+    els.tNext.textContent = nextFound
+      ? 'Siguiente: ' + (nextFound.st.name || 'paso')
+      : 'Último ejercicio de la sesión';
+
+    let rest = T.remaining;
+    for (let i = T.index + 1; i < T.queue.length; i++) {
+      const f = resolve(T.queue[i]);
+      if (f) rest += f.st.seconds * 1000;
+    }
+    els.tTotal.textContent = 'Restante total: ' + fmt(rest);
+
+    document.title = fmt(T.remaining) + ' · ' + (found.st.name || 'Entrenando');
+
+    updateButtons();
+    markCurrentRow();
+  }
+
+  function updateButtons() {
+    els.btnStart.disabled = T.status === 'running';
+    els.btnPause.disabled = T.status === 'idle';
+    els.btnPause.textContent = T.status === 'running' ? '⏸ Pausa' : '▶ Reanudar';
+    els.btnPrev.disabled  = T.status === 'idle';
+    els.btnNext.disabled  = T.status === 'idle';
+    els.btnStop.disabled  = T.status === 'idle';
+  }
+
+  function markCurrentRow() {
+    els.sections.querySelectorAll('.step.current').forEach(el => el.classList.remove('current'));
+    if (!T.currentRef) return;
+    const row = els.sections.querySelector('[data-step-id="' + T.currentRef.stepId + '"]');
+    if (row) row.classList.add('current');
+  }
+
+  /* ==================================================================
+     RENDER DEL EDITOR
+     ================================================================== */
+  function render() {
+    els.sections.innerHTML = '';
+    if (state.sections.length === 0) {
+      els.sections.innerHTML =
+        '<div class="empty">No hay secciones todavía.<br>Pulsa «+ Añadir sección» para empezar.</div>';
+    }
+    state.sections.forEach(sec => els.sections.appendChild(buildSection(sec)));
+    updateSummary();
+    markCurrentRow();
+  }
+
+  function buildSection(sec) {
+    const wrap = document.createElement('div');
+    wrap.className = 'section';
+    wrap.dataset.sectionId = sec.id;
+
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML =
+      '<input class="section-name" value="' + esc(sec.name) + '" placeholder="Nombre de la sección" />' +
+      '<span class="section-total">' + fmt(totalSec(sec) * 1000) + '</span>' +
+      '<button class="btn-icon" data-action="up-section" title="Subir sección">↑</button>' +
+      '<button class="btn-icon" data-action="down-section" title="Bajar sección">↓</button>' +
+      '<button class="btn-icon" data-action="del-section" title="Eliminar sección">🗑</button>';
+    wrap.appendChild(head);
+
+    const steps = document.createElement('div');
+    steps.className = 'steps';
+    sec.steps.forEach(st => steps.appendChild(buildStep(st)));
+    wrap.appendChild(steps);
+
+    const add = document.createElement('button');
+    add.className = 'btn btn-small';
+    add.dataset.action = 'add-step';
+    add.textContent = '+ Añadir paso';
+    wrap.appendChild(add);
+
+    return wrap;
+  }
+
+  function buildStep(st) {
+    const row = document.createElement('div');
+    row.className = 'step' + (st.done ? ' done' : '');
+    row.dataset.stepId = st.id;
+
+    const m = Math.floor(st.seconds / 60);
+    const s = st.seconds % 60;
+
+    row.innerHTML =
+      '<input type="checkbox" class="step-check"' + (st.done ? ' checked' : '') + ' title="Marcar como completado" />' +
+      '<input class="step-name" value="' + esc(st.name) + '" placeholder="Nombre del ejercicio" />' +
+      '<div class="dur">' +
+        '<input type="number" class="dur-min" min="0" max="999" value="' + m + '" title="Minutos" />' +
+        '<span>:</span>' +
+        '<input type="number" class="dur-sec" min="0" max="59" value="' + String(s).padStart(2, '0') + '" title="Segundos" />' +
+      '</div>' +
+      '<button class="btn-icon" data-action="play-step" title="Empezar desde aquí">▶</button>' +
+      '<button class="btn-icon" data-action="del-step" title="Eliminar paso">✕</button>';
+
+    return row;
+  }
+
+  function refreshRow(stepId) {
+    const row = els.sections.querySelector('[data-step-id="' + stepId + '"]');
+    if (!row) return;
+    let done = false;
+    state.sections.forEach(sec => sec.steps.forEach(st => { if (st.id === stepId) done = st.done; }));
+    row.classList.toggle('done', done);
+    const cb = row.querySelector('.step-check');
+    if (cb) cb.checked = done;
+  }
+
+  function updateSummary() {
+    let totalSteps = 0, doneSteps = 0, totalSeconds = 0;
+    state.sections.forEach(sec => {
+      sec.steps.forEach(st => {
+        totalSteps++;
+        totalSeconds += st.seconds || 0;
+        if (st.done) doneSteps++;
+      });
+    });
+    els.summary.innerHTML =
+      '<strong>' + state.sections.length + '</strong> secciones · ' +
+      '<strong>' + totalSteps + '</strong> pasos · ' +
+      'duración total <strong>' + fmt(totalSeconds * 1000) + '</strong><br>' +
+      'completados <strong>' + doneSteps + '</strong> de <strong>' + totalSteps + '</strong>';
+  }
+
+  /* ==================================================================
+     EVENTOS DEL EDITOR
+     ================================================================== */
+  els.sections.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const secEl = btn.closest('[data-section-id]');
+    const stepEl = btn.closest('[data-step-id]');
+    const secId = secEl ? secEl.dataset.sectionId : null;
+    const stepId = stepEl ? stepEl.dataset.stepId : null;
+    const action = btn.dataset.action;
+
+    if (action === 'add-step')   return addStep(secId);
+    if (action === 'del-step')   return delStep(secId, stepId);
+    if (action === 'play-step')  return startFrom(secId, stepId);
+    if (action === 'up-section') return moveSection(secId, -1);
+    if (action === 'down-section') return moveSection(secId, 1);
+    if (action === 'del-section')  return delSection(secId);
+  });
+
+  els.sections.addEventListener('input', (e) => {
+    const t = e.target;
+    const secEl = t.closest('[data-section-id]');
+    if (!secEl) return;
+    const sec = getSection(secEl.dataset.sectionId);
+    if (!sec) return;
+
+    if (t.classList.contains('section-name')) {
+      sec.name = t.value;
+      save();
+      return;
+    }
+
+    const row = t.closest('[data-step-id]');
+    if (!row) return;
+    const st = getStep(sec, row.dataset.stepId);
+    if (!st) return;
+
+    if (t.classList.contains('step-name')) {
+      st.name = t.value;
+      save();
+    } else if (t.classList.contains('dur-min') || t.classList.contains('dur-sec')) {
+      const m = parseInt(row.querySelector('.dur-min').value, 10) || 0;
+      const s = parseInt(row.querySelector('.dur-sec').value, 10) || 0;
+      st.seconds = Math.max(0, m * 60 + s);
+      const totalEl = secEl.querySelector('.section-total');
+      if (totalEl) totalEl.textContent = fmt(totalSec(sec) * 1000);
+      updateSummary();
+      save();
+    }
+  });
+
+  els.sections.addEventListener('change', (e) => {
+    const t = e.target;
+
+    if (t.classList.contains('step-check')) {
+      const row = t.closest('[data-step-id]');
+      const sec = getSection(t.closest('[data-section-id]').dataset.sectionId);
+      const st = getStep(sec, row.dataset.stepId);
+      if (!st) return;
+      st.done = t.checked;
+      row.classList.toggle('done', st.done);
+      updateSummary();
+      save();
+      return;
+    }
+
+    if (t.classList.contains('dur-min') || t.classList.contains('dur-sec')) {
+      const row = t.closest('[data-step-id]');
+      const sec = getSection(t.closest('[data-section-id]').dataset.sectionId);
+      const st = getStep(sec, row.dataset.stepId);
+      if (!st) return;
+      row.querySelector('.dur-min').value = Math.floor(st.seconds / 60);
+      row.querySelector('.dur-sec').value = st.seconds % 60;
+    }
+  });
+
+  /* --- CRUD --- */
+  function addStep(secId) {
+    const sec = getSection(secId);
+    if (!sec) return;
+    sec.steps.push({ id: uid(), name: '', seconds: 60, done: false });
+    save();
+    render();
+    const last = els.sections.querySelector(
+      '[data-section-id="' + secId + '"] .steps .step:last-child .step-name');
+    if (last) last.focus();
+  }
+
+  function delStep(secId, stepId) {
+    const sec = getSection(secId);
+    if (!sec) return;
+    sec.steps = sec.steps.filter(s => s.id !== stepId);
+    save();
+    render();
+  }
+
+  function delSection(secId) {
+    const sec = getSection(secId);
+    if (!sec) return;
+    if (!confirm('¿Eliminar la sección "' + (sec.name || 'sin nombre') + '" y todos sus pasos?')) return;
+    state.sections = state.sections.filter(s => s.id !== secId);
+    save();
+    render();
+  }
+
+  function moveSection(secId, dir) {
+    const i = state.sections.findIndex(s => s.id === secId);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= state.sections.length) return;
+    const tmp = state.sections[i];
+    state.sections[i] = state.sections[j];
+    state.sections[j] = tmp;
+    save();
+    render();
+  }
+
+  function addSection() {
+    state.sections.push({ id: uid(), name: 'Nueva sección', steps: [] });
+    save();
+    render();
+    const names = els.sections.querySelectorAll('.section-name');
+    const last = names[names.length - 1];
+    if (last) { last.focus(); last.select(); }
+  }
+
+  /* ==================================================================
+     BOTONES DEL TEMPORIZADOR
+     ================================================================== */
+  els.btnStart.addEventListener('click', () => {
+    if (T.status === 'paused') { togglePause(); return; }
+    startWorkout();
+  });
+  els.btnPause.addEventListener('click', togglePause);
+  els.btnNext.addEventListener('click', () => jump(1));
+  els.btnPrev.addEventListener('click', () => jump(-1));
+  els.btnStop.addEventListener('click', stopAll);
+
+  document.addEventListener('keydown', (e) => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (T.status === 'running' || T.status === 'paused') togglePause();
+      else startWorkout();
+    } else if (e.code === 'ArrowRight') {
+      e.preventDefault(); jump(1);
+    } else if (e.code === 'ArrowLeft') {
+      e.preventDefault(); jump(-1);
+    }
+  });
+
+  /* ==================================================================
+     AJUSTES
+     ================================================================== */
+  function syncSettingsUI() {
+    els.setSound.checked = !!state.settings.sound;
+    els.setVoice.checked = !!state.settings.voice;
+    els.setAuto.checked  = !!state.settings.autoCheck;
+  }
+
+  els.setSound.addEventListener('change', () => {
+    state.settings.sound = els.setSound.checked;
+    save();
+    if (state.settings.sound) beep(880, 0.1, 0);
+  });
+  els.setVoice.addEventListener('change', () => {
+    state.settings.voice = els.setVoice.checked;
+    save();
+    if (state.settings.voice) speak('Voz activada');
+  });
+  els.setAuto.addEventListener('change', () => {
+    state.settings.autoCheck = els.setAuto.checked;
+    save();
+  });
+
+  /* ==================================================================
+     HISTORIAL
+     ================================================================== */
+  function logSession() {
+    let done = 0, total = 0;
+    state.sections.forEach(sec => sec.steps.forEach(st => { total++; if (st.done) done++; }));
+    let h = [];
+    try { h = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch (e) { h = []; }
+    h.unshift({ date: new Date().toISOString(), done: done, total: total });
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 8))); } catch (e) {}
+    renderHistory();
+  }
+
+  function renderHistory() {
+    let h = [];
+    try { h = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch (e) { h = []; }
+    if (!h.length) {
+      els.history.innerHTML = '<div class="hint">Aún no hay sesiones registradas.</div>';
+      return;
+    }
+    els.history.innerHTML = h.map(x => {
+      const d = new Date(x.date);
+      const ds = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) +
+                 ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      return '<div class="history-item"><span>' + esc(ds) + '</span>' +
+             '<span>' + x.done + '/' + x.total + ' ✓</span></div>';
+    }).join('');
+  }
+
+  /* ==================================================================
+     EXPORTAR / IMPORTAR / LIMPIAR
+     ================================================================== */
+  $('#btnExport').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'entrenamiento-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  $('#btnImport').addEventListener('click', () => els.fileInput.click());
+
+  els.fileInput.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        const importedPlan = normalizePlan(data);
+        if (!importedPlan) throw new Error('El archivo no contiene secciones válidas.');
+        state = importedPlan;
+        save();
+        syncSettingsUI();
+        stopAll();
+        render();
+        setPlanStatus('Plan importado.');
+      } catch (err) {
+        console.warn('No se pudo importar el plan:', err);
+        alert(err.message === 'El archivo no contiene secciones válidas.'
+          ? err.message
+          : 'El archivo no es un plan válido.');
+      }
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
+
+  $('#btnSavePlan').addEventListener('click', savePlanPreset);
+  $('#savedPlans').addEventListener('change', renderSavedPlans);
+  $('#btnLoadPlan').addEventListener('click', loadPlanPreset);
+  $('#btnDeletePlan').addEventListener('click', deletePlanPreset);
+
+  $('#btnClear').addEventListener('click', () => {
+    if (!confirm('¿Borrar TODAS las secciones y pasos del plan?')) return;
+    state.sections = [];
+    save();
+    stopAll();
+    render();
+  });
+
+  $('#btnResetChecks').addEventListener('click', () => {
+    if (!confirm('¿Desmarcar todos los ejercicios como no completados?')) return;
+    state.sections.forEach(sec => sec.steps.forEach(st => { st.done = false; }));
+    save();
+    render();
+  });
+
+  $('#btnAddSection').addEventListener('click', addSection);
+
+  /* ==================================================================
+     INICIO
+     ================================================================== */
+  syncSettingsUI();
+  render();
+  renderHistory();
+  renderTimer();
+  renderSavedPlans();
+  initAppState();
+
+})();
+</script>
+</body>
+</html>
