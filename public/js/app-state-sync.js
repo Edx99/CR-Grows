@@ -187,20 +187,9 @@ async function syncAppState(defaultState = null) {
     console.log('syncAppState localState templates:', Array.isArray(localState?.templates) ? localState.templates.length : 'none', 'financeEntries:', Array.isArray(localState?.financeEntries) ? localState.financeEntries.length : 'none');
 
     if (serverState) {
-        const mergedState = ensureAppState(serverState);
-        if (localState) {
-            mergedState.templates = mergeUniqueById(serverState.templates, localState.templates);
-            mergedState.financeEntries = mergeUniqueById(serverState.financeEntries, localState.financeEntries);
-            mergedState.helpSettings = mergeHelpSettings(serverState.helpSettings, localState.helpSettings);
-            console.log('syncAppState merged templates:', mergedState.templates.length, 'financeEntries:', mergedState.financeEntries.length);
-            saveStateToLocal(mergedState);
-            if (mergedState.templates.length !== serverState.templates.length || mergedState.financeEntries.length !== serverState.financeEntries.length) {
-                await pushStateToServer(mergedState);
-            }
-            return mergedState;
-        }
-        saveStateToLocal(mergedState);
-        return mergedState;
+        const syncedState = ensureAppState(serverState);
+        saveStateToLocal(syncedState);
+        return syncedState;
     }
 
     if (localState) {
