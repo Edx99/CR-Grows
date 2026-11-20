@@ -465,6 +465,8 @@ let isSaving     = false;
 let currentView  = 'dashboard';
 let editingTemplateId = null;
 let savedTemplates = [];
+let localStateRevision = 0;
+let hasUnsentLocalChanges = false;
 let profile = { nickname: '', friends: [] };
 let leaderboard = [];
 const TEMPLATES_STORAGE_KEY = window.CR_GROWS_UTILS?.getUserScopedStorageKey('cr_grows_saved_templates', userEmail) || 'cr_grows_saved_templates';
@@ -597,11 +599,19 @@ function syncDerivedState() {
 
 function normalizeStateForCurrentUser(nextState) {
     const safeState = nextState && typeof nextState === 'object' ? nextState : {};
-    const normalizedDays = window.CR_GROWS_UTILS?.normalizeStateDays(safeState.days || {}) || {};
+    const rawTemplates = Array.isArray(safeState.templates) ? safeState.templates : [];
+    const filterTemplates = window.CR_GROWS_UTILS?.filterTemplatesForUser;
+    const userTemplates = typeof filterTemplates === 'function'
+        ? filterTemplates(rawTemplates, userEmail)
+        : rawTemplates.filter(item => typeof item?.ownerEmail !== 'string' || item.ownerEmail.toLowerCase() === userEmail.toLowerCase());
+    const normalizeDays = window.CR_GROWS_UTILS?.normalizeStateDays;
+    const normalizedDays = typeof normalizeDays === 'function'
+        ? normalizeDays(safeState.days || {})
+        : (safeState.days && typeof safeState.days === 'object' ? safeState.days : {});
     return {
         ...safeState,
         days: normalizedDays,
-        templates: (window.CR_GROWS_UTILS?.filterTemplatesForUser(safeState.templates, userEmail) || []).map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }))
+        templates: userTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }))
     };
 }
 
@@ -613,7 +623,11 @@ function loadSavedTemplates() {
     // saveSavedTemplates()), so an older local cache on THIS device must never be
     // allowed to win and overwrite it. TEMPLATES_STORAGE_KEY is kept only as a
     // fast local render cache, never as a source of truth.
-    const scopedTemplates = window.CR_GROWS_UTILS?.filterTemplatesForUser(state?.templates || [], userEmail) || [];
+    const rawTemplates = Array.isArray(state?.templates) ? state.templates : [];
+    const filterTemplates = window.CR_GROWS_UTILS?.filterTemplatesForUser;
+    const scopedTemplates = typeof filterTemplates === 'function'
+        ? filterTemplates(rawTemplates, userEmail)
+        : rawTemplates.filter(item => typeof item?.ownerEmail !== 'string' || item.ownerEmail.toLowerCase() === userEmail.toLowerCase());
     savedTemplates = scopedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
     state.templates = savedTemplates;
 
@@ -637,6 +651,8 @@ function saveSavedTemplates() {
 
     if (!state) state = loadFromLocal() || EMPTY_STATE();
     state.templates = savedTemplates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail }));
+    localStateRevision += 1;
+    hasUnsentLocalChanges = true;
     console.log('saveSavedTemplates saving state.templates:', savedTemplates.length, 'state.templates sample:', state.templates.slice(0,2));
     saveToLocal();
     pushToServer();
@@ -692,9 +708,14 @@ function renderSavedTemplates() {
         const title = document.createElement('h4');
         title.textContent = template.title;
         const type = document.createElement('p');
-        type.textContent = template.type === 'solo_frases' ? 'Template Basic' : 'Frases reproducibles';
+        type.textContent = template.type === 'solo_frases' ? 'Template Basic'
+            : template.type === 'frases_con_audio' ? 'Frases audibles'
+            : template.type === 'control_financial' ? 'Control financiero'
+            : template.type === 'program_timing' ? 'Programa de entrenamiento por intervalos'
+            : 'Frases reproducibles';
         const preview = document.createElement('pre');
-        preview.textContent = (template.items || []).slice(0, 6).join('\n') + ((template.items || []).length > 6 ? '\n...' : '');
+        const items = Array.isArray(template.items) ? template.items : [];
+        preview.textContent = items.slice(0, 6).join('\n') + (items.length > 6 ? '\n...' : '');
 
         const actions = document.createElement('div');
         actions.style.display = 'flex';
@@ -709,7 +730,13 @@ function renderSavedTemplates() {
         const editBtn = document.createElement('button');
         editBtn.className = 'template-btn';
         editBtn.textContent = '✏️ Editar';
-        editBtn.onclick = () => populateRoutineForm(template);
+        editBtn.onclick = () => {
+            if (template.type === 'program_timing') {
+                openTemplate(`ayuda_Programa_Timing.html?templateId=${encodeURIComponent(template.id)}`);
+                return;
+            }
+            populateRoutineForm(template);
+        };
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'template-btn';
@@ -737,6 +764,10 @@ function deleteSavedTemplate(templateId) {
         showToast('No se encontró el template a borrar', 'error');
         return;
     }
+    if (state?.helpSettings?.programTiming && Array.isArray(state.helpSettings.programTiming.presets)) {
+        state.helpSettings.programTiming.presets = state.helpSettings.programTiming.presets
+            .filter(preset => String(preset.id) !== idStr);
+    }
     // Persist immediately: local key + app state + server (last-write-wins)
     saveSavedTemplates();
     renderSavedTemplates();
@@ -748,6 +779,10 @@ async function openSavedTemplate(templateId) {
     if (!template) return;
 
     try {
+        if (template.type === 'program_timing') {
+            openTemplate(`ayuda_Programa_Timing.html?templateId=${encodeURIComponent(template.id)}`);
+            return;
+        }
         let templateFile = 'template_basic.html';
         if (template.type === 'frases_con_audio') {
             templateFile = 'ayuda_frases_audible.html';  // or the reproducible one
@@ -877,7 +912,8 @@ function hasUsableState(value) {
     const hasStreak = typeof value.streak === 'number' && value.streak > 0;
     const hasTemplates = Array.isArray(value.templates) && value.templates.length > 0;
     const hasFinance = Array.isArray(value.financeEntries) && value.financeEntries.length > 0;
-    return hasDays || hasWeekly || hasStreak || hasTemplates || hasFinance;
+    const hasHelpSettings = !!(value.helpSettings && Object.keys(value.helpSettings).length > 0);
+    return hasDays || hasWeekly || hasStreak || hasTemplates || hasFinance || hasHelpSettings;
 }
 
 async function loadStateFromServer() {
@@ -887,6 +923,7 @@ async function loadStateFromServer() {
     if (data && hasUsableState(data.state)) {
         // ✅ Got real data from server — use it and overwrite localStorage
         state = normalizeStateForCurrentUser(data.state);
+        hasUnsentLocalChanges = false;
         console.log('loadStateFromServer state keys:', Object.keys(state));
         console.log('loadStateFromServer templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
         saveToLocal();
@@ -898,9 +935,11 @@ async function loadStateFromServer() {
     const local = loadFromLocal();
     if (local && hasUsableState(local)) {
         state = normalizeStateForCurrentUser(local);
+        hasUnsentLocalChanges = true;
         saveToLocal();
         const pushed = await apiFetch('POST', '/api/state', { state });
         if (pushed) {
+            hasUnsentLocalChanges = false;
             setSyncStatus('synced', 'Sincronizado ✓');
             console.log('⚠️ Local state uploaded to SERVER');
             return true;
@@ -912,6 +951,7 @@ async function loadStateFromServer() {
 
     // Nothing anywhere — start fresh
     state = EMPTY_STATE();
+    hasUnsentLocalChanges = false;
     setSyncStatus('local', 'Sin datos previos');
     console.log('🆕 Starting with empty state');
     return false;
@@ -929,11 +969,11 @@ function mergeStateForUpload(localState, serverState = {}) {
     // templates / financeEntries: local array wins even when empty (user deleted all).
     // Previously length>0 check resurrected deleted items from the server.
     const merged = {
-        days: localState.days || serverState.days || {},
+        days: { ...(serverState.days || {}), ...(localState.days || {}) },
         weekly: Array.isArray(localState.weekly) && localState.weekly.length > 0 ? localState.weekly : (Array.isArray(serverState.weekly) ? serverState.weekly : []),
         streak: typeof localState.streak === 'number' && localState.streak > 0 ? localState.streak : serverState.streak || 0,
         helpSettings: { ...(serverState.helpSettings || {}), ...(localState.helpSettings || {}) },
-        templates: Array.isArray(localState.templates) ? localState.templates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail })) : (Array.isArray(serverState.templates) ? window.CR_GROWS_UTILS?.filterTemplatesForUser(serverState.templates, userEmail) || [] : []),
+        templates: Array.isArray(localState.templates) ? localState.templates.map(item => ({ ...item, ownerEmail: item.ownerEmail || userEmail })) : (Array.isArray(serverState.templates) ? serverState.templates.filter(item => typeof item?.ownerEmail !== 'string' || item.ownerEmail.toLowerCase() === userEmail.toLowerCase()) : []),
         financeEntries: Array.isArray(localState.financeEntries) ? localState.financeEntries : (Array.isArray(serverState.financeEntries) ? serverState.financeEntries : []),
     };
     if (!Array.isArray(merged.templates)) merged.templates = [];
@@ -945,11 +985,16 @@ function mergeStateForUpload(localState, serverState = {}) {
 // 5. SAVE STATE TO SERVER — debounced 2 seconds
 // ══════════════════════════════════════════════════
 function scheduleSave() {
+    localStateRevision += 1;
+    hasUnsentLocalChanges = true;
     saveToLocal();
     console.log('scheduleSave() fired — state queued for server push', state);
     setSyncStatus('pending', 'Guardando...');
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(pushToServer, 2000);
+    saveTimer = setTimeout(() => {
+        saveTimer = null;
+        pushToServer();
+    }, 2000);
 }
 
 async function pushToServer() {
@@ -958,6 +1003,7 @@ async function pushToServer() {
         return;
     }
     isSaving = true;
+    const revision = localStateRevision;
 
     const remoteResponse = await apiFetch('GET', '/api/state');
     const remoteState = remoteResponse?.state || {};
@@ -969,6 +1015,7 @@ async function pushToServer() {
     const result = await apiFetch('POST', '/api/state', { state });
     isSaving = false;
     if (result) {
+        if (revision === localStateRevision) hasUnsentLocalChanges = false;
         setSyncStatus('synced', 'Guardado en la nube ✓');
         console.log('pushToServer() success:', result);
     } else {
@@ -976,6 +1023,37 @@ async function pushToServer() {
         showToast('Sin conexión — datos guardados localmente', 'error');
         console.warn('pushToServer() failed — server did not return success');
     }
+    if (revision !== localStateRevision && !saveTimer) {
+        saveTimer = setTimeout(() => {
+            saveTimer = null;
+            pushToServer();
+        }, 500);
+    }
+}
+
+function comparableState(value) {
+    const snapshot = { ...value, days: { ...(value.days || {}) } };
+    const todayState = snapshot.days[today];
+    if (todayState && !(todayState.done || []).length && !todayState.percent) {
+        delete snapshot.days[today];
+    }
+    return JSON.stringify(snapshot);
+}
+
+async function refreshStateFromServer() {
+    if (document.visibilityState === 'hidden' || saveTimer || isSaving || hasUnsentLocalChanges) return;
+    const revision = localStateRevision;
+    const data = await apiFetch('GET', '/api/state');
+    if (!data || !hasUsableState(data.state) || revision !== localStateRevision || saveTimer || isSaving) return;
+
+    const remoteState = normalizeStateForCurrentUser(data.state);
+    if (comparableState(remoteState) === comparableState(state)) return;
+
+    state = remoteState;
+    saveToLocal();
+    loadSavedTemplates();
+    render();
+    setSyncStatus('synced', 'Sincronizado ✓');
 }
 
 // Manual sync button
@@ -987,6 +1065,7 @@ async function manualSync() {
 
     if (data && hasUsableState(data.state)) {
         state = normalizeStateForCurrentUser(data.state);
+        hasUnsentLocalChanges = false;
         console.log('manualSync state keys:', Object.keys(state));
         console.log('manualSync state.templates:', Array.isArray(state.templates) ? state.templates.length : 'none', 'state.financeEntries:', Array.isArray(state.financeEntries) ? state.financeEntries.length : 'none');
         saveToLocal();
@@ -1002,6 +1081,7 @@ async function manualSync() {
         const pushed = await apiFetch('POST', '/api/state', { state: local });
         if (pushed) {
             state = normalizeStateForCurrentUser(local);
+            hasUnsentLocalChanges = false;
             saveToLocal();
             loadSavedTemplates();
             setSyncStatus('synced', 'Sincronizado ✓');
@@ -1096,6 +1176,11 @@ async function init() {
     showView('dashboard');
     render();
     showToast(`Bienvenido, ${userName} 👋`, 'success');
+    window.setInterval(refreshStateFromServer, 15000);
+    window.addEventListener('focus', refreshStateFromServer);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') refreshStateFromServer();
+    });
 }
 
 // ══════════════════════════════════════════════════
