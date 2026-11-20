@@ -272,6 +272,7 @@
             <button class="btn btn-small" id="btnLoadPlan" disabled>Cargar</button>
             <button class="btn btn-small btn-danger" id="btnDeletePlan" disabled>Eliminar</button>
           </div>
+          <button class="btn btn-primary" id="btnSaveDashboardTemplate" type="button">Guardar en la sección Templates</button>
           <div class="plan-status" id="planSaveStatus" role="status" aria-live="polite"></div>
         </div>
       </div>
@@ -297,6 +298,14 @@
      ================================================================== */
   const $  = (sel, root) => (root || document).querySelector(sel);
   const uid = () => Math.random().toString(36).slice(2, 10);
+  const getAccountEmail = () => {
+    try {
+      const token = getAuthToken();
+      return token ? JSON.parse(atob(token.split('.')[1])).email || '' : '';
+    } catch (err) {
+      return '';
+    }
+  };
   const esc = (s) => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
@@ -316,6 +325,7 @@
   let saveSyncTimer = null;
   let saveSyncQueue = Promise.resolve();
   let hasLocalEdits = false;
+  let currentDashboardTemplateId = null;
 
   function defaultState() {
     return {
@@ -388,6 +398,23 @@
     if (!appState) appState = { helpSettings: {} };
     appState.helpSettings = appState.helpSettings && typeof appState.helpSettings === 'object'
       ? appState.helpSettings : {};
+    appState.templates = Array.isArray(appState.templates) ? appState.templates : [];
+    if (currentDashboardTemplateId) {
+      const template = appState.templates.find(item => item && item.id === currentDashboardTemplateId);
+      if (template) {
+        const title = $('#templateName').value.trim() || template.title;
+        template.title = title;
+        template.plan = JSON.parse(JSON.stringify(state));
+        template.items = state.sections.flatMap(section => section.steps.map(step => step.name));
+        template.updatedAt = new Date().toISOString();
+        const preset = savedPlans.find(item => item.id === currentDashboardTemplateId);
+        if (preset) {
+          preset.name = title;
+          preset.plan = JSON.parse(JSON.stringify(state));
+          preset.updatedAt = template.updatedAt;
+        }
+      }
+    }
     const currentSettings = appState.helpSettings[APP_STATE_SYNC_KEY] || {};
     appState.helpSettings[APP_STATE_SYNC_KEY] = {
       ...currentSettings,
@@ -404,12 +431,12 @@
       }
       const stateSnapshot = JSON.parse(JSON.stringify(appState));
       saveSyncQueue = saveSyncQueue.then(async () => {
-        const result = await apiFetch('POST', '/api/state', { state: stateSnapshot });
-        if (result.ok) {
+        const result = await pushStateToServer(stateSnapshot);
+        if (result) {
           setPlanStatus('Guardado y sincronizado con tu cuenta.');
           return;
         }
-        console.warn('No se pudo sincronizar el plan:', result.status, result.error || result.data);
+        console.warn('No se pudo sincronizar el plan.');
         setPlanStatus('Guardado localmente; no se pudo sincronizar con el servidor.');
       });
     }, 500);
@@ -462,6 +489,51 @@
     setPlanStatus('Plantilla guardada. Sincronizando…');
   }
 
+  function saveDashboardTemplate() {
+    const nameInput = $('#templateName');
+    const name = nameInput.value.trim();
+    if (!name) {
+      setPlanStatus('Escribe un nombre para la plantilla.');
+      nameInput.focus();
+      return;
+    }
+    if (!state.sections.length) {
+      setPlanStatus('Añade al menos una sección antes de guardar una plantilla.');
+      return;
+    }
+
+    if (!appState) appState = typeof loadStateFromLocal === 'function' ? loadStateFromLocal() : null;
+    if (!appState) appState = { helpSettings: {}, templates: [] };
+    appState.templates = Array.isArray(appState.templates) ? appState.templates : [];
+
+    const now = new Date().toISOString();
+    const templateId = currentDashboardTemplateId || uid();
+    const existingIndex = appState.templates.findIndex(item => item && item.id === templateId);
+    const existing = existingIndex >= 0 ? appState.templates[existingIndex] : null;
+    const template = {
+      ...(existing || {}),
+      id: templateId,
+      title: name,
+      type: 'program_timing',
+      items: state.sections.flatMap(section => section.steps.map(step => step.name)),
+      plan: JSON.parse(JSON.stringify(state)),
+      ownerEmail: getAccountEmail() || existing?.ownerEmail || '',
+      createdAt: existing?.createdAt || now,
+      updatedAt: now
+    };
+
+    if (existingIndex >= 0) appState.templates[existingIndex] = template;
+    else appState.templates.unshift(template);
+    currentDashboardTemplateId = templateId;
+    $('#btnSaveDashboardTemplate').textContent = 'Actualizar template guardado';
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('templateId', templateId);
+    window.history.replaceState(null, '', url);
+    save();
+    setPlanStatus('Template guardado en tu cuenta. Los cambios se actualizarán automáticamente.');
+  }
+
   function loadPlanPreset() {
     const preset = savedPlans.find(plan => plan.id === $('#savedPlans').value);
     if (!preset) return;
@@ -494,13 +566,39 @@
       appState = await syncAppState({ helpSettings: { [APP_STATE_SYNC_KEY]: { presets: [] } } });
       appState.helpSettings = appState.helpSettings && typeof appState.helpSettings === 'object'
         ? appState.helpSettings : {};
+      appState.templates = Array.isArray(appState.templates) ? appState.templates : [];
       const timingSettings = appState.helpSettings[APP_STATE_SYNC_KEY] || {};
+      const requestedTemplateId = new URLSearchParams(window.location.search).get('templateId');
+      const requestedTemplate = requestedTemplateId
+        ? appState.templates.find(item => item && String(item.id) === requestedTemplateId && item.type === 'program_timing')
+        : null;
+      if (requestedTemplate) {
+        const templatePlan = normalizePlan(requestedTemplate.plan);
+        if (templatePlan) {
+          currentDashboardTemplateId = requestedTemplate.id;
+          state = templatePlan;
+          $('#templateName').value = requestedTemplate.title || '';
+          $('#btnSaveDashboardTemplate').textContent = 'Actualizar template guardado';
+        } else {
+          setPlanStatus('El template guardado no contiene un plan válido.');
+        }
+      } else if (requestedTemplateId) {
+        setPlanStatus('No se encontró el template guardado; puedes guardar este plan como uno nuevo.');
+      }
       const locallyCreatedPlans = savedPlans;
-      if (!hasLocalEdits && timingSettings.currentPlan) {
+      if (!requestedTemplate && !hasLocalEdits && timingSettings.currentPlan) {
         const cloudPlan = normalizePlan(timingSettings.currentPlan);
         if (cloudPlan) state = cloudPlan;
       }
       savedPlans = normalizeSavedPlans(timingSettings.presets);
+      if (requestedTemplate && !savedPlans.some(plan => plan.id === requestedTemplate.id)) {
+        savedPlans.unshift({
+          id: requestedTemplate.id,
+          name: requestedTemplate.title || 'Template de entrenamiento',
+          updatedAt: requestedTemplate.updatedAt || '',
+          plan: normalizePlan(requestedTemplate.plan)
+        });
+      }
       if (hasLocalEdits) {
         const syncedIds = new Set(savedPlans.map(plan => plan.id));
         savedPlans.push(...locallyCreatedPlans.filter(plan => !syncedIds.has(plan.id)));
@@ -1195,6 +1293,10 @@
   });
 
   $('#btnSavePlan').addEventListener('click', savePlanPreset);
+  $('#btnSaveDashboardTemplate').addEventListener('click', saveDashboardTemplate);
+  $('#templateName').addEventListener('change', () => {
+    if (currentDashboardTemplateId) save();
+  });
   $('#savedPlans').addEventListener('change', renderSavedPlans);
   $('#btnLoadPlan').addEventListener('click', loadPlanPreset);
   $('#btnDeletePlan').addEventListener('click', deletePlanPreset);
